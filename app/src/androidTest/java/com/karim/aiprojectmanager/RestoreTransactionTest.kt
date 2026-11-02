@@ -78,4 +78,51 @@ class RestoreTransactionTest {
             assertArrayEquals(fresh, incoming.readBytes())
         } finally { dir.deleteRecursively() }
     }
+
+    @Test fun preexistingSafetyCopyBlocksRestoreWithoutChangingAnything() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val old = """[{"id":"old","name":"Existing"}]""".toByteArray()
+            val fresh = """[{"id":"new","name":"Candidate"}]""".toByteArray()
+            val previous = """[{"id":"previous","name":"Keep backup"}]""".toByteArray()
+            target.writeBytes(old)
+            incoming.writeBytes(fresh)
+            snapshot.writeBytes(previous)
+            try {
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true)
+                fail("Existing snapshot must never be overwritten")
+            } catch (_: IOException) {}
+            assertArrayEquals(old, target.readBytes())
+            assertArrayEquals(previous, snapshot.readBytes())
+            assertArrayEquals(fresh, incoming.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun postCommitVerificationFailureKeepsSafetyCopyForManualRecovery() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val old = """[{"id":"old","name":"Existing"}]""".toByteArray()
+            val fresh = """[{"id":"new","name":"Candidate"}]""".toByteArray()
+            target.writeBytes(old)
+            incoming.writeBytes(fresh)
+            try {
+                RestoreTransaction.replace(
+                    target, incoming, snapshot, authorized = true,
+                    verifyCommitted = { _, _ -> false }
+                )
+                fail("Failed verification must be reported")
+            } catch (_: IOException) {}
+            assertArrayEquals(old, snapshot.readBytes())
+            assertArrayEquals(fresh, incoming.readBytes())
+            // A committed write must not be silently overwritten after verification fails.
+            assertArrayEquals(fresh, target.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
