@@ -32,6 +32,14 @@ jobs:
           echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Compile APK and Android instrumentation test sources
         run: gradle --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Run Android storage regression tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: gradle --no-daemon :app:connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
         if: success()
         with:
