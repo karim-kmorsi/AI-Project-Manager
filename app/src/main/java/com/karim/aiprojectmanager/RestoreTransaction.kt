@@ -14,6 +14,8 @@ internal object RestoreTransaction {
     internal fun hash(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
+    // Serializes calls to this isolated engine within the current process only.
+    @Synchronized
     fun replace(
         target: File,
         candidate: File,
