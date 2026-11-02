@@ -227,4 +227,58 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun currentProjectChangingAfterSnapshotBlocksReplacement() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val original = """[{"id":"p","name":"Before"}]""".toByteArray()
+            val updated = """[{"id":"p","name":"Edited during restore"}]""".toByteArray()
+            val incoming = """[{"id":"q","name":"Candidate"}]""".toByteArray()
+            target.writeBytes(original)
+            candidate.writeBytes(incoming)
+            try {
+                RestoreTransaction.replace(
+                    target, candidate, snapshot, true,
+                    RestoreTransaction.hash(original), RestoreTransaction.hash(incoming),
+                    afterSnapshot = { target.writeBytes(updated) }
+                )
+                fail("Concurrent changes to current projects must block restore")
+            } catch (_: IOException) {}
+            assertArrayEquals(updated, target.readBytes())
+            assertArrayEquals(original, snapshot.readBytes())
+            assertArrayEquals(incoming, candidate.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun failedWriteRetainsIndependentRecoveryCopyWithoutPublishingPartialData() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val original = """[{"id":"p","name":"Saved"}]""".toByteArray()
+            val incoming = """[{"id":"q","name":"Replacement"}]""".toByteArray()
+            target.writeBytes(original)
+            candidate.writeBytes(incoming)
+            try {
+                RestoreTransaction.replace(
+                    target, candidate, snapshot, true,
+                    RestoreTransaction.hash(original), RestoreTransaction.hash(incoming),
+                    write = { stream, bytes ->
+                        stream.write(bytes, 0, bytes.size / 2)
+                        throw IOException("Simulated write failure")
+                    }
+                )
+                fail("Interrupted write cannot succeed")
+            } catch (_: IOException) {}
+            assertArrayEquals(original, android.util.AtomicFile(target).openRead().use { it.readBytes() })
+            assertArrayEquals(original, snapshot.readBytes())
+            assertEquals(RestoreTransaction.hash(original), RestoreTransaction.hash(snapshot.readBytes()))
+            assertArrayEquals(incoming, candidate.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
