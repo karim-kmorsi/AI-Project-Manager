@@ -95,6 +95,11 @@ class ProjectStorage(private val file: File) {
     }
 }
 
+internal fun persistProjectChange(storage: ProjectStorage, current: List<ProjectItem>, next: List<ProjectItem>): List<ProjectItem> {
+    storage.save(next)
+    return next
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectManagerApp(storage: ProjectStorage) {
@@ -105,7 +110,11 @@ fun ProjectManagerApp(storage: ProjectStorage) {
     var warnOnExit by remember { mutableStateOf(false) }
     fun update(item: ProjectItem) {
         val index = projects.indexOfFirst { it.id == item.id }
-        if (index >= 0) { projects[index] = item; storage.save(projects.toList()) }
+        if (index >= 0) {
+            val next = projects.toMutableList().apply { set(index, item) }
+            persistProjectChange(storage, projects.toList(), next)
+            projects[index] = item
+        }
     }
     val active = projects.find { it.id == activeId }
     // Respect unsaved document edits when the system Back gesture/button is used.
@@ -180,7 +189,8 @@ fun ProjectManagerApp(storage: ProjectStorage) {
             confirmButton = { TextButton(onClick = {
                 if (name.isNotBlank()) {
                     val p = ProjectItem(UUID.randomUUID().toString(), name.trim(), details.trim())
-                    projects.add(p); storage.save(projects.toList()); activeId = p.id
+                    persistProjectChange(storage, projects.toList(), projects.toList() + p)
+                    projects.add(p); activeId = p.id
                     showNew = false
                 }
             }, enabled = name.isNotBlank()) { Text("إنشاء") } },
