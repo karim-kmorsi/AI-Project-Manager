@@ -71,4 +71,21 @@ class RestoreCandidateTest {
             assertArrayEquals(original, live.readBytes())
         } finally { root.deleteRecursively() }
     }
+    @Test fun missingDocumentFailsSafelyAndLiveDataRemainsUnchanged() {
+        val root = File(context.cacheDir, "restore-missing-\${System.nanoTime()}")
+        try {
+            assertTrue(root.mkdirs())
+            val live = File(root, "projects.json")
+            val original = """[{"id":"live","name":"Original"}]""".toByteArray()
+            live.writeBytes(original)
+            val missing = File(root, "nonexistent.json")
+            try {
+                RestoreCandidate.inspectSelection(context.contentResolver, Uri.fromFile(missing))
+                fail("Missing document must not be accepted")
+            } catch (_: IOException) { }
+            assertArrayEquals(original, live.readBytes())
+            assertFalse(missing.exists())
+        } finally { root.deleteRecursively() }
+    }
+
 }
