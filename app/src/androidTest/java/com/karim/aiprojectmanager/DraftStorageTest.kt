@@ -82,4 +82,14 @@ class DraftStorageTest {
         } finally { root.deleteRecursively() }
     }
 
+    @Test fun staleSnapshotIsNotEligibleForAutosaveOrCleanup() {
+        val earlier = "first edit"
+        val latest = "first edit followed by new text"
+        assertFalse(isLatestDraft(earlier, latest))
+        assertTrue(isLatestDraft(latest, latest))
+        // In particular a previously scheduled autosave cannot treat the
+        // earlier snapshot as current after additional typing.
+        assertFalse(isLatestDraft("pending recovery draft", "newer revision"))
+    }
+
 }
