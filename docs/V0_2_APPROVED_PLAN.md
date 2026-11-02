@@ -67,3 +67,13 @@ No GitHub Inspector, remote code execution, AI agents, push notification system 
 ## Work sequence
 Gate 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5 -> Release validation.
 Within Phase 4/5, dependencies may be adjusted after data tests; never bypass Gate 0.
+
+## Approved future capability — Import from GitHub (post-v0.2 foundation)
+Approved for the roadmap, **not implemented or included in the v0.2 release gate**.
+- A user selects a repository to import after explicitly linking GitHub with least-privilege, read-only access.
+- Read only supported source material: README, project documentation (Blueprint/Roadmap when present), issues, PRs, commits and CI results; show provenance and distinguish extracted facts from AI suggestions and absent information.
+- Preview the proposed project, milestones and tasks; require confirmation before adding or overwriting anything locally.
+- Preserve local edits on refresh. Offer a diff/reconciliation step rather than automatic replacement.
+- Do not write to GitHub, initiate code actions, or request broader permissions without a separate opt-in.
+- Keep GitHub as source of truth for repository/CI facts; keep independent user notes and decisions in local app storage.
+- Implement only after reliable editing, data backup/restore and safe updates are established.
