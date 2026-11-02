@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.IOException
+import android.util.AtomicFile
 import java.util.UUID
 
 data class TaskItem(val id: String, val title: String, val status: String = "NOT_STARTED")
@@ -33,8 +35,12 @@ class MainActivity : ComponentActivity() {
 }
 
 class ProjectStorage(private val file: File) {
-    fun load(): List<ProjectItem> = try {
-        val array = JSONArray(file.readText())
+    fun load(): List<ProjectItem> {
+        if (!file.exists() && !File(file.path + ".bak").exists()) return emptyList()
+        val array = try { JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }) } catch (e: Exception) {
+            throw IOException("Cannot read saved projects; writes are blocked until recovery", e)
+        }
+        return try {
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
             val ta = o.optJSONArray("tasks") ?: JSONArray()
@@ -50,9 +56,14 @@ class ProjectStorage(private val file: File) {
                 }
             )
         }
-    } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) {
+            throw IOException("Invalid project data; refusing to replace saved file", e)
+        }
+    }
 
     fun save(data: List<ProjectItem>) {
+        // Never overwrite data that cannot be read or validated.
+        if (file.exists() || File(file.path + ".bak").exists()) load()
         val arr = JSONArray()
         data.forEach { project ->
             val obj = JSONObject()
@@ -68,11 +79,14 @@ class ProjectStorage(private val file: File) {
             obj.put("tasks", tasks)
             arr.put(obj)
         }
-        val temp = File(file.parentFile, "${file.name}.tmp")
-        temp.writeText(arr.toString(2))
-        if (!temp.renameTo(file)) {
-            file.writeText(temp.readText())
-            temp.delete()
+        val atomic = AtomicFile(file)
+        val stream = atomic.startWrite()
+        try {
+            stream.write(arr.toString(2).toByteArray(Charsets.UTF_8))
+            atomic.finishWrite(stream)
+        } catch (error: Exception) {
+            atomic.failWrite(stream)
+            throw error
         }
     }
 }
