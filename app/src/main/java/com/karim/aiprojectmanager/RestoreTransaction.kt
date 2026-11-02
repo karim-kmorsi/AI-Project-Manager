@@ -4,17 +4,23 @@ import android.util.AtomicFile
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.security.MessageDigest
 
 /**
  * Isolated restore transaction engine. Not connected to MainActivity or real storage.
  * Requires explicit authorization from a future, separately reviewed caller.
  */
 internal object RestoreTransaction {
+    internal fun hash(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
+        .digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
     fun replace(
         target: File,
         candidate: File,
         snapshot: File,
         authorized: Boolean,
+        expectedTargetSha256: String,
+        expectedCandidateSha256: String,
         write: (FileOutputStream, ByteArray) -> Unit = { output, bytes -> output.write(bytes) },
         verifyCommitted: (File, ByteArray) -> Boolean = { file, expected -> file.readBytes().contentEquals(expected) }
     ) {
@@ -29,10 +35,16 @@ internal object RestoreTransaction {
         val originalBytes = target.readBytes()
         LocalBackup.validate(candidateBytes)
         LocalBackup.validate(originalBytes)
+        if (hash(originalBytes) != expectedTargetSha256 || hash(candidateBytes) != expectedCandidateSha256) {
+            throw IOException("Restore files changed since preview; no changes made")
+        }
         // This immutable snapshot must exist and match the original before any target write.
         LocalBackup.createSnapshot(target, snapshot)
         if (!snapshot.readBytes().contentEquals(originalBytes)) {
             throw IOException("Safety snapshot does not match original")
+        }
+        if (hash(target.readBytes()) != expectedTargetSha256 || hash(candidate.readBytes()) != expectedCandidateSha256) {
+            throw IOException("Restore inputs changed before commit")
         }
         val atomic = AtomicFile(target)
         val output = atomic.startWrite()
