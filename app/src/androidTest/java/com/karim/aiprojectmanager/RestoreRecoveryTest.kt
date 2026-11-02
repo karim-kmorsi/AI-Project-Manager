@@ -75,4 +75,69 @@ class RestoreRecoveryTest {
             assertArrayEquals(after, target.readBytes())
         } finally { dir.deleteRecursively() }
     }
+
+    @Test fun interruptedRecoveryPreservesCurrentContentAndSafety() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val safety = File(dir, "safety.json")
+            val before = """[{"id":"old","name":"Original"}]""".toByteArray()
+            val after = """[{"id":"new","name":"Current"}]""".toByteArray()
+            target.writeBytes(after)
+            safety.writeBytes(before)
+            try {
+                RestoreRecovery.recover(target, safety,
+                    RestoreTransaction.hash(after), RestoreTransaction.hash(before), true,
+                    write = { stream, bytes ->
+                        stream.write(bytes, 0, bytes.size / 2)
+                        throw IOException("Simulated recovery interruption")
+                    })
+                fail("Interrupted recovery must fail")
+            } catch (_: IOException) {}
+            assertArrayEquals(after, android.util.AtomicFile(target).openRead().use { it.readBytes() })
+            assertArrayEquals(before, safety.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun overlappingAtomicSidecarIsRejectedBeforeWriting() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val safety = File(target.path + ".bak")
+            val current = """[{"id":"new","name":"Current"}]""".toByteArray()
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            target.writeBytes(current)
+            safety.writeBytes(original)
+            try {
+                RestoreRecovery.recover(target, safety,
+                    RestoreTransaction.hash(current), RestoreTransaction.hash(original), true)
+                fail("AtomicFile sidecar must not be used as recovery snapshot")
+            } catch (_: IOException) {}
+            assertArrayEquals(current, target.readBytes())
+            assertArrayEquals(original, safety.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun pendingSafetyWriteBlocksRecoveryAndPreservesBothFiles() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val safety = File(dir, "safety.json")
+            val pending = File(safety.path + ".new")
+            val current = """[{"id":"new","name":"Current"}]""".toByteArray()
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            target.writeBytes(current)
+            safety.writeBytes(original)
+            pending.writeText("unfinished")
+            try {
+                RestoreRecovery.recover(target, safety,
+                    RestoreTransaction.hash(current), RestoreTransaction.hash(original), true)
+                fail("Safety copy with pending atomic write must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(current, target.readBytes())
+            assertArrayEquals(original, safety.readBytes())
+            assertEquals("unfinished", pending.readText())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
