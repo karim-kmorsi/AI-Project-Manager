@@ -1,0 +1,51 @@
+package com.karim.aiprojectmanager
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+import java.nio.file.Files
+
+/**
+ * Executes on Android, where org.json has platform semantics.
+ * Use a temporary, app-private file. Does not read or edit actual user data.
+ */
+@RunWith(AndroidJUnit4::class)
+class LegacyStorageTest {
+    @Test fun legacyProjectsSurviveReadWriteAndReopen() {
+        val dir = Files.createTempDirectory("project-storage-test").toFile()
+        try {
+            val file = File(dir, "projects.json")
+            file.writeText(
+                """
+                [
+                  {
+                    "id":"old-project-1",
+                    "name":"مشروع تجريبي",
+                    "description":"legacy project",
+                    "blueprint":"اختبار حفظ بيانات المشروع 123",
+                    "roadmap":"Step A",
+                    "tasks":[
+                      {"id":"task-1","title":"Demo","status":"NOT_STARTED"},
+                      {"id":"task-2","title":"Verified legacy","status":"VERIFIED"}
+                    ]
+                  }
+                ]
+                """.trimIndent()
+            )
+            val initial = ProjectStorage(file).load()
+            assertEquals(1, initial.size)
+            assertEquals("اختبار حفظ بيانات المشروع 123", initial[0].blueprint)
+            assertEquals("Step A", initial[0].roadmap)
+            assertEquals("VERIFIED", initial[0].tasks[1].status)
+            ProjectStorage(file).save(initial)
+            val reopened = ProjectStorage(file).load()
+            assertEquals(initial, reopened)
+            assertTrue(file.exists())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+}
