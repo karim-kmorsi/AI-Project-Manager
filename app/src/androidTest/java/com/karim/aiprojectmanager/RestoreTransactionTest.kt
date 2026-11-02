@@ -48,7 +48,7 @@ class RestoreTransactionTest {
             assertFalse(snapshot.exists())
             incoming.writeText("corrupt")
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh))
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(incoming.readBytes()))
                 fail("Corrupt input must be rejected")
             } catch (_: IOException) {}
             assertArrayEquals(old, target.readBytes())
@@ -67,10 +67,10 @@ class RestoreTransactionTest {
             target.writeBytes(old)
             incoming.writeBytes(fresh)
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh)) { output, bytes ->
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh), write = { output, bytes ->
                     output.write(bytes, 0, bytes.size / 2)
                     throw IOException("Simulated interrupted write")
-                }
+                })
                 fail("Write failure must propagate")
             } catch (_: IOException) {}
             assertArrayEquals(old, target.readBytes())
