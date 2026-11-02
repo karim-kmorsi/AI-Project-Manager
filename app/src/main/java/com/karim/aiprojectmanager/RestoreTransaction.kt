@@ -22,7 +22,8 @@ internal object RestoreTransaction {
         expectedTargetSha256: String,
         expectedCandidateSha256: String,
         write: (FileOutputStream, ByteArray) -> Unit = { output, bytes -> output.write(bytes) },
-        verifyCommitted: (File, ByteArray) -> Boolean = { file, expected -> file.readBytes().contentEquals(expected) }
+        verifyCommitted: (File, ByteArray) -> Boolean = { file, expected -> file.readBytes().contentEquals(expected) },
+        afterSnapshot: () -> Unit = {}
     ) {
         if (!authorized) throw IOException("Restore was not authorized")
         val paths = listOf(target, candidate, snapshot).map { it.canonicalPath }
@@ -43,6 +44,7 @@ internal object RestoreTransaction {
         if (!snapshot.readBytes().contentEquals(originalBytes)) {
             throw IOException("Safety snapshot does not match original")
         }
+        afterSnapshot()
         if (hash(target.readBytes()) != expectedTargetSha256 || hash(candidate.readBytes()) != expectedCandidateSha256) {
             throw IOException("Restore inputs changed before commit")
         }
