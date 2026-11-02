@@ -250,7 +250,7 @@ private fun EditableDocument(
                     recoveryError = false
                     runCatching { draftStore.discard(projectId, document) }
                 } catch (_: Exception) { saveError = true }
-            }, enabled = draft != value || saveError) { Text("حفظ") }
+            }, enabled = conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
         }
         Text(
             when {
@@ -272,9 +272,12 @@ private fun EditableDocument(
                 conflictingDraft = null
             }) { Text("استخدام المسودة السابقة") }
             TextButton(onClick = {
-                // Keep current project text; do not erase the conflicting file.
-                conflictingDraft = null
-                recoveryError = false
+                // Explicit user choice; remove only this conflicting recovery draft.
+                try {
+                    draftStore.discard(projectId, document)
+                    conflictingDraft = null
+                    recoveryError = false
+                } catch (_: IOException) { recoveryError = true }
             }) { Text("الاحتفاظ بنص المشروع الحالي") }
         }
         OutlinedTextField(
