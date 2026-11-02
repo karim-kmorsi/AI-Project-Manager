@@ -72,7 +72,7 @@ class RestoreCandidateTest {
         } finally { root.deleteRecursively() }
     }
     @Test fun missingDocumentFailsSafelyAndLiveDataRemainsUnchanged() {
-        val root = File(context.cacheDir, "restore-missing-\${System.nanoTime()}")
+        val root = File(context.cacheDir, "restore-missing-${System.nanoTime()}")
         try {
             assertTrue(root.mkdirs())
             val live = File(root, "projects.json")
