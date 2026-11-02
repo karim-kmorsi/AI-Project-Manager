@@ -140,4 +140,23 @@ class RestoreRecoveryTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun oversizedRecoveryInputIsRejectedBeforeReadingOrWriting() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val safety = File(dir, "safety.json")
+            val current = """[{"id":"new","name":"Current"}]""".toByteArray()
+            target.writeBytes(current)
+            java.io.RandomAccessFile(safety, "rw").use { it.setLength(8L * 1024 * 1024 + 1) }
+            try {
+                RestoreRecovery.recover(target, safety,
+                    RestoreTransaction.hash(current), "irrelevant", true)
+                fail("Oversized recovery input must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(current, target.readBytes())
+            assertEquals(8L * 1024 * 1024 + 1, safety.length())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
