@@ -30,6 +30,9 @@ internal object RestoreRecovery {
             throw IOException("Safety snapshot has pending atomic writes")
         }
         if (!target.isFile || !safetySnapshot.isFile) throw IOException("Recovery input missing")
+        if (target.length() > 8L * 1024 * 1024 || safetySnapshot.length() > 8L * 1024 * 1024) {
+            throw IOException("Recovery file exceeds 8 MiB limit")
+        }
         val current = target.readBytes()
         val safety = safetySnapshot.readBytes()
         LocalBackup.validate(current)
