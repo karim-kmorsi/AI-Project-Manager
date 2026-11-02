@@ -17,6 +17,7 @@ import java.io.File
 import java.io.IOException
 import android.util.AtomicFile
 import java.util.UUID
+import kotlinx.coroutines.delay
 
 data class TaskItem(val id: String, val title: String, val status: String = "NOT_STARTED")
 data class ProjectItem(
@@ -174,17 +175,56 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 
 @Composable
 private fun EditableDocument(value: String, hint: String, save: (String) -> Unit) {
-    var draft by remember(value) { mutableStateOf(value) }
+    var draft by rememberSaveable(hint) { mutableStateOf(value) }
+    var saveError by remember { mutableStateOf(false) }
+    val latestSave by rememberUpdatedState(save)
+    // Reflect a newly loaded project document only when no local edit is pending.
+    LaunchedEffect(value) {
+        if (draft == value) saveError = false
+    }
+    LaunchedEffect(draft, value) {
+        if (draft != value) {
+            delay(700)
+            try {
+                latestSave(draft)
+                saveError = false
+            } catch (_: Exception) {
+                saveError = true
+            }
+        }
+    }
+    DisposableEffect(hint) {
+        onDispose {
+            if (draft != value) {
+                // Flush edits when switching tabs; never silently treat a failure as saved.
+                runCatching { latestSave(draft) }
+            }
+        }
+    }
     Column(
         Modifier.fillMaxSize().imePadding().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-            Button(onClick = { save(draft) }, enabled = draft != value) { Text("حفظ") }
+            Button(onClick = {
+                try {
+                    latestSave(draft)
+                    saveError = false
+                } catch (_: Exception) {
+                    saveError = true
+                }
+            }, enabled = draft != value) { Text("حفظ") }
         }
+        Text(
+            if (saveError) "تعذر الحفظ — احتفظ بالنص وحاول مرة أخرى"
+            else if (draft != value) "جارٍ حفظ المسودة تلقائيًا..."
+            else "تم الحفظ",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (saveError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+        )
         OutlinedTextField(
-            value = draft, onValueChange = { draft = it },
+            value = draft, onValueChange = { draft = it; saveError = false },
             modifier = Modifier.fillMaxWidth().weight(1f),
             label = { Text("محتوى المستند") },
             placeholder = { Text("اكتب أو الصق الخطة هنا...") }
