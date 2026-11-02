@@ -25,7 +25,7 @@ class RestoreTransactionTest {
             val fresh = """[{"id":"new","name":"Incoming","tasks":[]}]""".toByteArray()
             target.writeBytes(old)
             incoming.writeBytes(fresh)
-            RestoreTransaction.replace(target, incoming, snapshot, authorized = true)
+            RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh))
             assertArrayEquals(fresh, target.readBytes())
             assertArrayEquals(old, snapshot.readBytes())
             assertArrayEquals(fresh, incoming.readBytes())
@@ -42,13 +42,13 @@ class RestoreTransactionTest {
             target.writeBytes(old)
             incoming.writeText("""[{"id":"new","name":"Candidate"}]""")
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = false)
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = false, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(incoming.readBytes()))
                 fail("Explicit authorization is mandatory")
             } catch (_: IOException) {}
             assertFalse(snapshot.exists())
             incoming.writeText("corrupt")
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = true)
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh))
                 fail("Corrupt input must be rejected")
             } catch (_: IOException) {}
             assertArrayEquals(old, target.readBytes())
@@ -67,7 +67,7 @@ class RestoreTransactionTest {
             target.writeBytes(old)
             incoming.writeBytes(fresh)
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = true) { output, bytes ->
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh)) { output, bytes ->
                     output.write(bytes, 0, bytes.size / 2)
                     throw IOException("Simulated interrupted write")
                 }
@@ -92,7 +92,7 @@ class RestoreTransactionTest {
             incoming.writeBytes(fresh)
             snapshot.writeBytes(previous)
             try {
-                RestoreTransaction.replace(target, incoming, snapshot, authorized = true)
+                RestoreTransaction.replace(target, incoming, snapshot, authorized = true, expectedTargetSha256 = RestoreTransaction.hash(old), expectedCandidateSha256 = RestoreTransaction.hash(fresh))
                 fail("Existing snapshot must never be overwritten")
             } catch (_: IOException) {}
             assertArrayEquals(old, target.readBytes())
@@ -114,6 +114,8 @@ class RestoreTransactionTest {
             try {
                 RestoreTransaction.replace(
                     target, incoming, snapshot, authorized = true,
+                    expectedTargetSha256 = RestoreTransaction.hash(old),
+                    expectedCandidateSha256 = RestoreTransaction.hash(fresh),
                     verifyCommitted = { _, _ -> false }
                 )
                 fail("Failed verification must be reported")
