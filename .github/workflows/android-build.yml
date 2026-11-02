@@ -1,7 +1,7 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety]
+    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux]
   pull_request:
     branches: [main, feature/android-mvp-0-1]
   workflow_dispatch:
@@ -37,6 +37,7 @@ jobs:
           name: ai-project-manager-debug-apk
           path: app/build/outputs/apk/debug/*.apk
       - name: Run Android storage regression tests on emulator
+        if: github.ref != 'refs/heads/feature/v0-2-editor-ux'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
