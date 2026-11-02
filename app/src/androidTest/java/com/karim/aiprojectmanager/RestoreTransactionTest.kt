@@ -281,4 +281,67 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun concurrentTransactionCallsAreSerializedWithinProcess() {
+        val dir = root()
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val secondFinished = java.util.concurrent.atomic.AtomicBoolean(false)
+        val failures = java.util.concurrent.CopyOnWriteArrayList<Throwable>()
+        try {
+            fun fixtures(prefix: String): Triple<File, File, File> {
+                val target = File(dir, "$prefix-live.json")
+                val candidate = File(dir, "$prefix-incoming.json")
+                val backup = File(dir, "$prefix-safety.json")
+                target.writeText("""[{"id":"old","name":"Original"}]""")
+                candidate.writeText("""[{"id":"new","name":"Incoming"}]""")
+                return Triple(target, candidate, backup)
+            }
+            val first = fixtures("one")
+            val second = fixtures("two")
+            fun runRestore(files: Triple<File, File, File>, pause: () -> Unit = {}) {
+                RestoreTransaction.replace(
+                    files.first, files.second, files.third, true,
+                    RestoreTransaction.hash(files.first.readBytes()),
+                    RestoreTransaction.hash(files.second.readBytes()),
+                    afterSnapshot = pause
+                )
+            }
+            val thread1 = Thread {
+                try {
+                    runRestore(first) {
+                        entered.countDown()
+                        if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                            throw IOException("Timed out waiting to finish first restore")
+                        }
+                    }
+                } catch (e: Throwable) { failures.add(e) }
+            }
+            val thread2 = Thread {
+                try { runRestore(second) } catch (e: Throwable) { failures.add(e) }
+                finally { secondFinished.set(true) }
+            }
+            thread1.start()
+            assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            thread2.start()
+            try {
+                Thread.sleep(100)
+                assertFalse("Second restore should not finish while first holds lock", secondFinished.get())
+            } finally {
+                release.countDown()
+                thread1.join(5000)
+                thread2.join(5000)
+            }
+            assertFalse(thread1.isAlive)
+            assertFalse(thread2.isAlive)
+            assertTrue("Both transactions should finish without errors: $failures", failures.isEmpty())
+            assertTrue(secondFinished.get())
+            assertTrue(first.third.isFile)
+            assertTrue(second.third.isFile)
+        } finally {
+            release.countDown()
+            dir.deleteRecursively()
+        }
+    }
+
 }
