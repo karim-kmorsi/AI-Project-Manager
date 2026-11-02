@@ -53,4 +53,26 @@ class ReleaseWorkflowRegressionTest {
             assertArrayEquals(original, source.readBytes())
         } finally { dir.deleteRecursively() }
     }
+
+    @Test fun verifiedTaskStatusPersistsAfterReloadAndCountsTowardProgress() {
+        val dir = sandbox()
+        try {
+            val file = File(dir, "test-projects.json")
+            val storage = ProjectStorage(file)
+            val created = ProjectItem("p1", "Project", "Description",
+                tasks = listOf(TaskItem("t1", "Implement", "IMPLEMENTED_UNVERIFIED"),
+                    TaskItem("t2", "Review", "IN_PROGRESS")))
+            storage.save(listOf(created))
+            val verified = created.copy(tasks = created.tasks.map { task ->
+                if (task.id == "t1") task.copy(status = "VERIFIED") else task
+            })
+            persistProjectChange(storage, listOf(created), listOf(verified))
+            val reloaded = ProjectStorage(file).load().single()
+            assertEquals("VERIFIED", reloaded.tasks.first { it.id == "t1" }.status)
+            assertEquals("IN_PROGRESS", reloaded.tasks.first { it.id == "t2" }.status)
+            assertEquals(1, reloaded.tasks.count { it.status == "VERIFIED" })
+            assertEquals(2, reloaded.tasks.size)
+        } finally { dir.deleteRecursively() }
+    }
+
 }
