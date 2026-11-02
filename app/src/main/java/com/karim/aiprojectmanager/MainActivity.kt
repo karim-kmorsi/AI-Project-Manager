@@ -105,7 +105,7 @@ class ProjectStorage(private val file: File) {
         }
     }
 
-    fun save(data: List<ProjectItem>) {
+    fun save(data: List<ProjectItem>) = synchronized(ProjectWriteLock.monitor) {
         // Never overwrite data that cannot be read or validated.
         if (file.exists() || File(file.path + ".bak").exists()) load()
         val arr = JSONArray()
