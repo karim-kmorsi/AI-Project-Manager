@@ -174,4 +174,57 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun candidateChangingAfterSnapshotIsRejectedWithoutTargetWrite() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val old = """[{"id":"old","name":"Existing"}]""".toByteArray()
+            val incoming = """[{"id":"new","name":"Reviewed"}]""".toByteArray()
+            val changed = """[{"id":"new","name":"Changed"}]""".toByteArray()
+            target.writeBytes(old)
+            candidate.writeBytes(incoming)
+            try {
+                RestoreTransaction.replace(
+                    target, candidate, snapshot, true,
+                    RestoreTransaction.hash(old), RestoreTransaction.hash(incoming),
+                    afterSnapshot = { candidate.writeBytes(changed) }
+                )
+                fail("Changed candidate must be rejected before writing target")
+            } catch (_: IOException) {}
+            assertArrayEquals(old, target.readBytes())
+            assertArrayEquals(old, snapshot.readBytes())
+            assertArrayEquals(changed, candidate.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun snapshotCreationFailureKeepsLiveAndCandidateIntact() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val pending = File(snapshot.path + ".new")
+            val old = """[{"id":"old","name":"Existing"}]""".toByteArray()
+            val incoming = """[{"id":"new","name":"Reviewed"}]""".toByteArray()
+            val leftover = "incomplete previous snapshot".toByteArray()
+            target.writeBytes(old)
+            candidate.writeBytes(incoming)
+            pending.writeBytes(leftover)
+            try {
+                RestoreTransaction.replace(
+                    target, candidate, snapshot, true,
+                    RestoreTransaction.hash(old), RestoreTransaction.hash(incoming)
+                )
+                fail("Pending incomplete safety snapshot must block restore")
+            } catch (_: IOException) {}
+            assertArrayEquals(old, target.readBytes())
+            assertArrayEquals(incoming, candidate.readBytes())
+            assertArrayEquals(leftover, pending.readBytes())
+            assertFalse(snapshot.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
