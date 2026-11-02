@@ -399,6 +399,11 @@ private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Unit) {
                                     if (it.id == task.id) it.copy(status = "IMPLEMENTED_UNVERIFIED") else it
                                 }))
                             }) { Text("كود غير متحقق") }
+                            TextButton(onClick = {
+                                update(project.copy(tasks = project.tasks.map {
+                                    if (it.id == task.id) it.copy(status = "VERIFIED") else it
+                                }))
+                            }) { Text("تم التحقق") }
                         }
                     }
                 }
