@@ -175,15 +175,20 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 @Composable
 private fun EditableDocument(value: String, hint: String, save: (String) -> Unit) {
     var draft by remember(value) { mutableStateOf(value) }
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(hint, fontWeight = FontWeight.Medium)
+    Column(
+        Modifier.fillMaxSize().imePadding().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+            Button(onClick = { save(draft) }, enabled = draft != value) { Text("حفظ") }
+        }
         OutlinedTextField(
             value = draft, onValueChange = { draft = it },
             modifier = Modifier.fillMaxWidth().weight(1f),
             label = { Text("محتوى المستند") },
             placeholder = { Text("اكتب أو الصق الخطة هنا...") }
         )
-        Button(onClick = { save(draft) }, enabled = draft != value) { Text("حفظ") }
     }
 }
 
