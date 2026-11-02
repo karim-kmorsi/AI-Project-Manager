@@ -92,4 +92,30 @@ class DraftStorageTest {
         assertFalse(isLatestDraft("pending recovery draft", "newer revision"))
     }
 
+
+    @Test fun failedProjectWriteKeepsLastSavedProjectsIntact() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "project-write-failure-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val projectFile = File(root, "projects.json")
+            val storage = ProjectStorage(projectFile)
+            val original = listOf(ProjectItem("p1", "Original", "safe", blueprint = "saved"))
+            storage.save(original)
+            val bytesBefore = projectFile.readBytes()
+            // A broken on-disk payload must reject updates, never overwrite existing bytes.
+            projectFile.writeText("{invalid json")
+            val corruptBytes = projectFile.readBytes()
+            try {
+                persistProjectChange(
+                    storage, original,
+                    listOf(original.single().copy(blueprint = "should not persist"))
+                )
+                fail("Expected the corrupted project file to block all writes")
+            } catch (_: IOException) { }
+            assertArrayEquals(corruptBytes, projectFile.readBytes())
+            assertFalse(projectFile.readBytes().contentEquals(bytesBefore))
+        } finally { root.deleteRecursively() }
+    }
+
 }
