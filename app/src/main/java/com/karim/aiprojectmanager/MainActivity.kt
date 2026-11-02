@@ -210,6 +210,8 @@ private fun EditableDocument(
     }
     var saveError by rememberSaveable(projectId, document) { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
+    // Keep a live snapshot so an outdated coroutine cannot commit or delete a newer draft.
+    val latestDraft by rememberUpdatedState(draft)
     SideEffect { onDirtyChange(draft != value || saveError || recoveryError || conflictingDraft != null) }
 
     LaunchedEffect(draft, value) {
@@ -224,11 +226,12 @@ private fun EditableDocument(
                 return@LaunchedEffect
             }
             delay(700)
+            if (latestDraft != draft) return@LaunchedEffect
             try {
                 latestSave(draft)
                 saveError = false
                 // Failure to delete a now-redundant recovery file must not reclassify successful persistence.
-                runCatching { draftStore.discard(projectId, document) }
+                if (latestDraft == draft) runCatching { draftStore.discard(projectId, document) }
             } catch (_: Exception) {
                 saveError = true
             }
