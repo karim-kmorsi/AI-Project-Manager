@@ -142,12 +142,12 @@ fun ProjectManagerApp(storage: ProjectStorage) {
                         Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
                         Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                     }
-                    1 -> EditableDocument(active.blueprint, "المخطط الهندسي للمشروع") {
+                    1 -> key(active.id) { EditableDocument(active.blueprint, "المخطط الهندسي للمشروع") {
                         update(active.copy(blueprint = it))
-                    }
-                    2 -> EditableDocument(active.roadmap, "المراحل والمعالم وشروط النجاح") {
+                    } }
+                    2 -> key(active.id) { EditableDocument(active.roadmap, "المراحل والمعالم وشروط النجاح") {
                         update(active.copy(roadmap = it))
-                    }
+                    } }
                     3 -> TaskScreen(active, ::update)
                 }
             }
@@ -178,6 +178,8 @@ private fun EditableDocument(value: String, hint: String, save: (String) -> Unit
     var draft by rememberSaveable(hint) { mutableStateOf(value) }
     var saveError by remember { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
+    val latestDraft by rememberUpdatedState(draft)
+    val latestValue by rememberUpdatedState(value)
     // Reflect a newly loaded project document only when no local edit is pending.
     LaunchedEffect(value) {
         if (draft == value) saveError = false
@@ -195,9 +197,9 @@ private fun EditableDocument(value: String, hint: String, save: (String) -> Unit
     }
     DisposableEffect(hint) {
         onDispose {
-            if (draft != value) {
-                // Flush edits when switching tabs; never silently treat a failure as saved.
-                runCatching { latestSave(draft) }
+            if (latestDraft != latestValue) {
+                // Best-effort immediate flush when switching tabs.
+                runCatching { latestSave(latestDraft) }
             }
         }
     }
