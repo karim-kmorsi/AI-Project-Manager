@@ -98,9 +98,9 @@ class ProjectStorage(private val file: File) {
 @Composable
 fun ProjectManagerApp(storage: ProjectStorage) {
     val projects = remember { mutableStateListOf<ProjectItem>().apply { addAll(storage.load()) } }
-    var activeId by remember { mutableStateOf<String?>(null) }
-    var showNew by remember { mutableStateOf(false) }
-    var editorDirty by remember { mutableStateOf(false) }
+    var activeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showNew by rememberSaveable { mutableStateOf(false) }
+    var editorDirty by rememberSaveable { mutableStateOf(false) }
     var warnOnExit by remember { mutableStateOf(false) }
     fun update(item: ProjectItem) {
         val index = projects.indexOfFirst { it.id == item.id }
