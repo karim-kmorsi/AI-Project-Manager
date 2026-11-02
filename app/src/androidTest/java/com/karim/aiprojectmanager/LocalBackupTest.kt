@@ -58,4 +58,46 @@ class LocalBackupTest {
             }
         } finally { root.deleteRecursively() }
     }
+
+    @Test fun interruptedWriteNeverPublishesPartialBackup() {
+        val root = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "backup-interrupted-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val source = File(root, "projects.json")
+            val destination = File(root, "backup.json")
+            val bytes = """[{"id":"safe","name":"Original","tasks":[]}]""".toByteArray()
+            source.writeBytes(bytes)
+            try {
+                LocalBackup.createSnapshotWithWriter(source, destination) { stream, input ->
+                    stream.write(input, 0, input.size / 2)
+                    throw IOException("Simulated disk full/interrupted write")
+                }
+                fail("Expected simulated failure")
+            } catch (_: IOException) { }
+            assertFalse("Incomplete backup must not be published", destination.exists())
+            assertArrayEquals(bytes, source.readBytes())
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun existingIncompletePendingFileMustNotBeReusedOrPublished() {
+        val root = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "backup-pending-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val source = File(root, "projects.json")
+            val destination = File(root, "backup.json")
+            val bytes = """[{"id":"safe","name":"Original"}]""".toByteArray()
+            source.writeBytes(bytes)
+            val pending = File(destination.path + ".new")
+            val incomplete = "incomplete backup".toByteArray()
+            pending.writeBytes(incomplete)
+            try {
+                LocalBackup.createSnapshot(source, destination)
+                fail("Existing pending file must block a new snapshot")
+            } catch (_: IOException) { }
+            assertFalse(destination.exists())
+            assertArrayEquals(incomplete, pending.readBytes())
+            assertArrayEquals(bytes, source.readBytes())
+        } finally { root.deleteRecursively() }
+    }
+
 }
