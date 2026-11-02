@@ -3,6 +3,7 @@ package com.karim.aiprojectmanager
 import android.util.AtomicFile
 import java.io.File
 import java.io.IOException
+import java.io.FileOutputStream
 
 /**
  * Explicit, isolated recovery from a retained safety snapshot.
@@ -14,10 +15,20 @@ internal object RestoreRecovery {
         safetySnapshot: File,
         expectedFailedTargetSha256: String,
         expectedSafetySha256: String,
-        authorized: Boolean
+        authorized: Boolean,
+        write: (FileOutputStream, ByteArray) -> Unit = { stream, bytes -> stream.write(bytes) }
     ) = synchronized(ProjectWriteLock.monitor) {
         if (!authorized) throw IOException("Recovery requires explicit authorization")
-        if (target.canonicalPath == safetySnapshot.canonicalPath) throw IOException("Recovery files overlap")
+        val targetPath = target.canonicalPath
+        val safetyPath = safetySnapshot.canonicalPath
+        if (targetPath == safetyPath || targetPath == safetyPath + ".new" ||
+            targetPath == safetyPath + ".bak" || safetyPath == targetPath + ".new" ||
+            safetyPath == targetPath + ".bak") {
+            throw IOException("Recovery files overlap with atomic storage sidecars")
+        }
+        if (File(safetySnapshot.path + ".new").exists() || File(safetySnapshot.path + ".bak").exists()) {
+            throw IOException("Safety snapshot has pending atomic writes")
+        }
         if (!target.isFile || !safetySnapshot.isFile) throw IOException("Recovery input missing")
         val current = target.readBytes()
         val safety = safetySnapshot.readBytes()
@@ -30,7 +41,7 @@ internal object RestoreRecovery {
         val atomic = AtomicFile(target)
         val stream = atomic.startWrite()
         try {
-            stream.write(safety)
+            write(stream, safety)
             atomic.finishWrite(stream)
         } catch (error: Exception) {
             atomic.failWrite(stream)
