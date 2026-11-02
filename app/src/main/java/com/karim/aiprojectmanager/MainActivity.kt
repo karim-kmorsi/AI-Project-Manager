@@ -33,6 +33,19 @@ data class ProjectItem(
 class MainActivity : ComponentActivity() {
     private lateinit var storage: ProjectStorage
     private var pendingExport: ByteArray? = null
+    private var restorePreviewState by mutableStateOf<RestorePreview.Summary?>(null)
+    private var restorePreviewError by mutableStateOf<String?>(null)
+    private val restorePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        restorePreviewState = null
+        restorePreviewError = null
+        if (uri != null) {
+            try {
+                restorePreviewState = RestoreCandidate.inspectSelection(contentResolver, uri)
+            } catch (_: Exception) {
+                restorePreviewError = "ملف النسخة الاحتياطية غير صالح أو تعذرت قراءته. لم تتغير بياناتك."
+            }
+        }
+    }
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val bytes = pendingExport
         pendingExport = null
@@ -48,7 +61,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         storage = ProjectStorage(File(filesDir, "projects.json"))
-        setContent { MaterialTheme { ProjectManagerApp(storage, onExport = {
+        setContent { MaterialTheme { ProjectManagerApp(storage, onRestorePreview = {
+            restorePreviewState = null
+            restorePreviewError = null
+            restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+        }, restorePreview = restorePreviewState, restoreError = restorePreviewError,
+        onDismissPreview = { restorePreviewState = null; restorePreviewError = null }, onExport = {
             try {
                 pendingExport = JsonExport.readValidatedSource(File(filesDir, "projects.json"))
                 exportLauncher.launch("ai-project-manager-backup.json")
@@ -124,7 +142,14 @@ internal fun persistProjectChange(storage: ProjectStorage, current: List<Project
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProjectManagerApp(storage: ProjectStorage, onExport: () -> Unit = {}) {
+fun ProjectManagerApp(
+    storage: ProjectStorage,
+    onExport: () -> Unit = {},
+    onRestorePreview: () -> Unit = {},
+    restorePreview: RestorePreview.Summary? = null,
+    restoreError: String? = null,
+    onDismissPreview: () -> Unit = {}
+) {
     val projects = remember { mutableStateListOf<ProjectItem>().apply { addAll(storage.load()) } }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
@@ -146,7 +171,10 @@ fun ProjectManagerApp(storage: ProjectStorage, onExport: () -> Unit = {}) {
 
     Scaffold(topBar = {
         TopAppBar(title = { Text(if (active == null) "إدارة المشاريع" else active.name) },
-            actions = { if (active == null) TextButton(onClick = onExport) { Text("تصدير JSON") } },
+            actions = { if (active == null) {
+                TextButton(onClick = onExport) { Text("تصدير JSON") }
+                TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
+            } },
             navigationIcon = {
                 if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
@@ -194,6 +222,21 @@ fun ProjectManagerApp(storage: ProjectStorage, onExport: () -> Unit = {}) {
                 }
             }
         }
+    }
+    if (restorePreview != null || restoreError != null) {
+        AlertDialog(onDismissRequest = onDismissPreview,
+            title = { Text(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
+            text = {
+                if (restoreError != null) Text(restoreError)
+                else if (restorePreview != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
+                    restorePreview.projects.take(30).forEach { project ->
+                        Text("${project.name} — ${project.taskCount} مهمة")
+                    }
+                    if (restorePreview.projects.size > 30) Text("تُعرض أول 30 مشروعًا فقط")
+                    Text("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
+                }
+            }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
     }
     if (warnOnExit) {
         AlertDialog(onDismissRequest = { warnOnExit = false }, title = { Text("تعديلات غير محفوظة") },
