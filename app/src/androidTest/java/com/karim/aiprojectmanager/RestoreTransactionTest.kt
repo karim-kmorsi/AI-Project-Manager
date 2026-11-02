@@ -344,4 +344,62 @@ class RestoreTransactionTest {
         }
     }
 
+
+    @Test fun savingProjectsWaitsForIsolatedRestoreTransaction() {
+        val dir = root()
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val resume = java.util.concurrent.CountDownLatch(1)
+        val saveStarted = java.util.concurrent.CountDownLatch(1)
+        val saveCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
+        val failures = java.util.concurrent.CopyOnWriteArrayList<Throwable>()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            val replacement = """[{"id":"new","name":"From backup"}]""".toByteArray()
+            target.writeBytes(original)
+            incoming.writeBytes(replacement)
+            val first = Thread {
+                try {
+                    RestoreTransaction.replace(target, incoming, snapshot, true,
+                        RestoreTransaction.hash(original), RestoreTransaction.hash(replacement),
+                        afterSnapshot = {
+                            entered.countDown()
+                            if (!resume.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                                throw IOException("Timed out")
+                        })
+                } catch (e: Throwable) { failures.add(e) }
+            }
+            val second = Thread {
+                saveStarted.countDown()
+                try {
+                    ProjectStorage(target).save(listOf(ProjectItem("saved", "After", "")))
+                    saveCompleted.set(true)
+                } catch (e: Throwable) { failures.add(e) }
+            }
+            first.start()
+            assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            second.start()
+            assertTrue(saveStarted.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            try {
+                Thread.sleep(120)
+                assertFalse("Project save must wait until restore releases the lock", saveCompleted.get())
+            } finally {
+                resume.countDown()
+                first.join(5000)
+                second.join(5000)
+            }
+            assertFalse(first.isAlive)
+            assertFalse(second.isAlive)
+            assertTrue("Unexpected thread failure: $failures", failures.isEmpty())
+            assertTrue(saveCompleted.get())
+            assertEquals("saved", ProjectStorage(target).load().single().id)
+            assertArrayEquals(original, snapshot.readBytes())
+        } finally {
+            resume.countDown()
+            dir.deleteRecursively()
+        }
+    }
+
 }
