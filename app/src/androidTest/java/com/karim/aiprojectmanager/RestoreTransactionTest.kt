@@ -127,4 +127,51 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun changedCandidateAfterPreviewIsRejectedBeforeSafetySnapshot() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val old = """[{"id":"old","name":"Original"}]""".toByteArray()
+            val reviewed = """[{"id":"new","name":"Reviewed"}]""".toByteArray()
+            val changed = """[{"id":"new","name":"Modified"}]""".toByteArray()
+            target.writeBytes(old)
+            candidate.writeBytes(reviewed)
+            val targetHash = RestoreTransaction.hash(old)
+            val candidateHash = RestoreTransaction.hash(reviewed)
+            candidate.writeBytes(changed)
+            try {
+                RestoreTransaction.replace(target, candidate, snapshot, true, targetHash, candidateHash)
+                fail("Changed candidate must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(old, target.readBytes())
+            assertArrayEquals(changed, candidate.readBytes())
+            assertFalse(snapshot.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun changedCurrentDataAfterPreviewIsRejected() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val reviewed = """[{"id":"old","name":"Reviewed"}]""".toByteArray()
+            val newer = """[{"id":"old","name":"Unsaved update"}]""".toByteArray()
+            val incoming = """[{"id":"new","name":"Incoming"}]""".toByteArray()
+            target.writeBytes(reviewed)
+            candidate.writeBytes(incoming)
+            val reviewedHash = RestoreTransaction.hash(reviewed)
+            target.writeBytes(newer)
+            try {
+                RestoreTransaction.replace(target, candidate, snapshot, true, reviewedHash, RestoreTransaction.hash(incoming))
+                fail("Changed current data must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(newer, target.readBytes())
+            assertFalse(snapshot.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
