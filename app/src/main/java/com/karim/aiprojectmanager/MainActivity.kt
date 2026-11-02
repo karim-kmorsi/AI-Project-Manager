@@ -204,14 +204,16 @@ private fun EditableDocument(
     }
     // Do not auto-apply a draft if its original base has since changed.
     val canRecover = recovered != null && recovered.baseText == value
+    var conflictingDraft by remember(projectId, document) { mutableStateOf(if (canRecover) null else recovered?.text) }
     var draft by rememberSaveable(projectId, document) {
         mutableStateOf(if (canRecover) recovered!!.text else value)
     }
     var saveError by rememberSaveable(projectId, document) { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
-    SideEffect { onDirtyChange(draft != value || saveError || recoveryError || (recovered != null && !canRecover)) }
+    SideEffect { onDirtyChange(draft != value || saveError || recoveryError || conflictingDraft != null) }
 
     LaunchedEffect(draft, value) {
+        if (conflictingDraft != null) return@LaunchedEffect
         if (draft != value) {
             // A draft is written to a separate atomic file before touching projects.json.
             try {
@@ -225,7 +227,8 @@ private fun EditableDocument(
             try {
                 latestSave(draft)
                 saveError = false
-                draftStore.discard(projectId, document)
+                // Failure to delete a now-redundant recovery file must not reclassify successful persistence.
+                runCatching { draftStore.discard(projectId, document) }
             } catch (_: Exception) {
                 saveError = true
             }
@@ -244,15 +247,15 @@ private fun EditableDocument(
                     draftStore.save(projectId, document, value, draft)
                     latestSave(draft)
                     saveError = false
-                    draftStore.discard(projectId, document)
                     recoveryError = false
+                    runCatching { draftStore.discard(projectId, document) }
                 } catch (_: Exception) { saveError = true }
             }, enabled = draft != value || saveError) { Text("حفظ") }
         }
         Text(
             when {
                 recoveryError -> "تعذّر حفظ أو قراءة المسودة الاحتياطية — لا تغادر المحرر"
-                recovered != null && !canRecover -> "توجد مسودة من إصدار آخر؛ لم نستبدل النص الحالي"
+                conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
                 saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
                 draft != value -> "تعديلات قيد الحفظ..."
                 else -> "تم الحفظ"
@@ -260,6 +263,20 @@ private fun EditableDocument(
             style = MaterialTheme.typography.bodySmall,
             color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (conflictingDraft != null) {
+            Text("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
+            Text(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
+            TextButton(onClick = {
+                // Explicit choice: recover the older text; a new draft records the current base.
+                draft = conflictingDraft!!
+                conflictingDraft = null
+            }) { Text("استخدام المسودة السابقة") }
+            TextButton(onClick = {
+                // Keep current project text; do not erase the conflicting file.
+                conflictingDraft = null
+                recoveryError = false
+            }) { Text("الاحتفاظ بنص المشروع الحالي") }
+        }
         OutlinedTextField(
             value = draft, onValueChange = { draft = it },
             modifier = Modifier.fillMaxWidth().weight(1f),
