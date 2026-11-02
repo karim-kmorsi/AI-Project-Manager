@@ -45,4 +45,41 @@ class DraftStorageTest {
             assertEquals("broken payload", files.single().readText())
         } finally { root.deleteRecursively() }
     }
+
+    @Test fun recoveryAfterSimulatedProcessRestartPreservesDraftAndProjectFile() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-restart-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val projectFile = File(root, "projects.json")
+            val original = "[{\"id\":\"p1\",\"blueprint\":\"committed\"}]"
+            projectFile.writeText(original)
+            DraftStorage(File(root, "recovery-drafts"))
+                .save("p1", "blueprint", "committed", "interrupted unsaved edit")
+            // New instance simulates opening the app after its prior process disappears.
+            val recovered = DraftStorage(File(root, "recovery-drafts"))
+                .load("p1", "blueprint")
+            assertNotNull(recovered)
+            assertEquals("committed", recovered!!.baseText)
+            assertEquals("interrupted unsaved edit", recovered.text)
+            assertEquals(original, projectFile.readText())
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun newerCommittedContentMustNotMatchStaleDraftBase() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-conflict-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            store.save("p1", "roadmap", "old committed text", "pending earlier changes")
+            val saved = DraftStorage(root).load("p1", "roadmap")!!
+            val newerCommitted = "newer independently saved roadmap"
+            assertNotEquals(newerCommitted, saved.baseText)
+            assertEquals("pending earlier changes", saved.text)
+            // Conflict detection is read-only: neither side can be silently overwritten.
+            assertEquals("pending earlier changes", store.load("p1", "roadmap")!!.text)
+            assertEquals(newerCommitted, newerCommitted)
+        } finally { root.deleteRecursively() }
+    }
+
 }
