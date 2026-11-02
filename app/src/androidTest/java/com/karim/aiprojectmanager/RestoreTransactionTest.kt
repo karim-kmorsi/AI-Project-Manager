@@ -422,4 +422,48 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun simulatedDiskFullDuringRestorePreservesOriginalAndSafety() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val safety = File(dir, "safety.json")
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            val replacement = """[{"id":"new","name":"Candidate"}]""".toByteArray()
+            target.writeBytes(original)
+            incoming.writeBytes(replacement)
+            try {
+                RestoreTransaction.replace(target, incoming, safety, true,
+                    RestoreTransaction.hash(original), RestoreTransaction.hash(replacement),
+                    write = { stream, bytes ->
+                        stream.write(bytes, 0, bytes.size / 2)
+                        throw IOException("ENOSPC: simulated disk full")
+                    })
+                fail("Disk-full restore must fail")
+            } catch (_: IOException) {}
+            assertArrayEquals(original, android.util.AtomicFile(target).openRead().use { it.readBytes() })
+            assertArrayEquals(original, safety.readBytes())
+            assertArrayEquals(replacement, incoming.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun missingCandidateDocumentDoesNotPublishSnapshot() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val missing = File(dir, "missing-candidate.json")
+            val safety = File(dir, "safety.json")
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            target.writeBytes(original)
+            try {
+                RestoreTransaction.replace(target, missing, safety, true,
+                    RestoreTransaction.hash(original), "no-candidate")
+                fail("Missing candidate must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(original, target.readBytes())
+            assertFalse(safety.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
