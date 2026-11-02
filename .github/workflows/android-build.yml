@@ -3,7 +3,7 @@ on:
   push:
     branches: [feature/android-mvp-0-1, feature/v0-2-data-safety]
   pull_request:
-    branches: [main]
+    branches: [main, feature/android-mvp-0-1]
   workflow_dispatch:
 
 permissions:
@@ -30,8 +30,8 @@ jobs:
           curl --fail --location --retry 3 --output gradle.zip https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle.zip -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Compile APK and Android instrumentation test sources
+        run: gradle --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
       - uses: actions/upload-artifact@v4
         if: success()
         with:
