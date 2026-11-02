@@ -1,6 +1,7 @@
 package com.karim.aiprojectmanager
 
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -31,10 +32,31 @@ data class ProjectItem(
 
 class MainActivity : ComponentActivity() {
     private lateinit var storage: ProjectStorage
+    private var pendingExport: ByteArray? = null
+    private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val bytes = pendingExport
+        pendingExport = null
+        if (uri != null && bytes != null) {
+            try {
+                JsonExport.exportToUri(contentResolver, uri, bytes)
+                android.widget.Toast.makeText(this, "تم تصدير النسخة الاحتياطية", android.widget.Toast.LENGTH_LONG).show()
+            } catch (_: Exception) {
+                android.widget.Toast.makeText(this, "فشل التصدير؛ تحقق من الملف في مكان الحفظ", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         storage = ProjectStorage(File(filesDir, "projects.json"))
-        setContent { MaterialTheme { ProjectManagerApp(storage) } }
+        setContent { MaterialTheme { ProjectManagerApp(storage, onExport = {
+            try {
+                pendingExport = JsonExport.readValidatedSource(File(filesDir, "projects.json"))
+                exportLauncher.launch("ai-project-manager-backup.json")
+            } catch (_: Exception) {
+                pendingExport = null
+                android.widget.Toast.makeText(this, "تعذّر تحضير النسخة الاحتياطية", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }) } }
     }
 }
 
@@ -102,7 +124,7 @@ internal fun persistProjectChange(storage: ProjectStorage, current: List<Project
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProjectManagerApp(storage: ProjectStorage) {
+fun ProjectManagerApp(storage: ProjectStorage, onExport: () -> Unit = {}) {
     val projects = remember { mutableStateListOf<ProjectItem>().apply { addAll(storage.load()) } }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
@@ -124,6 +146,7 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 
     Scaffold(topBar = {
         TopAppBar(title = { Text(if (active == null) "إدارة المشاريع" else active.name) },
+            actions = { if (active == null) TextButton(onClick = onExport) { Text("تصدير JSON") } },
             navigationIcon = {
                 if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
