@@ -402,4 +402,24 @@ class RestoreTransactionTest {
         }
     }
 
+
+    @Test fun oversizedRestoreCandidateIsRejectedWithoutSnapshot() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val candidate = File(dir, "candidate.json")
+            val snapshot = File(dir, "safety.json")
+            val original = """[{"id":"old","name":"Original"}]""".toByteArray()
+            target.writeBytes(original)
+            java.io.RandomAccessFile(candidate, "rw").use { it.setLength(8L * 1024 * 1024 + 1) }
+            try {
+                RestoreTransaction.replace(target, candidate, snapshot, true,
+                    RestoreTransaction.hash(original), "irrelevant")
+                fail("Oversized restore candidate must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(original, target.readBytes())
+            assertFalse(snapshot.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
