@@ -14,8 +14,7 @@ internal object RestoreTransaction {
     internal fun hash(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
-    // Serializes calls to this isolated engine within the current process only.
-    @Synchronized
+    // Share the same mutex as ProjectStorage.save within this process.
     fun replace(
         target: File,
         candidate: File,
@@ -26,7 +25,7 @@ internal object RestoreTransaction {
         write: (FileOutputStream, ByteArray) -> Unit = { output, bytes -> output.write(bytes) },
         verifyCommitted: (File, ByteArray) -> Boolean = { file, expected -> file.readBytes().contentEquals(expected) },
         afterSnapshot: () -> Unit = {}
-    ) {
+    ) = synchronized(ProjectWriteLock.monitor) {
         if (!authorized) throw IOException("Restore was not authorized")
         val paths = listOf(target, candidate, snapshot).map { it.canonicalPath }
         if (paths.distinct().size != 3) throw IOException("Restore paths must be independent")
