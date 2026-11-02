@@ -3,7 +3,7 @@ on:
   push:
     branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux]
   pull_request:
-    branches: [main, feature/android-mvp-0-1]
+    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
   workflow_dispatch:
 
 permissions:
