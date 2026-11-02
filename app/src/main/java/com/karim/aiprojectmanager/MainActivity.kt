@@ -99,6 +99,8 @@ fun ProjectManagerApp(storage: ProjectStorage) {
     val projects = remember { mutableStateListOf<ProjectItem>().apply { addAll(storage.load()) } }
     var activeId by remember { mutableStateOf<String?>(null) }
     var showNew by remember { mutableStateOf(false) }
+    var editorDirty by remember { mutableStateOf(false) }
+    var warnOnExit by remember { mutableStateOf(false) }
     fun update(item: ProjectItem) {
         val index = projects.indexOfFirst { it.id == item.id }
         if (index >= 0) { projects[index] = item; storage.save(projects.toList()) }
@@ -107,7 +109,7 @@ fun ProjectManagerApp(storage: ProjectStorage) {
     Scaffold(topBar = {
         TopAppBar(title = { Text(if (active == null) "إدارة المشاريع" else active.name) },
             navigationIcon = {
-                if (active != null) TextButton(onClick = { activeId = null }) { Text("رجوع") }
+                if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
     }, floatingActionButton = {
         if (active == null) FloatingActionButton(onClick = { showNew = true }) { Text("+") }
@@ -132,7 +134,7 @@ fun ProjectManagerApp(storage: ProjectStorage) {
             Column(Modifier.padding(padding)) {
                 ScrollableTabRow(selectedTabIndex = tab) {
                     listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { index, label ->
-                        Tab(selected = index == tab, onClick = { tab = index }, text = { Text(label) })
+                        Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index }, text = { Text(label) })
                     }
                 }
                 when (tab) {
@@ -143,16 +145,21 @@ fun ProjectManagerApp(storage: ProjectStorage) {
                         Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
                         Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                     }
-                    1 -> key(active.id) { EditableDocument(active.blueprint, "المخطط الهندسي للمشروع") {
+                    1 -> key(active.id) { EditableDocument(active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
                         update(active.copy(blueprint = it))
                     } }
-                    2 -> key(active.id) { EditableDocument(active.roadmap, "المراحل والمعالم وشروط النجاح") {
+                    2 -> key(active.id) { EditableDocument(active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
                     3 -> TaskScreen(active, ::update)
                 }
             }
         }
+    }
+    if (warnOnExit) {
+        AlertDialog(onDismissRequest = { warnOnExit = false }, title = { Text("تعديلات غير محفوظة") },
+            text = { Text("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
+            confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
     }
     if (showNew) {
         var name by remember { mutableStateOf("") }
@@ -175,10 +182,11 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 }
 
 @Composable
-private fun EditableDocument(value: String, hint: String, save: (String) -> Unit) {
+private fun EditableDocument(value: String, hint: String, onDirtyChange: (Boolean) -> Unit, save: (String) -> Unit) {
     var draft by rememberSaveable(hint) { mutableStateOf(value) }
     var saveError by rememberSaveable(hint) { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
+    SideEffect { onDirtyChange(draft != value || saveError) }
     val latestDraft by rememberUpdatedState(draft)
     val latestValue by rememberUpdatedState(value)
 
@@ -194,7 +202,7 @@ private fun EditableDocument(value: String, hint: String, save: (String) -> Unit
             }
         }
     }
-    // An unsuccessful flush must not silently discard the draft: warn on navigation.
+    // Parent navigation is blocked while changes are pending. Best-effort flush on disposal.
     DisposableEffect(hint) {
         onDispose {
             if (latestDraft != latestValue) {
