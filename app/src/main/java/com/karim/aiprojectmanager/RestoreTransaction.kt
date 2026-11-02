@@ -33,6 +33,9 @@ internal object RestoreTransaction {
         if (snapshot.exists() || File(snapshot.path + ".new").exists() || File(snapshot.path + ".bak").exists()) {
             throw IOException("Refusing to overwrite previous safety copy")
         }
+        if (candidate.length() > 8L * 1024 * 1024 || target.length() > 8L * 1024 * 1024) {
+            throw IOException("Restore file exceeds 8 MiB limit")
+        }
         val candidateBytes = candidate.readBytes()
         val originalBytes = target.readBytes()
         LocalBackup.validate(candidateBytes)
