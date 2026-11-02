@@ -36,8 +36,8 @@ class MainActivity : ComponentActivity() {
 
 class ProjectStorage(private val file: File) {
     fun load(): List<ProjectItem> {
-        if (!file.exists()) return emptyList()
-        val array = try { JSONArray(file.readText()) } catch (e: Exception) {
+        if (!file.exists() && !File(file.path + ".bak").exists()) return emptyList()
+        val array = try { JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }) } catch (e: Exception) {
             throw IOException("Cannot read saved projects; writes are blocked until recovery", e)
         }
         return try {
@@ -63,7 +63,7 @@ class ProjectStorage(private val file: File) {
 
     fun save(data: List<ProjectItem>) {
         // Never overwrite data that cannot be read or validated.
-        if (file.exists()) load()
+        if (file.exists() || File(file.path + ".bak").exists()) load()
         val arr = JSONArray()
         data.forEach { project ->
             val obj = JSONObject()
