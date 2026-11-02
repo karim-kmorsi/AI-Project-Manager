@@ -78,7 +78,7 @@ class DraftStorageTest {
             assertEquals("pending earlier changes", saved.text)
             // Conflict detection is read-only: neither side can be silently overwritten.
             assertEquals("pending earlier changes", store.load("p1", "roadmap")!!.text)
-            assertEquals(newerCommitted, newerCommitted)
+            assertNotEquals(newerCommitted, store.load("p1", "roadmap")!!.baseText)
         } finally { root.deleteRecursively() }
     }
 
