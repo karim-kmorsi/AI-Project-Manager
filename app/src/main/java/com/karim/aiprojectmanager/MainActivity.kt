@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.json.JSONArray
@@ -151,10 +152,10 @@ fun ProjectManagerApp(storage: ProjectStorage) {
                         Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
                         Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                     }
-                    1 -> key(active.id) { EditableDocument(active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
+                    1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
                         update(active.copy(blueprint = it))
                     } }
-                    2 -> key(active.id) { EditableDocument(active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
+                    2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
                     3 -> TaskScreen(active, ::update)
@@ -188,32 +189,48 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 }
 
 @Composable
-private fun EditableDocument(value: String, hint: String, onDirtyChange: (Boolean) -> Unit, save: (String) -> Unit) {
-    var draft by rememberSaveable(hint) { mutableStateOf(value) }
-    var saveError by rememberSaveable(hint) { mutableStateOf(false) }
+private fun EditableDocument(
+    projectId: String, document: String, value: String, hint: String,
+    onDirtyChange: (Boolean) -> Unit, save: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val draftStore = remember(context) { DraftStorage(File(context.filesDir, "recovery-drafts")) }
+    var recoveryError by remember(projectId, document) { mutableStateOf(false) }
+    val recovered = remember(projectId, document) {
+        try { draftStore.load(projectId, document) } catch (_: IOException) {
+            recoveryError = true
+            null
+        }
+    }
+    // Do not auto-apply a draft if its original base has since changed.
+    val canRecover = recovered != null && recovered.baseText == value
+    var draft by rememberSaveable(projectId, document) {
+        mutableStateOf(if (canRecover) recovered!!.text else value)
+    }
+    var saveError by rememberSaveable(projectId, document) { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
-    SideEffect { onDirtyChange(draft != value || saveError) }
-    val latestDraft by rememberUpdatedState(draft)
-    val latestValue by rememberUpdatedState(value)
+    SideEffect { onDirtyChange(draft != value || saveError || recoveryError || (recovered != null && !canRecover)) }
 
-    // Debounce while editing. Never report success until persistence returns normally.
     LaunchedEffect(draft, value) {
         if (draft != value) {
+            // A draft is written to a separate atomic file before touching projects.json.
+            try {
+                draftStore.save(projectId, document, value, draft)
+                recoveryError = false
+            } catch (_: Exception) {
+                recoveryError = true
+                return@LaunchedEffect
+            }
             delay(700)
             try {
                 latestSave(draft)
                 saveError = false
+                draftStore.discard(projectId, document)
             } catch (_: Exception) {
                 saveError = true
             }
-        }
-    }
-    // Parent navigation is blocked while changes are pending. Best-effort flush on disposal.
-    DisposableEffect(hint) {
-        onDispose {
-            if (latestDraft != latestValue) {
-                runCatching { latestSave(latestDraft) }
-            }
+        } else if (!recoveryError && recovered?.baseText == value && recovered.text == value) {
+            runCatching { draftStore.discard(projectId, document) }
         }
     }
     Column(
@@ -224,19 +241,24 @@ private fun EditableDocument(value: String, hint: String, onDirtyChange: (Boolea
             Text(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
             Button(onClick = {
                 try {
+                    draftStore.save(projectId, document, value, draft)
                     latestSave(draft)
                     saveError = false
-                } catch (_: Exception) {
-                    saveError = true
-                }
+                    draftStore.discard(projectId, document)
+                    recoveryError = false
+                } catch (_: Exception) { saveError = true }
             }, enabled = draft != value || saveError) { Text("حفظ") }
         }
         Text(
-            if (saveError) "فشل الحفظ — اضغط حفظ للمحاولة مجددًا"
-            else if (draft != value) "تعديلات لم تُحفظ بعد..."
-            else "تم الحفظ",
+            when {
+                recoveryError -> "تعذّر حفظ أو قراءة المسودة الاحتياطية — لا تغادر المحرر"
+                recovered != null && !canRecover -> "توجد مسودة من إصدار آخر؛ لم نستبدل النص الحالي"
+                saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
+                draft != value -> "تعديلات قيد الحفظ..."
+                else -> "تم الحفظ"
+            },
             style = MaterialTheme.typography.bodySmall,
-            color = if (saveError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
         OutlinedTextField(
             value = draft, onValueChange = { draft = it },
