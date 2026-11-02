@@ -4,6 +4,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.io.FileOutputStream
+import android.util.AtomicFile
 import java.security.MessageDigest
 
 /**
@@ -51,25 +53,45 @@ object LocalBackup {
         return Preview(root.length(), taskCount, digest)
     }
 
-    /** Copy the exact source bytes, never a lossy parse-and-reserialize. */
-    fun createSnapshot(source: File, destination: File): Preview {
+    /** Stage, verify and atomically publish a snapshot; never replace an existing backup. */
+    fun createSnapshot(source: File, destination: File): Preview =
+        createSnapshotWithWriter(source, destination) { stream, bytes -> stream.write(bytes) }
+
+    // Writer injection is used only by isolated failure tests.
+    internal fun createSnapshotWithWriter(
+        source: File,
+        destination: File,
+        writer: (FileOutputStream, ByteArray) -> Unit
+    ): Preview {
         if (!source.isFile || source.canonicalFile == destination.canonicalFile) {
             throw IOException("Source is missing or destination overlaps source")
         }
         val bytes = source.readBytes()
         val preview = validate(bytes)
-        if (destination.exists()) throw IOException("Refusing to overwrite an existing backup")
-        destination.outputStream().use { output -> output.write(bytes); output.fdSyncIfPossible() }
-        try {
-            if (!destination.readBytes().contentEquals(bytes)) throw IOException("Backup verification failed")
-        } catch (e: Exception) {
-            destination.delete()
-            throw e
+        val pending = File(destination.path + ".new")
+        val backup = File(destination.path + ".bak")
+        if (destination.exists() || pending.exists() || backup.exists()) {
+            throw IOException("Destination or pending backup already exists; refusing overwrite")
         }
-        return preview
-    }
-
-    private fun java.io.OutputStream.fdSyncIfPossible() {
-        if (this is java.io.FileOutputStream) fd.sync()
+        val atomic = AtomicFile(destination)
+        val stream = atomic.startWrite()
+        var committed = false
+        try {
+            writer(stream, bytes)
+            stream.fd.sync()
+            // AtomicFile stages into <destination>.new before commit.
+            if (!pending.readBytes().contentEquals(bytes)) {
+                throw IOException("Incomplete backup; refusing publication")
+            }
+            atomic.finishWrite(stream)
+            committed = true
+            if (!destination.readBytes().contentEquals(bytes)) {
+                throw IOException("Committed snapshot verification failed")
+            }
+            return preview
+        } catch (error: Exception) {
+            if (!committed) atomic.failWrite(stream)
+            throw error
+        }
     }
 }
