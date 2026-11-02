@@ -177,14 +177,12 @@ fun ProjectManagerApp(storage: ProjectStorage) {
 @Composable
 private fun EditableDocument(value: String, hint: String, save: (String) -> Unit) {
     var draft by rememberSaveable(hint) { mutableStateOf(value) }
-    var saveError by remember { mutableStateOf(false) }
+    var saveError by rememberSaveable(hint) { mutableStateOf(false) }
     val latestSave by rememberUpdatedState(save)
     val latestDraft by rememberUpdatedState(draft)
     val latestValue by rememberUpdatedState(value)
-    // Reflect a newly loaded project document only when no local edit is pending.
-    LaunchedEffect(value) {
-        if (draft == value) saveError = false
-    }
+
+    // Debounce while editing. Never report success until persistence returns normally.
     LaunchedEffect(draft, value) {
         if (draft != value) {
             delay(700)
@@ -196,10 +194,10 @@ private fun EditableDocument(value: String, hint: String, save: (String) -> Unit
             }
         }
     }
+    // An unsuccessful flush must not silently discard the draft: warn on navigation.
     DisposableEffect(hint) {
         onDispose {
             if (latestDraft != latestValue) {
-                // Best-effort immediate flush when switching tabs.
                 runCatching { latestSave(latestDraft) }
             }
         }
@@ -217,17 +215,17 @@ private fun EditableDocument(value: String, hint: String, save: (String) -> Unit
                 } catch (_: Exception) {
                     saveError = true
                 }
-            }, enabled = draft != value) { Text("حفظ") }
+            }, enabled = draft != value || saveError) { Text("حفظ") }
         }
         Text(
-            if (saveError) "تعذر الحفظ — احتفظ بالنص وحاول مرة أخرى"
-            else if (draft != value) "جارٍ حفظ المسودة تلقائيًا..."
+            if (saveError) "فشل الحفظ — اضغط حفظ للمحاولة مجددًا"
+            else if (draft != value) "تعديلات لم تُحفظ بعد..."
             else "تم الحفظ",
             style = MaterialTheme.typography.bodySmall,
             color = if (saveError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
         OutlinedTextField(
-            value = draft, onValueChange = { draft = it; saveError = false },
+            value = draft, onValueChange = { draft = it },
             modifier = Modifier.fillMaxWidth().weight(1f),
             label = { Text("محتوى المستند") },
             placeholder = { Text("اكتب أو الصق الخطة هنا...") }
