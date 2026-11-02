@@ -118,4 +118,63 @@ class DraftStorageTest {
         } finally { root.deleteRecursively() }
     }
 
+
+    @Test fun legacyV01ProjectsSurviveRoundTripWithStatusesAndIds() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "legacy-v01-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val file = File(root, "projects.json")
+            file.writeText(
+                """[
+                  {"id":"legacy-project-1","name":"مشروع قديم","description":"Arabic and English",
+                   "blueprint":"خطوة أولى\\nBlueprint line","roadmap":"مرحلة A",
+                   "tasks":[
+                     {"id":"t-verified","title":"مكتملة","status":"VERIFIED"},
+                     {"id":"t-progress","title":"Working","status":"IN_PROGRESS"},
+                     {"id":"t-unverified","title":"Code ready","status":"IMPLEMENTED_UNVERIFIED"}
+                   ]},
+                  {"id":"legacy-project-2","name":"Second","description":"",
+                   "blueprint":"","roadmap":"Roadmap text",
+                   "tasks":[{"id":"t-new","title":"Pending","status":"NOT_STARTED"}]}
+                ]""".trimIndent()
+            )
+            val storage = ProjectStorage(file)
+            val legacy = storage.load()
+            assertEquals(2, legacy.size)
+            assertEquals(listOf("legacy-project-1", "legacy-project-2"), legacy.map { it.id })
+            assertEquals(listOf("t-verified", "t-progress", "t-unverified"), legacy.first().tasks.map { it.id })
+            assertEquals(
+                listOf("VERIFIED", "IN_PROGRESS", "IMPLEMENTED_UNVERIFIED"),
+                legacy.first().tasks.map { it.status }
+            )
+            storage.save(legacy)
+            val afterRestart = ProjectStorage(file).load()
+            assertEquals(legacy, afterRestart)
+            assertEquals("VERIFIED", afterRestart.first().tasks.first().status)
+            assertEquals("Roadmap text", afterRestart[1].roadmap)
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun legacyV01MissingOptionalFieldsKeepDefaultsOnRoundTrip() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "legacy-v01-defaults-${System.nanoTime()}")
+        try {
+            root.mkdirs()
+            val file = File(root, "projects.json")
+            file.writeText(
+                """[{"id":"legacy-minimal","name":"Minimal",
+                    "tasks":[{"id":"task-with-default","title":"Untouched"}]}]"""
+            )
+            val storage = ProjectStorage(file)
+            val before = storage.load()
+            assertEquals("", before.single().description)
+            assertEquals("", before.single().blueprint)
+            assertEquals("", before.single().roadmap)
+            assertEquals("NOT_STARTED", before.single().tasks.single().status)
+            storage.save(before)
+            assertEquals(before, ProjectStorage(file).load())
+        } finally { root.deleteRecursively() }
+    }
+
 }
