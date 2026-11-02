@@ -159,4 +159,45 @@ class RestoreRecoveryTest {
         } finally { dir.deleteRecursively() }
     }
 
+
+    @Test fun simulatedDiskFullDuringRecoveryPreservesCurrentAndSafety() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val safety = File(dir, "safety.json")
+            val current = """[{"id":"current","name":"Keep current"}]""".toByteArray()
+            val original = """[{"id":"original","name":"Keep backup"}]""".toByteArray()
+            target.writeBytes(current)
+            safety.writeBytes(original)
+            try {
+                RestoreRecovery.recover(target, safety,
+                    RestoreTransaction.hash(current), RestoreTransaction.hash(original), true,
+                    write = { stream, data ->
+                        stream.write(data, 0, data.size / 2)
+                        throw IOException("ENOSPC: simulated disk full")
+                    })
+                fail("Disk-full recovery must not succeed")
+            } catch (_: IOException) {}
+            assertArrayEquals(current, android.util.AtomicFile(target).openRead().use { it.readBytes() })
+            assertArrayEquals(original, safety.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun missingSafetyDocumentNeverModifiesCurrentData() {
+        val dir = isolatedRoot()
+        try {
+            val target = File(dir, "test-live.json")
+            val missing = File(dir, "missing-safety.json")
+            val current = """[{"id":"current","name":"Preserved"}]""".toByteArray()
+            target.writeBytes(current)
+            try {
+                RestoreRecovery.recover(target, missing, RestoreTransaction.hash(current),
+                    "no-snapshot", authorized = true)
+                fail("Missing safety file must be rejected")
+            } catch (_: IOException) {}
+            assertArrayEquals(current, target.readBytes())
+            assertFalse(missing.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
 }
