@@ -3,6 +3,8 @@ package com.karim.aiprojectmanager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import java.io.IOException
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -14,6 +16,27 @@ import java.nio.file.Files
  */
 @RunWith(AndroidJUnit4::class)
 class LegacyStorageTest {
+    @Test fun corruptJsonIsNotSilentlyReplaced() {
+        val dir = Files.createTempDirectory("corrupt-storage-test").toFile()
+        try {
+            val file = File(dir, "projects.json")
+            val original = "{definitely invalid JSON"
+            file.writeText(original)
+            val storage = ProjectStorage(file)
+            try {
+                storage.load()
+                fail("Corrupt data should not be treated as empty")
+            } catch (_: IOException) { }
+            try {
+                storage.save(emptyList())
+                fail("Save must not overwrite an unreadable file")
+            } catch (_: IOException) { }
+            assertEquals(original, file.readText())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
     @Test fun legacyProjectsSurviveReadWriteAndReopen() {
         val dir = Files.createTempDirectory("project-storage-test").toFile()
         try {
