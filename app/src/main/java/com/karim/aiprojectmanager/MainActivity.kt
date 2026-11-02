@@ -3,6 +3,7 @@ package com.karim.aiprojectmanager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -106,6 +107,11 @@ fun ProjectManagerApp(storage: ProjectStorage) {
         if (index >= 0) { projects[index] = item; storage.save(projects.toList()) }
     }
     val active = projects.find { it.id == activeId }
+    // Respect unsaved document edits when the system Back gesture/button is used.
+    BackHandler(enabled = activeId != null) {
+        if (editorDirty) warnOnExit = true else activeId = null
+    }
+
     Scaffold(topBar = {
         TopAppBar(title = { Text(if (active == null) "إدارة المشاريع" else active.name) },
             navigationIcon = {
