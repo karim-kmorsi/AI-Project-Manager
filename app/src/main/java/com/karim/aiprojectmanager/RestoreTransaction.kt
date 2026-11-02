@@ -15,7 +15,8 @@ internal object RestoreTransaction {
         candidate: File,
         snapshot: File,
         authorized: Boolean,
-        write: (FileOutputStream, ByteArray) -> Unit = { output, bytes -> output.write(bytes) }
+        write: (FileOutputStream, ByteArray) -> Unit = { output, bytes -> output.write(bytes) },
+        verifyCommitted: (File, ByteArray) -> Boolean = { file, expected -> file.readBytes().contentEquals(expected) }
     ) {
         if (!authorized) throw IOException("Restore was not authorized")
         val paths = listOf(target, candidate, snapshot).map { it.canonicalPath }
@@ -43,7 +44,7 @@ internal object RestoreTransaction {
             throw e
         }
         // Never automatically overwrite an existing target again on post-commit failure.
-        if (!target.readBytes().contentEquals(candidateBytes)) {
+        if (!verifyCommitted(target, candidateBytes)) {
             throw IOException("Restore verification failed; recovery copy is retained")
         }
     }
