@@ -188,6 +188,8 @@ fun ProjectManagerApp(storage: ProjectStorage) {
     }
 }
 
+internal fun isLatestDraft(candidate: String, current: String): Boolean = candidate == current
+
 @Composable
 private fun EditableDocument(
     projectId: String, document: String, value: String, hint: String,
@@ -226,12 +228,12 @@ private fun EditableDocument(
                 return@LaunchedEffect
             }
             delay(700)
-            if (latestDraft != draft) return@LaunchedEffect
+            if (!isLatestDraft(draft, latestDraft)) return@LaunchedEffect
             try {
                 latestSave(draft)
                 saveError = false
                 // Failure to delete a now-redundant recovery file must not reclassify successful persistence.
-                if (latestDraft == draft) runCatching { draftStore.discard(projectId, document) }
+                if (isLatestDraft(draft, latestDraft)) runCatching { draftStore.discard(projectId, document) }
             } catch (_: Exception) {
                 saveError = true
             }
