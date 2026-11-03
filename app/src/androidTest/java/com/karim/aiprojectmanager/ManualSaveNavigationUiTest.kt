@@ -110,9 +110,12 @@ class ManualSaveNavigationUiTest {
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن").assertExists()
         compose.onNodeWithText("رجوع").performClick()
+        // The clock is paused to prevent autosave; render the dialog explicitly.
+        compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
         compose.onNodeWithText("العودة إلى المحرر").performClick()
         compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
+        compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
         compose.onNodeWithText("العودة إلى المحرر").performClick()
         compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Manual edit")
