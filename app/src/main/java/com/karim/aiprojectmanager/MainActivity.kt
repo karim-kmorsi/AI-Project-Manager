@@ -22,6 +22,10 @@ import java.io.IOException
 import android.util.AtomicFile
 import java.util.UUID
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
 
 data class TaskItem(val id: String, val title: String, val status: String = "NOT_STARTED")
 data class ProjectItem(
@@ -32,58 +36,90 @@ data class ProjectItem(
 
 class MainActivity : ComponentActivity() {
     private lateinit var storage: ProjectStorage
-    private var pendingExport: ByteArray? = null
+    private var pendingExportToken: String? = null
+    private var exportPreparing = false
+    private val exportStore by lazy { PendingExport(File(cacheDir, "pending-exports")) }
     private var restorePreviewState by mutableStateOf<RestorePreview.Summary?>(null)
     private var restorePreviewError by mutableStateOf<String?>(null)
     private val restorePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         restorePreviewState = null
         restorePreviewError = null
-        if (uri != null) {
+        if (uri != null) lifecycleScope.launch {
             try {
-                restorePreviewState = RestoreCandidate.inspectSelection(contentResolver, uri)
-            } catch (_: Exception) {
+                restorePreviewState = withContext(Dispatchers.IO) {
+                    RestoreCandidate.inspectSelection(contentResolver, uri)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
                 restorePreviewError = "ملف النسخة الاحتياطية غير صالح أو تعذرت قراءته. لم تتغير بياناتك."
             }
         }
     }
+    private fun notifyUser(message: String) {
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+    }
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        val bytes = pendingExport
-        pendingExport = null
-        if (uri != null && bytes != null) {
+        val token = pendingExportToken
+        pendingExportToken = null
+        lifecycleScope.launch {
             try {
-                JsonExport.exportToUri(contentResolver, uri, bytes)
-                android.widget.Toast.makeText(this, "تم تصدير النسخة الاحتياطية", android.widget.Toast.LENGTH_LONG).show()
-            } catch (_: Exception) {
-                android.widget.Toast.makeText(this, "فشل التصدير؛ تحقق من الملف في مكان الحفظ", android.widget.Toast.LENGTH_LONG).show()
-            }
+                if (uri != null) {
+                    if (token == null) throw IOException("Export snapshot unavailable")
+                    withContext(Dispatchers.IO) {
+                        JsonExport.exportToUri(contentResolver, uri, exportStore.read(token))
+                    }
+                    notifyUser("تم تصدير النسخة الاحتياطية")
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { notifyUser("فشل التصدير؛ تحقق من الملف في مكان الحفظ") }
+            finally { if (token != null) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { exportStore.discard(token) } }
         }
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("pendingExportToken", pendingExportToken)
+        super.onSaveInstanceState(outState)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingExportToken = savedInstanceState?.getString("pendingExportToken")
         storage = ProjectStorage(File(filesDir, "projects.json"))
         setContent { MaterialTheme { ProjectManagerApp(storage, onRestorePreview = {
             restorePreviewState = null
             restorePreviewError = null
-            restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+            try { restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+            catch (_: Exception) { restorePreviewError = "تعذّر فتح منتقي الملفات. لم تتغير بياناتك." }
         }, restorePreview = restorePreviewState, restoreError = restorePreviewError,
         onDismissPreview = { restorePreviewState = null; restorePreviewError = null }, onExport = {
-            try {
-                pendingExport = JsonExport.readValidatedSource(File(filesDir, "projects.json"))
-                exportLauncher.launch("ai-project-manager-backup.json")
-            } catch (_: Exception) {
-                pendingExport = null
-                android.widget.Toast.makeText(this, "تعذّر تحضير النسخة الاحتياطية", android.widget.Toast.LENGTH_LONG).show()
+            if (pendingExportToken == null && !exportPreparing) {
+                exportPreparing = true
+                lifecycleScope.launch {
+                    try {
+                        pendingExportToken = withContext(Dispatchers.IO) {
+                            exportStore.stage(JsonExport.readValidatedSource(File(filesDir, "projects.json")))
+                        }
+                        exportLauncher.launch("ai-project-manager-backup.json")
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) {
+                        pendingExportToken?.let { token -> withContext(Dispatchers.IO) { exportStore.discard(token) } }
+                        pendingExportToken = null
+                        notifyUser("تعذّر تحضير النسخة الاحتياطية")
+                    } finally { exportPreparing = false }
+                }
             }
         }) } }
     }
 }
 
 class ProjectStorage(private val file: File) {
-    fun load(): List<ProjectItem> {
-        if (!file.exists() && !File(file.path + ".bak").exists()) return emptyList()
+    fun load(): List<ProjectItem> = synchronized(ProjectWriteLock.monitor) {
+        if (!file.exists() && !File(file.path + ".bak").exists()) {
+            if (File(file.path + ".new").exists()) throw IOException("Interrupted initial write; recovery required")
+            return emptyList()
+        }
         val array = try { JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }) } catch (e: Exception) {
             throw IOException("Cannot read saved projects; writes are blocked until recovery", e)
         }
+        LocalBackup.validateArray(array)
         return try {
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
@@ -107,38 +143,45 @@ class ProjectStorage(private val file: File) {
 
     fun save(data: List<ProjectItem>) = synchronized(ProjectWriteLock.monitor) {
         // Never overwrite data that cannot be read or validated.
-        if (file.exists() || File(file.path + ".bak").exists()) load()
+        load()
+        val existing = if (file.exists() || File(file.path + ".bak").exists()) {
+            JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
+        } else JSONArray()
+        val originals = (0 until existing.length()).associate { index ->
+            val obj = existing.getJSONObject(index)
+            obj.getString("id") to obj
+        }
         val arr = JSONArray()
         data.forEach { project ->
-            val obj = JSONObject()
+            val obj = originals[project.id] ?: JSONObject()
             obj.put("id", project.id)
             obj.put("name", project.name)
             obj.put("description", project.description)
             obj.put("blueprint", project.blueprint)
             obj.put("roadmap", project.roadmap)
+            val oldTasks = obj.optJSONArray("tasks") ?: JSONArray()
+            val taskOriginals = (0 until oldTasks.length()).associate { index ->
+                val task = oldTasks.getJSONObject(index)
+                task.getString("id") to task
+            }
             val tasks = JSONArray()
             project.tasks.forEach { t ->
-                tasks.put(JSONObject().put("id", t.id).put("title", t.title).put("status", t.status))
+                tasks.put((taskOriginals[t.id] ?: JSONObject()).put("id", t.id).put("title", t.title).put("status", t.status))
             }
             obj.put("tasks", tasks)
             arr.put(obj)
         }
-        val atomic = AtomicFile(file)
-        val stream = atomic.startWrite()
-        try {
-            stream.write(arr.toString(2).toByteArray(Charsets.UTF_8))
-            atomic.finishWrite(stream)
-        } catch (error: Exception) {
-            atomic.failWrite(stream)
-            throw error
-        }
+        LocalBackup.validateArray(arr)
+        writeVerifiedAtomic(file, arr.toString(2).toByteArray(Charsets.UTF_8))
     }
 }
 
-internal fun persistProjectChange(storage: ProjectStorage, current: List<ProjectItem>, next: List<ProjectItem>): List<ProjectItem> {
-    storage.save(next)
-    return next
-}
+internal fun persistProjectChange(storage: ProjectStorage, current: List<ProjectItem>, next: List<ProjectItem>): List<ProjectItem> =
+    synchronized(ProjectWriteLock.monitor) {
+        if (storage.load() != current) throw IOException("Projects changed since loading; refusing stale write")
+        storage.save(next)
+        next
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,10 +193,16 @@ fun ProjectManagerApp(
     restoreError: String? = null,
     onDismissPreview: () -> Unit = {}
 ) {
-    val projects = remember { mutableStateListOf<ProjectItem>().apply { addAll(storage.load()) } }
+    var loadError by remember { mutableStateOf(false) }
+    val projects = remember {
+        mutableStateListOf<ProjectItem>().apply {
+            try { addAll(storage.load()) } catch (_: Exception) { loadError = true }
+        }
+    }
+    var writeError by remember { mutableStateOf(false) }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
-    var editorDirty by rememberSaveable { mutableStateOf(false) }
+    var editorDirty by remember { mutableStateOf(false) }
     var warnOnExit by remember { mutableStateOf(false) }
     fun update(item: ProjectItem) {
         val index = projects.indexOfFirst { it.id == item.id }
@@ -179,9 +228,17 @@ fun ProjectManagerApp(
                 if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
     }, floatingActionButton = {
-        if (active == null) FloatingActionButton(onClick = { showNew = true }) { Text("+") }
+        if (active == null && !loadError) FloatingActionButton(onClick = { writeError = false; showNew = true }) { Text("+") }
     }) { padding ->
-        if (active == null) {
+        if (loadError) {
+            Column(Modifier.padding(padding).padding(16.dp)) {
+                Text("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
+                TextButton(onClick = {
+                    try { val loaded = storage.load(); projects.clear(); projects.addAll(loaded); loadError = false }
+                    catch (_: Exception) { loadError = true }
+                }) { Text("إعادة المحاولة") }
+            }
+        } else if (active == null) {
             LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item { Text("مشاريعي", style = MaterialTheme.typography.headlineMedium) }
                 item { Text("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
@@ -197,7 +254,7 @@ fun ProjectManagerApp(
                 }
             }
         } else {
-            var tab by remember(active.id) { mutableIntStateOf(0) }
+            var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding)) {
                 ScrollableTabRow(selectedTabIndex = tab) {
                     listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { index, label ->
@@ -218,7 +275,10 @@ fun ProjectManagerApp(
                     2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
-                    3 -> TaskScreen(active, ::update)
+                    3 -> TaskScreen(active) { item ->
+                        try { update(item); writeError = false; true }
+                        catch (_: Exception) { writeError = true; false }
+                    }
                 }
             }
         }
@@ -238,26 +298,34 @@ fun ProjectManagerApp(
                 }
             }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
     }
+    if (writeError && !showNew) {
+        AlertDialog(onDismissRequest = { writeError = false }, title = { Text("تعذّر الحفظ") },
+            text = { Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
+            confirmButton = { TextButton(onClick = { writeError = false }) { Text("إغلاق") } })
+    }
     if (warnOnExit) {
         AlertDialog(onDismissRequest = { warnOnExit = false }, title = { Text("تعديلات غير محفوظة") },
             text = { Text("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
             confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
     }
     if (showNew) {
-        var name by remember { mutableStateOf("") }
-        var details by remember { mutableStateOf("") }
+        var name by rememberSaveable { mutableStateOf("") }
+        var details by rememberSaveable { mutableStateOf("") }
         AlertDialog(onDismissRequest = { showNew = false },
             title = { Text("إنشاء مشروع") },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (writeError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
                 OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") })
                 OutlinedTextField(details, { details = it }, label = { Text("وصف مختصر") })
             } },
             confirmButton = { TextButton(onClick = {
                 if (name.isNotBlank()) {
                     val p = ProjectItem(UUID.randomUUID().toString(), name.trim(), details.trim())
-                    persistProjectChange(storage, projects.toList(), projects.toList() + p)
-                    projects.add(p); activeId = p.id
-                    showNew = false
+                    try {
+                        persistProjectChange(storage, projects.toList(), projects.toList() + p)
+                        projects.add(p); activeId = p.id
+                        showNew = false; writeError = false
+                    } catch (_: Exception) { writeError = true }
                 }
             }, enabled = name.isNotBlank()) { Text("إنشاء") } },
             dismissButton = { TextButton(onClick = { showNew = false }) { Text("إلغاء") } })
@@ -396,15 +464,16 @@ private fun EditableDocument(
 }
 
 @Composable
-private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Unit) {
-    var newTask by remember(project.id) { mutableStateOf("") }
+private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Boolean) {
+    var newTask by rememberSaveable(project.id) { mutableStateOf("") }
     Column(Modifier.padding(16.dp)) {
         OutlinedTextField(newTask, { newTask = it },
             label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         Button(onClick = {
-            update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))
-            newTask = ""
+            if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
+                newTask = ""
+            }
         }, enabled = newTask.isNotBlank()) { Text("إضافة") }
         Spacer(Modifier.height(12.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {

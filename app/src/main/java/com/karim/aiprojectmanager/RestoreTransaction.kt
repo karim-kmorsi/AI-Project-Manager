@@ -27,8 +27,12 @@ internal object RestoreTransaction {
         afterSnapshot: () -> Unit = {}
     ) = synchronized(ProjectWriteLock.monitor) {
         if (!authorized) throw IOException("Restore was not authorized")
-        val paths = listOf(target, candidate, snapshot).map { it.canonicalPath }
-        if (paths.distinct().size != 3) throw IOException("Restore paths must be independent")
+        requireIndependentAtomicFiles(target, candidate, snapshot)
+        for (input in listOf(target, candidate)) {
+            if (File(input.path + ".new").exists() || File(input.path + ".bak").exists()) {
+                throw IOException("Restore input has pending atomic writes")
+            }
+        }
         if (!target.isFile || !candidate.isFile) throw IOException("Missing restore input")
         if (snapshot.exists() || File(snapshot.path + ".new").exists() || File(snapshot.path + ".bak").exists()) {
             throw IOException("Refusing to overwrite previous safety copy")

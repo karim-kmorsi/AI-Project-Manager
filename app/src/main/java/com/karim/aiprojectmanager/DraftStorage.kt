@@ -81,15 +81,7 @@ class DraftStorage(private val directory: File) {
             .put("baseText", baseText)
             .put("text", text)
             .toString()
-        val atomic = AtomicFile(file)
-        val stream = atomic.startWrite()
-        try {
-            stream.write(payload.toByteArray(Charsets.UTF_8))
-            atomic.finishWrite(stream)
-        } catch (e: Exception) {
-            atomic.failWrite(stream)
-            throw e
-        }
+        writeVerifiedAtomic(file, payload.toByteArray(Charsets.UTF_8))
     }
 
     fun discard(projectId: String, document: String) {

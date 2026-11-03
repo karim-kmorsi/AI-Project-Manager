@@ -11,7 +11,7 @@ import java.io.OutputStream
 object JsonExport {
     private const val MAX_BYTES = 8L * 1024 * 1024
 
-    fun readValidatedSource(source: File): ByteArray {
+    fun readValidatedSource(source: File): ByteArray = synchronized(ProjectWriteLock.monitor) {
         val atomic = AtomicFile(source)
         if (!source.exists() && !File(source.path + ".bak").exists()) {
             throw IOException("No saved project data to export")

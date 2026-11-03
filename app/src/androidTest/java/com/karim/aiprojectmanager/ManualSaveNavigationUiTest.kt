@@ -109,8 +109,11 @@ class ManualSaveNavigationUiTest {
         compose.onNodeWithText("حفظ").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن").assertExists()
+        // Navigation includes animated tab scrolling. A paused clock deadlocks performScrollTo
+        // when Roadmap has moved Overview off screen. The corrupt fixture still blocks autosave.
+        compose.mainClock.autoAdvance = true
         compose.onNodeWithText("رجوع").performClick()
-        // The clock is paused to prevent autosave; render the dialog explicitly.
+        // Render the guard before asserting it.
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
         compose.onNodeWithText("العودة إلى المحرر").performClick()

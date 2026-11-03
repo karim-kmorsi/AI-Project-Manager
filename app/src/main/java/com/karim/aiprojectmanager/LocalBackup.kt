@@ -23,13 +23,24 @@ object LocalBackup {
         val root = try { JSONArray(content) } catch (e: Exception) {
             throw IOException("Only legacy JSON project arrays are currently supported", e)
         }
+        val taskCount = validateArray(root)
+        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        return Preview(root.length(), taskCount, digest)
+    }
+
+    private fun strictString(obj: JSONObject, field: String): String =
+        obj.get(field) as? String ?: throw IOException("Invalid string field")
+
+    /** Shared validation for storage and backups; never coerces malformed fields or identifiers. */
+    internal fun validateArray(root: JSONArray): Int {
         val ids = HashSet<String>()
         var taskCount = 0
         try {
             for (i in 0 until root.length()) {
                 val project = root.getJSONObject(i)
-                val id = project.getString("id")
-                val name = project.getString("name")
+                val id = strictString(project, "id")
+                val name = strictString(project, "name")
                 if (id.isBlank() || name.isBlank() || !ids.add(id)) throw IOException("Invalid or duplicate project")
                 for (field in listOf("description", "blueprint", "roadmap")) {
                     if (project.has(field) && project.get(field) !is String) throw IOException("Invalid project field")
@@ -38,8 +49,8 @@ object LocalBackup {
                 val taskIds = HashSet<String>()
                 for (j in 0 until tasks.length()) {
                     val task = tasks.getJSONObject(j)
-                    val taskId = task.getString("id")
-                    task.getString("title")
+                    val taskId = strictString(task, "id")
+                    strictString(task, "title")
                     if (taskId.isBlank() || !taskIds.add(taskId)) throw IOException("Invalid or duplicate task")
                     if (task.has("status") && task.get("status") !is String) throw IOException("Invalid task status")
                     taskCount++
@@ -48,9 +59,7 @@ object LocalBackup {
         } catch (e: Exception) {
             throw IOException("Invalid project backup; no changes made", e)
         }
-        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
-            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
-        return Preview(root.length(), taskCount, digest)
+        return taskCount
     }
 
     /** Stage, verify and atomically publish a snapshot; never replace an existing backup. */
@@ -63,7 +72,8 @@ object LocalBackup {
         destination: File,
         writer: (FileOutputStream, ByteArray) -> Unit
     ): Preview {
-        if (!source.isFile || source.canonicalFile == destination.canonicalFile) {
+        requireIndependentAtomicFiles(source, destination)
+        if (!source.isFile) {
             throw IOException("Source is missing or destination overlaps source")
         }
         val bytes = source.readBytes()
