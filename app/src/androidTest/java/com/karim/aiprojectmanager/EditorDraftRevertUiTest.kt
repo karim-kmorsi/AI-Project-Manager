@@ -74,6 +74,8 @@ class EditorDraftRevertUiTest {
                 assertArrayEquals(committedBytes, file.readBytes())
                 if (preserveNewerDraft) assertEquals(DraftStorage.Draft("C", "A"), drafts.load(project.id, document))
             }
+            // Navigation may need scrolling frames on narrow displays; the revert is now complete.
+            compose.mainClock.autoAdvance = true
             compose.onNodeWithText("رجوع").performClick()
             compose.mainClock.advanceTimeBy(64)
             compose.onNodeWithText(project.name).performClick()
@@ -96,6 +98,7 @@ class EditorDraftRevertUiTest {
             }
             compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", expectedText)
         } finally {
+            compose.mainClock.autoAdvance = true
             compose.runOnIdle { visible.value = false }
             compose.mainClock.advanceTimeByFrame()
             compose.waitForIdle()
