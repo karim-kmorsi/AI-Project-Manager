@@ -34,6 +34,14 @@ All three inject ProjectStorage backed by a unique cache directory and `test-pro
 - The initial environment-readiness blockers are historical and were superseded by this successful local validation. They are not outstanding test failures.
 - Publication review preserves the verified UI tests and only corrects this documentation. Successful local builds/tests are not repeated for documentation-only corrections.
 
-The publication scope is limited to this audit and `ProjectWorkflowUiTest.kt` on `feature/v0-2-editor-ux`. Only the existing CI run automatically triggered by the branch push is to be observed; no manual CI run or rerun is requested. The user confirmed a $0 Actions spending budget with usage blocking enabled; no billing settings are changed.
+The original publication scope was limited to this audit and `ProjectWorkflowUiTest.kt` on `feature/v0-2-editor-ux`. Only automatically triggered CI runs are observed; no manual CI run or rerun is requested. The user confirmed a $0 Actions spending budget with usage blocking enabled; no billing settings are changed.
+
+## Subsequent CI diagnosis and verification — 2026-11-03
+
+Push run `41524878527` and PR run `41524890832` failed the task workflow test on `435adace9779faf92612e2744e4bcd47f7bd31e7`. The unchanged targeted test reproduced the exact missing `إضافة` semantics-node failure on the Android 15 emulator at CI's 320 × 640 display size and 160 dpi. The Tasks tab was outside the visible portion of `ScrollableTabRow`, so a click without scrolling did not navigate to the task screen.
+
+Commit `06e9a50c23ea35ec1ca7929e00ddc642a54fcd0d` adds `performScrollTo()` before Tasks/Overview tab clicks in that test. All disabled-button, persistence, status, progress and other-project assertions remain. No production or storage-format change was needed. At the same narrow emulator size, the fixed targeted test passed (1 test) and the full suite passed (58 tests, 0 failures/errors/skips).
+
+Both automatic workflows on the fix completed successfully: [push 41643830854](https://github.com/karim-kmorsi/AI-Project-Manager/actions/runs/41643830854) and [PR 41643842358](https://github.com/karim-kmorsi/AI-Project-Manager/actions/runs/41643842358), each running 58 instrumentation tests. This resolves the CI failure, not the coverage gaps listed above or real-device/signing verification. The [release gate](RELEASE_GATE_V0_2.md) defines the reduced release scope; the broader approved requirements remain historical requirements.
 
 Local test success does not establish phone validation, signing compatibility or release readiness. The remaining release gate still applies. No production code, data format, signing, design, live restore or user-data changes are included.

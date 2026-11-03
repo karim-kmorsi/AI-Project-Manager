@@ -1,7 +1,13 @@
 # AI Project Manager — v0.2 approved scope and execution order
 
-Status: **Approved requirements, not yet implemented**. Approved 2026-11-02.
+Status: **Historical broader approved requirements**. Approved 2026-11-02; retained below without removing the original requirements.
 Target: Android only; Kotlin + Jetpack Compose. GitHub PR review before merge.
+
+## Current release-scope reconciliation — 2026-11-03
+
+The original phases and acceptance criteria below are a requirements record, not a claim that all features are implemented or included in the reduced v0.2 release. [RELEASE_GATE_V0_2.md](RELEASE_GATE_V0_2.md) defines the current release scope, deferred requirements and outstanding verification; [V0_2_LOCAL_REGRESSION_AUDIT.md](V0_2_LOCAL_REGRESSION_AUDIT.md) records automated coverage and its limits.
+
+The reduced release covers project creation/listing/selection, Blueprint/Roadmap editing and saving, simple task creation/status/progress, existing-format JSON export, and read-only backup preview. Actual restore/merge, project metadata editing/expansion, archival, search/history, multilingual/theme settings, visual redesign and GitHub integration remain deferred. This deferral does not mark the broader requirements complete or waive data preservation, signing, device validation or PR review gates.
 
 ## Hard constraints
 1. Do **not** change, force-push or merge into `main` without explicit review and approval.
