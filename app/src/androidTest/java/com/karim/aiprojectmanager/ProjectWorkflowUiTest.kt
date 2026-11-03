@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -68,7 +69,8 @@ class ProjectWorkflowUiTest {
         storage.save(listOf(active, untouched))
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Task project").performClick()
-        compose.onNodeWithText("المهام").performClick()
+        // ScrollableTabRow can place the Tasks tab off screen on narrow CI displays.
+        compose.onNodeWithText("المهام").performScrollTo().performClick()
         compose.onNodeWithText("إضافة").assertIsNotEnabled()
         compose.onNodeWithText("مهمة جديدة").performTextInput("   ")
         compose.onNodeWithText("إضافة").assertIsNotEnabled()
@@ -96,9 +98,9 @@ class ProjectWorkflowUiTest {
                     ProjectStorage(file).load()
                 )
             }
-            compose.onNodeWithText("نظرة عامة").performClick()
+            compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
             compose.onNodeWithText("تقدم مثبت: ${if (status == "VERIFIED") 1 else 0} من 1 مهمة").assertExists()
-            compose.onNodeWithText("المهام").performClick()
+            compose.onNodeWithText("المهام").performScrollTo().performClick()
         }
         compose.onNodeWithText("رجوع").performClick()
         // The other project has one verified task too, so use the unique overview assertion above.
