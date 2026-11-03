@@ -1,7 +1,13 @@
 # AI Project Manager — v0.2 approved scope and execution order
 
-Status: **Approved requirements, not yet implemented**. Approved 2026-11-02.
+Status: **Historical broader approved requirements**. Approved 2026-11-02; retained below without removing the original requirements.
 Target: Android only; Kotlin + Jetpack Compose. GitHub PR review before merge.
+
+## Current release-scope reconciliation — 2026-11-03
+
+The original phases and acceptance criteria below are a requirements record, not a claim that all features are implemented or included in the reduced v0.2 release. [RELEASE_GATE_V0_2.md](RELEASE_GATE_V0_2.md) defines the current release scope, deferred requirements and outstanding verification; [V0_2_LOCAL_REGRESSION_AUDIT.md](V0_2_LOCAL_REGRESSION_AUDIT.md) records automated coverage and its limits.
+
+The reduced release covers project creation/listing/selection, Blueprint/Roadmap editing and saving, simple task creation/status/progress, existing-format JSON export, and read-only backup preview. Actual restore/merge, project metadata editing/expansion, archival, search/history, multilingual/theme settings, visual redesign and GitHub integration remain deferred. This deferral does not mark the broader requirements complete or waive data preservation, signing, device validation or PR review gates.
 
 ## Hard constraints
 1. Do **not** change, force-push or merge into `main` without explicit review and approval.
@@ -67,3 +73,13 @@ No GitHub Inspector, remote code execution, AI agents, push notification system 
 ## Work sequence
 Gate 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5 -> Release validation.
 Within Phase 4/5, dependencies may be adjusted after data tests; never bypass Gate 0.
+
+## Approved future capability — Import from GitHub (post-v0.2 foundation)
+Approved for the roadmap, **not implemented or included in the v0.2 release gate**.
+- A user selects a repository to import after explicitly linking GitHub with least-privilege, read-only access.
+- Read only supported source material: README, project documentation (Blueprint/Roadmap when present), issues, PRs, commits and CI results; show provenance and distinguish extracted facts from AI suggestions and absent information.
+- Preview the proposed project, milestones and tasks; require confirmation before adding or overwriting anything locally.
+- Preserve local edits on refresh. Offer a diff/reconciliation step rather than automatic replacement.
+- Do not write to GitHub, initiate code actions, or request broader permissions without a separate opt-in.
+- Keep GitHub as source of truth for repository/CI facts; keep independent user notes and decisions in local app storage.
+- Implement only after reliable editing, data backup/restore and safe updates are established.

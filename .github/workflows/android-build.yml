@@ -1,9 +1,9 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety]
+    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux]
   pull_request:
-    branches: [main, feature/android-mvp-0-1]
+    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
   workflow_dispatch:
 
 permissions:
@@ -36,6 +36,9 @@ jobs:
         with:
           name: ai-project-manager-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Enable KVM for emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; else echo 'KVM unavailable'; fi
       - name: Run Android storage regression tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -44,5 +47,5 @@ jobs:
           target: default
           emulator-boot-timeout: 1800
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -accel off
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: gradle --no-daemon :app:connectedDebugAndroidTest
