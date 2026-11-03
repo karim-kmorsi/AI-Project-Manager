@@ -290,6 +290,7 @@ private fun EditableDocument(
     val latestSave by rememberUpdatedState(save)
     // Keep a live snapshot so an outdated coroutine cannot commit or delete a newer draft.
     val latestDraft by rememberUpdatedState(draft)
+    var lastWrittenDraft by remember(projectId, document) { mutableStateOf<DraftStorage.Draft?>(null) }
     SideEffect { onDirtyChange(draft != value || saveError || recoveryError || conflictingDraft != null) }
 
     LaunchedEffect(draft, value) {
@@ -298,6 +299,7 @@ private fun EditableDocument(
             // A draft is written to a separate atomic file before touching projects.json.
             try {
                 draftStore.save(projectId, document, value, draft)
+                lastWrittenDraft = DraftStorage.Draft(draft, value)
                 recoveryError = false
             } catch (_: Exception) {
                 recoveryError = true
@@ -313,8 +315,15 @@ private fun EditableDocument(
             } catch (_: Exception) {
                 saveError = true
             }
-        } else if (!recoveryError && recovered?.baseText == value && recovered.text == value) {
-            runCatching { draftStore.discard(projectId, document) }
+        } else if (!recoveryError) {
+            runCatching {
+                val stored = draftStore.load(projectId, document)
+                // Reverting cancels autosave; remove only our abandoned draft or redundant saved text.
+                if (stored != null && stored.baseText == value &&
+                    (stored == lastWrittenDraft || stored.text == value)) {
+                    draftStore.discard(projectId, document)
+                }
+            }
         }
     }
     Column(
