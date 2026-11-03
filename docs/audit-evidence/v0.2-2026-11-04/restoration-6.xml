@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.karim.aiprojectmanager.StorageFailureUiTest" tests="6" failures="0" errors="0" skipped="0" time="7.324" timestamp="2026-11-03T18:41:25" hostname="localhost">
+  <properties>
+    <property name="device" value="REDMAGIC_10_Pro_Test(AVD) - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="blueprintDraftSurvivesSavedStateRestoration" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="1.791" />
+  <testcase name="selectedTabAndUnsubmittedTaskSurviveSavedStateRestoration" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="1.21" />
+  <testcase name="taskFailureRetainsInputAndDoesNotAdvanceStatus" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="1.447" />
+  <testcase name="failedCreationKeepsFormAndAllowsRetry" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.946" />
+  <testcase name="roadmapDraftSurvivesSavedStateRestoration" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.884" />
+  <testcase name="corruptStartupShowsErrorAndBlocksCreationWithoutChangingBytes" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.485" />
+</testsuite>

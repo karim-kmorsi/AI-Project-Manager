@@ -78,3 +78,7 @@ Add focused automated coverage for manual Save, Roadmap editing and dirty-editor
 
 ## Release status
 Implemented functionality is not the same as a verified release. Ship only after the checks above and explicit user approval.
+
+## Comprehensive stabilization audit — 2026-11-04
+
+See [the audit report](V0_2_STABILIZATION_AUDIT_2026_11_04.md) for confirmed storage/lifecycle fixes, focused regressions, exact local evidence, CI #188–190 diagnosis and remaining limits. Local full regression passed 88 tests; the final 6-test failure/restoration class adds 2 further distinct editor-restoration tests (90 distinct passing tests across those runs). Final candidate cloud results are reported separately in the chat handoff. These engineering checks do not constitute the separately authorized final acceptance test or close the physical-device/signing gates.

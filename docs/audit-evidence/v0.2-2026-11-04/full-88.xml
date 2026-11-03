@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.karim.aiprojectmanager.CorruptDraftUiTest" tests="88" failures="0" errors="0" skipped="0" time="31.565" timestamp="2026-11-03T18:39:42" hostname="localhost">
+  <properties>
+    <property name="device" value="REDMAGIC_10_Pro_Test(AVD) - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="roadmapPreservationFailureKeepsDataReadOnlyAndNavigable" classname="com.karim.aiprojectmanager.CorruptDraftUiTest" time="5.091" />
+  <testcase name="roadmapCorruptionPreservesDataAndAllowsNavigationAndEditing" classname="com.karim.aiprojectmanager.CorruptDraftUiTest" time="2.109" />
+  <testcase name="blueprintPreservationFailureKeepsDataReadOnlyAndNavigable" classname="com.karim.aiprojectmanager.CorruptDraftUiTest" time="2.273" />
+  <testcase name="blueprintCorruptionPreservesDataAndAllowsNavigationAndEditing" classname="com.karim.aiprojectmanager.CorruptDraftUiTest" time="1.78" />
+  <testcase name="completeOrphanPendingWriteCanBeExplicitlyPreservedWithoutRestoringIt" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="recoveryAfterSimulatedProcessRestartPreservesDraftAndProjectFile" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.011" />
+  <testcase name="newerCommittedContentMustNotMatchStaleDraftBase" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.0" />
+  <testcase name="draftSurvivesStoreRecreationWithoutTouchingProjects" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.015" />
+  <testcase name="explicitPreservationKeepsEveryUnreadableDraftByteAndAllowsFreshDrafts" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.052" />
+  <testcase name="failedProjectWriteKeepsLastSavedProjectsIntact" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.002" />
+  <testcase name="preservationRejectsReadableDraftAndLeavesItUntouched" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="staleSnapshotIsNotEligibleForAutosaveOrCleanup" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.002" />
+  <testcase name="validBackupCannotSilentlyReplaceCorruptBaseBeforeExplicitPreservation" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="legacyV01ProjectsSurviveRoundTripWithStatusesAndIds" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.027" />
+  <testcase name="legacyV01MissingOptionalFieldsKeepDefaultsOnRoundTrip" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="corruptDraftCannotBeOverwritten" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="unreadablePendingSidecarAloneStillBlocksWritesUntilPreserved" classname="com.karim.aiprojectmanager.DraftStorageTest" time="0.001" />
+  <testcase name="blueprintRevertPreservesNewerRecoveryDraft" classname="com.karim.aiprojectmanager.EditorDraftRevertUiTest" time="1.085" />
+  <testcase name="blueprintRevertDoesNotRecoverOrAutosaveAbandonedText" classname="com.karim.aiprojectmanager.EditorDraftRevertUiTest" time="1.039" />
+  <testcase name="roadmapRevertDoesNotRecoverOrAutosaveAbandonedText" classname="com.karim.aiprojectmanager.EditorDraftRevertUiTest" time="1.061" />
+  <testcase name="roadmapRevertPreservesNewerRecoveryDraft" classname="com.karim.aiprojectmanager.EditorDraftRevertUiTest" time="1.19" />
+  <testcase name="exportSnapshotSurvivesNewStoreInstanceAndDiscardsOnlyOwnPayload" classname="com.karim.aiprojectmanager.ExportAndAtomicSafetyTest" time="0.03" />
+  <testcase name="restoreRejectsSnapshotAliasingTargetSidecar" classname="com.karim.aiprojectmanager.ExportAndAtomicSafetyTest" time="0.001" />
+  <testcase name="snapshotCannotTruncateSourceThroughAtomicSidecarAlias" classname="com.karim.aiprojectmanager.ExportAndAtomicSafetyTest" time="0.002" />
+  <testcase name="silentlyUnpublishedAtomicWriteIsReportedAndStagingIsRetained" classname="com.karim.aiprojectmanager.ExportAndAtomicSafetyTest" time="0.004" />
+  <testcase name="interruptedFirstProjectWriteIsPreservedAndBlocksFreshSave" classname="com.karim.aiprojectmanager.ExportAndAtomicSafetyTest" time="0.021" />
+  <testcase name="failedDestinationWriteDoesNotModifySource" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.007" />
+  <testcase name="cancelledDocumentSelectionLeavesSourceIntact" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.0" />
+  <testcase name="uriExportWritesExactBytesAndCanBeReadBack" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.0" />
+  <testcase name="invalidSourceAndCancelledPickerCannotExportOrMutateSource" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.008" />
+  <testcase name="exportCopyPreservesSourceAndAllBytes" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.002" />
+  <testcase name="partialExternalWriteIsReportedAsFailureAndSourceIsSafe" classname="com.karim.aiprojectmanager.JsonExportTest" time="0.001" />
+  <testcase name="corruptJsonIsNotSilentlyReplaced" classname="com.karim.aiprojectmanager.LegacyStorageTest" time="0.0" />
+  <testcase name="legacyProjectsSurviveReadWriteAndReopen" classname="com.karim.aiprojectmanager.LegacyStorageTest" time="0.006" />
+  <testcase name="invalidAndDuplicateBackupsAreRejectedWithoutCreatingSnapshot" classname="com.karim.aiprojectmanager.LocalBackupTest" time="0.0" />
+  <testcase name="interruptedWriteNeverPublishesPartialBackup" classname="com.karim.aiprojectmanager.LocalBackupTest" time="0.035" />
+  <testcase name="existingIncompletePendingFileMustNotBeReusedOrPublished" classname="com.karim.aiprojectmanager.LocalBackupTest" time="0.005" />
+  <testcase name="snapshotPreservesExactLegacyBytesWithoutTouchingOriginal" classname="com.karim.aiprojectmanager.LocalBackupTest" time="0.001" />
+  <testcase name="blueprintSaveFailureBlocksBackAndTabs" classname="com.karim.aiprojectmanager.ManualSaveNavigationUiTest" time="1.363" />
+  <testcase name="roadmapManualSavePersistsBeforeAutosave" classname="com.karim.aiprojectmanager.ManualSaveNavigationUiTest" time="1.13" />
+  <testcase name="blueprintManualSavePersistsBeforeAutosave" classname="com.karim.aiprojectmanager.ManualSaveNavigationUiTest" time="1.081" />
+  <testcase name="roadmapSaveFailureBlocksBackAndTabs" classname="com.karim.aiprojectmanager.ManualSaveNavigationUiTest" time="1.468" />
+  <testcase name="closingPreviewAndErrorDialogsDoesNotPersistOrInvokeExport" classname="com.karim.aiprojectmanager.ProjectWorkflowUiTest" time="0.762" />
+  <testcase name="cancelledCreationDoesNotSaveAndValidCreationTrimsFields" classname="com.karim.aiprojectmanager.ProjectWorkflowUiTest" time="1.765" />
+  <testcase name="taskUiPersistsEachStatusAndUpdatesVerifiedProgressWithoutChangingOtherProjects" classname="com.karim.aiprojectmanager.ProjectWorkflowUiTest" time="2.36" />
+  <testcase name="rapidSequentialTypingRetainsLatestDocumentAfterAutosave" classname="com.karim.aiprojectmanager.RapidTypingUiTest" time="1.23" />
+  <testcase name="createEditTaskAndRestartPreserveAllProjectFields" classname="com.karim.aiprojectmanager.ReleaseWorkflowRegressionTest" time="0.0" />
+  <testcase name="cancelledPreviewAndExternalExportLeaveSavedProjectsUnchanged" classname="com.karim.aiprojectmanager.ReleaseWorkflowRegressionTest" time="0.036" />
+  <testcase name="verifiedTaskStatusPersistsAfterReloadAndCountsTowardProgress" classname="com.karim.aiprojectmanager.ReleaseWorkflowRegressionTest" time="0.049" />
+  <testcase name="invalidOrOversizedSelectionIsRejectedWithoutChangingLiveData" classname="com.karim.aiprojectmanager.RestoreCandidateTest" time="0.051" />
+  <testcase name="missingDocumentFailsSafelyAndLiveDataRemainsUnchanged" classname="com.karim.aiprojectmanager.RestoreCandidateTest" time="0.001" />
+  <testcase name="validSelectedDocumentCanBePreviewedWithoutChangingLiveData" classname="com.karim.aiprojectmanager.RestoreCandidateTest" time="0.027" />
+  <testcase name="cancellationDoesNotReadOrWriteFiles" classname="com.karim.aiprojectmanager.RestoreCandidateTest" time="0.0" />
+  <testcase name="previewSummarizesProjectsAndLeavesLiveDataUnchanged" classname="com.karim.aiprojectmanager.RestorePreviewTest" time="0.0" />
+  <testcase name="rejectedBackupDoesNotTouchLiveFile" classname="com.karim.aiprojectmanager.RestorePreviewTest" time="0.0" />
+  <testcase name="interruptedRecoveryPreservesCurrentContentAndSafety" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="explicitRecoveryRestoresVerifiedSafetyCopyAndKeepsIt" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="invalidSafetyCopyIsRejectedWithoutChangingTarget" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="overlappingAtomicSidecarIsRejectedBeforeWriting" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="oversizedRecoveryInputIsRejectedBeforeReadingOrWriting" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="missingSafetyDocumentNeverModifiesCurrentData" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="simulatedDiskFullDuringRecoveryPreservesCurrentAndSafety" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.001" />
+  <testcase name="cancelledOrStaleRecoveryRefusesToOverwrite" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.027" />
+  <testcase name="pendingSafetyWriteBlocksRecoveryAndPreservesBothFiles" classname="com.karim.aiprojectmanager.RestoreRecoveryTest" time="0.0" />
+  <testcase name="interruptedWriteRestoresOriginalAndRetainsSafetyCopy" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="preexistingSafetyCopyBlocksRestoreWithoutChangingAnything" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.001" />
+  <testcase name="changedCurrentDataAfterPreviewIsRejected" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="concurrentTransactionCallsAreSerializedWithinProcess" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.101" />
+  <testcase name="missingCandidateDocumentDoesNotPublishSnapshot" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="oversizedRestoreCandidateIsRejectedWithoutSnapshot" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="postCommitVerificationFailureKeepsSafetyCopyForManualRecovery" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.027" />
+  <testcase name="rejectionAndMissingAuthorizationNeverModifySource" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.001" />
+  <testcase name="currentProjectChangingAfterSnapshotBlocksReplacement" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="simulatedDiskFullDuringRestorePreservesOriginalAndSafety" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.001" />
+  <testcase name="authorizedRestoreKeepsVerifiableSafetyCopy" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="changedCandidateAfterPreviewIsRejectedBeforeSafetySnapshot" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="failedWriteRetainsIndependentRecoveryCopyWithoutPublishingPartialData" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.027" />
+  <testcase name="savingProjectsWaitsForIsolatedRestoreTransaction" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.131" />
+  <testcase name="candidateChangingAfterSnapshotIsRejectedWithoutTargetWrite" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="snapshotCreationFailureKeepsLiveAndCandidateIntact" classname="com.karim.aiprojectmanager.RestoreTransactionTest" time="0.0" />
+  <testcase name="selectedTabAndUnsubmittedTaskSurviveSavedStateRestoration" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.735" />
+  <testcase name="taskFailureRetainsInputAndDoesNotAdvanceStatus" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="1.16" />
+  <testcase name="failedCreationKeepsFormAndAllowsRetry" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.818" />
+  <testcase name="corruptStartupShowsErrorAndBlocksCreationWithoutChangingBytes" classname="com.karim.aiprojectmanager.StorageFailureUiTest" time="0.529" />
+  <testcase name="malformedFieldsAndDuplicateIdsBlockWritesWithoutChangingBytes" classname="com.karim.aiprojectmanager.StorageSafetyAuditTest" time="0.0" />
+  <testcase name="invalidOutgoingModelsCannotCreateUnreadableStorage" classname="com.karim.aiprojectmanager.StorageSafetyAuditTest" time="0.003" />
+  <testcase name="unknownFieldsSurviveKnownFieldEdits" classname="com.karim.aiprojectmanager.StorageSafetyAuditTest" time="0.0" />
+  <testcase name="staleUiSnapshotCannotOverwriteAnotherWriter" classname="com.karim.aiprojectmanager.StorageSafetyAuditTest" time="0.055" />
+</testsuite>

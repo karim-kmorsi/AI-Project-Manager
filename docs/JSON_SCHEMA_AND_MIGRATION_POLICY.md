@@ -9,7 +9,7 @@ The root is a JSON **array**, not an object or envelope. There is **no stored sc
 
 Preserve IDs, task order, all status strings (especially `VERIFIED`), and user-written Arabic/English text verbatim. Do not infer verification or rewrite original Blueprint/Roadmap content.
 
-Known limitation: the current reader materializes only fields represented by `ProjectItem` and `TaskItem`. Extra unknown JSON keys are currently **not preserved** by a load/save round trip. Do not claim arbitrary newer/third-party JSON fields round-trip safely.
+The reader materializes supported `ProjectItem`/`TaskItem` fields. As of the 2026-11-04 stabilization audit, saves merge those supported fields into the validated stored objects by project/task ID, preserving unknown keys on retained records. The legacy array schema is unchanged. Malformed known fields, non-string IDs, blank/duplicate project IDs and duplicate task IDs are rejected before writing. This preserves extensions; it does not authorize interpreting a future schema.
 
 ## Versioning decision for a future change
 
@@ -27,6 +27,12 @@ Known limitation: the current reader materializes only fields represented by `Pr
 4. Serialize the candidate to a separate temporary destination, then parse it again and compare required semantic fields and record counts before committing.
 5. Atomically commit only after validation; preserve the prior snapshot until restore safety is confirmed. On any exception, leave original data recoverable and show an actionable error; never silently substitute an empty project list.
 6. On application restart, re-read and verify the committed data. Add regression cases for failed/corrupt writes, missing optional fields, stale drafts, and unsupported future format.
+
+## 2026-11-04 stabilization safeguards
+
+Project reads and writes share the process-local write mutex. UI writes compare the current stored models with the displayed snapshot before committing, preventing a stale activity from silently overwriting a newer save. Atomic project/draft writes explicitly sync and verify publication before reporting success. An orphan initial `projects.json.new` blocks fresh writes and remains available for recovery; there is no automatic repair or migration.
+
+Export preserves the validated source bytes in an app-private cache snapshot while the external picker is open. Saved activity state contains only its random token. Cache eviction can still make export fail explicitly; it cannot alter the live file. Preview and provider export run off the UI thread. End-to-end provider recreation remains a separate verification gap.
 
 ## Existing coverage and remaining gate
 
