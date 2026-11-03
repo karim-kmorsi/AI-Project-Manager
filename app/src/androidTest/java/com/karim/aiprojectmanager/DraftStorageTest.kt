@@ -10,6 +10,111 @@ import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 class DraftStorageTest {
+    @Test fun explicitPreservationKeepsEveryUnreadableDraftByteAndAllowsFreshDrafts() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-preserve-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            for (document in listOf("blueprint", "roadmap")) {
+                store.save("p", document, "A", "B")
+                val base = root.listFiles()!!.single { it.isFile }
+                val bytes = byteArrayOf(0xff.toByte(), 0, 123, 98, 97, 100)
+                base.writeBytes(bytes)
+                val backup = File(base.path + ".bak").apply { writeBytes(bytes + 1.toByte()) }
+                val pending = File(base.path + ".new").apply { writeBytes(bytes + 2.toByte()) }
+                val originals = listOf(base, backup, pending).associate { it.name to it.readBytes() }
+                try { store.load("p", document); fail("Expected unreadable draft") } catch (_: IOException) { }
+                originals.forEach { (name, expected) -> assertArrayEquals(expected, File(root, name).readBytes()) }
+                val preserved = store.preserveUnreadable("p", document)
+                assertEquals(originals.keys, preserved.list()!!.toSet())
+                originals.forEach { (name, expected) -> assertArrayEquals(expected, File(preserved, name).readBytes()) }
+                assertNull(store.load("p", document))
+                store.save("p", document, "A", "C")
+                assertEquals(DraftStorage.Draft("C", "A"), store.load("p", document))
+                store.discard("p", document)
+                originals.forEach { (name, expected) -> assertArrayEquals(expected, File(preserved, name).readBytes()) }
+            }
+            assertEquals(2, File(root, "preserved").listFiles()!!.size)
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun preservationRejectsReadableDraftAndLeavesItUntouched() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-preserve-valid-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            store.save("p", "blueprint", "A", "Legitimate B")
+            val base = root.listFiles()!!.single()
+            val bytes = base.readBytes()
+            try { store.preserveUnreadable("p", "blueprint"); fail("Must retain readable draft") } catch (_: IOException) { }
+            assertArrayEquals(bytes, base.readBytes())
+            assertEquals(DraftStorage.Draft("Legitimate B", "A"), store.load("p", "blueprint"))
+            assertFalse(File(root, "preserved").exists())
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun validBackupCannotSilentlyReplaceCorruptBaseBeforeExplicitPreservation() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-preserve-backup-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            store.save("p", "roadmap", "A", "Valid backup")
+            val base = root.listFiles()!!.single()
+            val backup = File(base.path + ".bak")
+            val validBytes = base.readBytes()
+            backup.writeBytes(validBytes)
+            val corruptBytes = "unreadable current draft".toByteArray()
+            base.writeBytes(corruptBytes)
+            try { store.load("p", "roadmap"); fail("Must preserve corrupt base") } catch (_: IOException) { }
+            assertArrayEquals(corruptBytes, base.readBytes())
+            assertArrayEquals(validBytes, backup.readBytes())
+            val preserved = store.preserveUnreadable("p", "roadmap")
+            assertArrayEquals(corruptBytes, File(preserved, base.name).readBytes())
+            assertArrayEquals(validBytes, File(preserved, backup.name).readBytes())
+            assertNull(store.load("p", "roadmap"))
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun unreadablePendingSidecarAloneStillBlocksWritesUntilPreserved() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-preserve-pending-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            store.save("p", "blueprint", "A", "B")
+            val base = root.listFiles()!!.single()
+            val pending = File(base.path + ".new")
+            val bytes = "interrupted unreadable draft".toByteArray()
+            pending.writeBytes(bytes)
+            assertTrue(base.delete())
+            try { store.save("p", "blueprint", "A", "C"); fail("Must retain pending draft") } catch (_: IOException) { }
+            assertArrayEquals(bytes, pending.readBytes())
+            val preserved = store.preserveUnreadable("p", "blueprint")
+            assertArrayEquals(bytes, File(preserved, pending.name).readBytes())
+            store.save("p", "blueprint", "A", "C")
+            assertEquals(DraftStorage.Draft("C", "A"), store.load("p", "blueprint"))
+            assertArrayEquals(bytes, File(preserved, pending.name).readBytes())
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun completeOrphanPendingWriteCanBeExplicitlyPreservedWithoutRestoringIt() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "draft-preserve-orphan-${System.nanoTime()}")
+        try {
+            val store = DraftStorage(root)
+            store.save("p", "roadmap", "A", "Pending B")
+            val base = root.listFiles()!!.single()
+            val bytes = base.readBytes()
+            val pending = File(base.path + ".new")
+            pending.writeBytes(bytes)
+            assertTrue(base.delete())
+            try { store.load("p", "roadmap"); fail("No committed draft exists") } catch (_: IOException) { }
+            assertArrayEquals(bytes, pending.readBytes())
+            val preserved = store.preserveUnreadable("p", "roadmap")
+            assertArrayEquals(bytes, File(preserved, pending.name).readBytes())
+            assertNull(store.load("p", "roadmap"))
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun draftSurvivesStoreRecreationWithoutTouchingProjects() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val root = File(context.cacheDir, "draft-test-${System.nanoTime()}")

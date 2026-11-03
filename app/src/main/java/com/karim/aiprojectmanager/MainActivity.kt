@@ -274,6 +274,8 @@ private fun EditableDocument(
     val context = LocalContext.current
     val draftStore = remember(context) { DraftStorage(File(context.filesDir, "recovery-drafts")) }
     var recoveryError by remember(projectId, document) { mutableStateOf(false) }
+    var preservationFailed by remember(projectId, document) { mutableStateOf(false) }
+    var preservationCount by rememberSaveable(projectId, document) { mutableIntStateOf(0) }
     val recovered = remember(projectId, document) {
         try { draftStore.load(projectId, document) } catch (_: IOException) {
             recoveryError = true
@@ -291,9 +293,10 @@ private fun EditableDocument(
     // Keep a live snapshot so an outdated coroutine cannot commit or delete a newer draft.
     val latestDraft by rememberUpdatedState(draft)
     var lastWrittenDraft by remember(projectId, document) { mutableStateOf<DraftStorage.Draft?>(null) }
-    SideEffect { onDirtyChange(draft != value || saveError || recoveryError || conflictingDraft != null) }
+    // An unreadable on-disk draft alone must not trap the user in an unchanged, read-only editor.
+    SideEffect { onDirtyChange(draft != value || saveError || conflictingDraft != null) }
 
-    LaunchedEffect(draft, value) {
+    LaunchedEffect(draft, value, preservationCount) {
         if (conflictingDraft != null) return@LaunchedEffect
         if (draft != value) {
             // A draft is written to a separate atomic file before touching projects.json.
@@ -340,11 +343,11 @@ private fun EditableDocument(
                     recoveryError = false
                     runCatching { draftStore.discard(projectId, document) }
                 } catch (_: Exception) { saveError = true }
-            }, enabled = conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
+            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
         }
         Text(
             when {
-                recoveryError -> "تعذّر حفظ أو قراءة المسودة الاحتياطية — لا تغادر المحرر"
+                recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
                 conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
                 saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
                 draft != value -> "تعديلات قيد الحفظ..."
@@ -353,6 +356,18 @@ private fun EditableDocument(
             style = MaterialTheme.typography.bodySmall,
             color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (recoveryError) {
+            if (preservationFailed) Text("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
+            TextButton(onClick = {
+                try {
+                    draftStore.preserveUnreadable(projectId, document)
+                    recoveryError = false
+                    preservationFailed = false
+                    preservationCount++
+                } catch (_: Exception) { preservationFailed = true }
+            }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
+        }
+        if (preservationCount > 0) Text("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
         if (conflictingDraft != null) {
             Text("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
             Text(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
@@ -372,6 +387,7 @@ private fun EditableDocument(
         }
         OutlinedTextField(
             value = draft, onValueChange = { draft = it },
+            enabled = !recoveryError,
             modifier = Modifier.fillMaxWidth().weight(1f),
             label = { Text("محتوى المستند") },
             placeholder = { Text("اكتب أو الصق الخطة هنا...") }

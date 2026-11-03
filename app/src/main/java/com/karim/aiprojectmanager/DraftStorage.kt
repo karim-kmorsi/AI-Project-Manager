@@ -3,6 +3,8 @@ package com.karim.aiprojectmanager
 import android.util.AtomicFile
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.util.UUID
 import org.json.JSONObject
 
 /**
@@ -19,19 +21,53 @@ class DraftStorage(private val directory: File) {
 
     data class Draft(val text: String, val baseText: String)
 
+    private fun parse(payload: String, projectId: String, document: String): Draft {
+        val o = JSONObject(payload)
+        if (o.getString("projectId") != projectId || o.getString("document") != document) {
+            throw IOException("Draft identity mismatch")
+        }
+        return Draft(o.getString("text"), o.getString("baseText"))
+    }
+
     fun load(projectId: String, document: String): Draft? {
         val file = fileFor(projectId, document)
-        if (!file.exists() && !File(file.path + ".bak").exists()) return null
+        if (!file.exists() && !File(file.path + ".bak").exists() && !File(file.path + ".new").exists()) return null
         try {
-            val payload = AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
-            val o = JSONObject(payload)
-            if (o.getString("projectId") != projectId || o.getString("document") != document) {
-                throw IOException("Draft identity mismatch")
+            // Validate before AtomicFile recovery can replace a base or remove a pending sidecar.
+            for (candidate in listOf(file, File(file.path + ".bak"), File(file.path + ".new")).filter { it.exists() }) {
+                parse(candidate.readText(Charsets.UTF_8), projectId, document)
             }
-            return Draft(o.getString("text"), o.getString("baseText"))
+            val payload = AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+            return parse(payload, projectId, document)
         } catch (e: Exception) {
             throw IOException("Draft could not be loaded; refusing to overwrite it", e)
         }
+    }
+
+    /** Explicit preservation only: no replacement, deletion, parsing recovery or automatic restore. */
+    fun preserveUnreadable(projectId: String, document: String): File {
+        val file = fileFor(projectId, document)
+        val backup = File(file.path + ".bak")
+        val sources = listOf(file, backup, File(file.path + ".new")).filter { it.exists() }
+        val unreadable = sources.firstOrNull { candidate ->
+            try {
+                parse(candidate.readText(Charsets.UTF_8), projectId, document)
+                false
+            } catch (_: Exception) { true }
+        } ?: if (!file.exists() && !backup.exists()) {
+            // An orphan pending write cannot be opened by AtomicFile, even if its JSON is complete.
+            sources.singleOrNull() ?: throw IOException("No draft to preserve")
+        } else throw IOException("No unreadable draft to preserve; readable drafts are retained")
+        val preservedRoot = File(directory, "preserved")
+        if (!preservedRoot.isDirectory && !preservedRoot.mkdirs()) throw IOException("Cannot preserve draft")
+        val destination = File(preservedRoot, UUID.randomUUID().toString())
+        if (!destination.mkdir()) throw IOException("Cannot create unique preservation directory")
+        // Keep the unreadable file in place until every other move succeeds, so partial failure
+        // continues to block fresh writes. Files.move without REPLACE_EXISTING never overwrites.
+        for (source in sources.filter { it != unreadable } + unreadable) {
+            Files.move(source.toPath(), File(destination, source.name).toPath())
+        }
+        return destination
     }
 
     fun save(projectId: String, document: String, baseText: String, text: String) {
