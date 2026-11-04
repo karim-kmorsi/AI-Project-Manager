@@ -24,6 +24,7 @@ import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import androidx.lifecycle.lifecycleScope
 
@@ -34,17 +35,19 @@ data class ProjectItem(
     val tasks: List<TaskItem> = emptyList()
 )
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
     private lateinit var storage: ProjectStorage
     private var pendingExportToken: String? = null
     private var exportPreparing = false
     private val exportStore by lazy { PendingExport(File(cacheDir, "pending-exports")) }
     private var restorePreviewState by mutableStateOf<RestorePreview.Summary?>(null)
     private var restorePreviewError by mutableStateOf<String?>(null)
+    private var restorePreviewJob: Job? = null
     private val restorePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        restorePreviewJob?.cancel()
         restorePreviewState = null
         restorePreviewError = null
-        if (uri != null) lifecycleScope.launch {
+        restorePreviewJob = if (uri != null) lifecycleScope.launch {
             try {
                 restorePreviewState = withContext(Dispatchers.IO) {
                     RestoreCandidate.inspectSelection(contentResolver, uri)
@@ -53,9 +56,9 @@ class MainActivity : ComponentActivity() {
             catch (_: Exception) {
                 restorePreviewError = "ملف النسخة الاحتياطية غير صالح أو تعذرت قراءته. لم تتغير بياناتك."
             }
-        }
+        } else null
     }
-    private fun notifyUser(message: String) {
+    protected open fun notifyUser(message: String) {
         android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
     }
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -84,6 +87,8 @@ class MainActivity : ComponentActivity() {
         pendingExportToken = savedInstanceState?.getString("pendingExportToken")
         storage = ProjectStorage(File(filesDir, "projects.json"))
         setContent { MaterialTheme { ProjectManagerApp(storage, onRestorePreview = {
+            // An older provider read must not publish into a newer picker/preview request.
+            restorePreviewJob?.cancel()
             restorePreviewState = null
             restorePreviewError = null
             try { restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }

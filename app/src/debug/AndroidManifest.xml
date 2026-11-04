@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name=".IsolatedWorkflowActivity" android:exported="false" />
+        <activity android:name=".DeterministicPickerActivity" android:exported="false" />
+        <provider android:name=".DeterministicDocumentProvider"
+            android:authorities="com.karim.aiprojectmanager.debug.documents"
+            android:exported="false" />
+    </application>
+</manifest>

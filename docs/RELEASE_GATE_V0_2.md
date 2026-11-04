@@ -74,7 +74,9 @@ The title, “v0.2: keep Blueprint and Roadmap Save button visible”, and “Fi
 - If the remaining included quota becomes insufficient, stop expensive cloud builds rather than incur unapproved charges.
 
 ## Next engineering task
-Add focused automated coverage for manual Save, Roadmap editing and dirty-editor navigation guards, with isolated storage/draft handling; then address save-failure/recreation and actual document-picker gaps recorded in the local audit. Obtain separate authorization for implementation or PR metadata changes. Do not wire real restore. Complete the physical-device and signing gates before release.
+The [2026-11-04 local follow-up](V0_2_LOCAL_REGRESSION_AUDIT.md#autonomous-engineering-follow-up--2026-11-04) extends the existing manual Save/navigation tests with actual Blueprint/Roadmap activity recreation, failed-save recovery and real ActivityResult callbacks using controlled debug picker/provider fixtures. All 106 local instrumentation tests pass; overlapping backup previews now cancel older reads to prevent stale results. These local changes have not been pushed or run in cloud CI.
+
+Next, cover actual system DocumentsUI export/preview success and cancellation on a disposable emulator; fixture callbacks do not establish system picker, third-party provider or URI-grant behavior. Actual process-death, physical-device and signing/update gates remain open. Do not wire real restore or treat this engineering result as release acceptance.
 
 ## Release status
 Implemented functionality is not the same as a verified release. Ship only after the checks above and explicit user approval.
