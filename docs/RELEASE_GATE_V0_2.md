@@ -51,7 +51,7 @@ scale, signing and physical-device gates remain open; **NOT Ready for Release**.
 ## Reduced v0.2 release scope
 This gate reconciles the current release with the broader historical requirements in [V0_2_APPROVED_PLAN.md](V0_2_APPROVED_PLAN.md); deferred requirements remain on the roadmap. Earlier MVP, Gate 0 and next-step documents are historical snapshots where they conflict with this gate. Inclusion here describes release intent and implemented behavior, not completed acceptance testing.
 
-- Offline project creation with name/description, listing and selection. There is no project name/description edit form.
+- Offline project creation with name/description, listing and selection. Overview now offers an explicit title/description edit dialog using the existing save path: blank titles are blocked, Cancel does not save, and save failures retain the form. Validation for this feature: 3 focused JVM tests passed; debug assembly and Android test compilation succeeded. The 3 new isolated UI tests are compiled only; UI/device acceptance remains deferred until the end of the build cycle.
 - Freeform Blueprint/Roadmap editing, explicit Save, autosave drafts and saved/pending/error feedback.
 - Simple task creation and manual status changes, including VERIFIED; progress counts tasks with that stored status. The app does not independently verify evidence or code.
 - Existing-format JSON export to an external document.
@@ -99,7 +99,7 @@ The current candidate still needs physical-device checks of keyboard-visible Sav
 
 ## Deferred beyond v0.2
 - Real restore/replacement/merge of user data. Isolated engines require deeper crash/concurrency verification before exposure.
-- Editing/expanding project metadata, archive/unarchive, richer task fields and structured milestone links.
+- Expanding project metadata beyond the existing title/description, archive/unarchive, richer task fields and structured milestone links.
 - Broader task/decision search, active/archived and task-state filters, decision records, audit log and history. Simple project-name/description search is implemented in the current local baseline.
 - Multilingual settings and selectable light/dark/system themes.
 - GitHub account integration / automatic repository sync.

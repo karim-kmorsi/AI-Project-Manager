@@ -209,6 +209,7 @@ fun ProjectManagerApp(
     var writeError by remember { mutableStateOf(false) }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
+    var editingProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var editorDirty by remember { mutableStateOf(false) }
     var warnOnExit by remember { mutableStateOf(false) }
     fun update(item: ProjectItem) {
@@ -281,6 +282,7 @@ fun ProjectManagerApp(
                             Modifier.weight(1f).fillMaxWidth().verticalScroll(overviewScrollState).padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            TextButton(onClick = { editingProjectId = active.id }) { Text("تعديل المشروع") }
                             Text(active.description)
                             val verified = active.tasks.count { it.status == "VERIFIED" }
                             Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
@@ -335,6 +337,32 @@ fun ProjectManagerApp(
         AlertDialog(onDismissRequest = { warnOnExit = false }, title = { Text("تعديلات غير محفوظة") },
             text = { Text("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
             confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
+    }
+    val editingProject = active?.takeIf { it.id == editingProjectId }
+    if (editingProject != null) {
+        key(editingProject.id) {
+            var name by rememberSaveable { mutableStateOf(editingProject.name) }
+            var description by rememberSaveable { mutableStateOf(editingProject.description) }
+            var saveError by rememberSaveable { mutableStateOf(false) }
+            AlertDialog(onDismissRequest = { editingProjectId = null },
+                title = { Text("تعديل المشروع") },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (saveError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") },
+                            singleLine = true, isError = name.isBlank())
+                        OutlinedTextField(description, { description = it }, label = { Text("وصف مختصر") })
+                    }
+                },
+                confirmButton = { TextButton(onClick = {
+                    try {
+                        val edited = editedProjectMetadata(editingProject, name, description)
+                        if (edited != editingProject) update(edited)
+                        editingProjectId = null
+                    } catch (_: Exception) { saveError = true }
+                }, enabled = name.isNotBlank()) { Text("حفظ") } },
+                dismissButton = { TextButton(onClick = { editingProjectId = null }) { Text("إلغاء") } })
+        }
     }
     if (showNew) {
         var name by rememberSaveable { mutableStateOf("") }
