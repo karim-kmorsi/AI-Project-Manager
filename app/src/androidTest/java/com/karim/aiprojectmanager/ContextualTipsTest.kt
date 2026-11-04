@@ -8,6 +8,12 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ContextualTipsTest {
+    @Test fun newProjectTipExplainsRequiredInputAndNextStep() {
+        val tip = contextualTip("new_project")
+        assertTrue(tip.contains("اسمًا واضحًا"))
+        assertTrue(tip.contains("Blueprint"))
+    }
+
     @Test fun blueprintTipDescribesRequirements() {
         assertTrue(contextualTip("blueprint").contains("متطلباته"))
     }
