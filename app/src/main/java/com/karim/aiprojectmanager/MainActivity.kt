@@ -5,6 +5,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -273,21 +275,27 @@ fun ProjectManagerApp(
                     }
                 }
                 when (tab) {
-                    0 -> Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(active.description)
-                        val verified = active.tasks.count { it.status == "VERIFIED" }
-                        Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
-                        Text(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
-                        val pendingTasks = pendingTaskDetails(active.tasks)
-                        if (pendingTasks.isNotEmpty()) {
-                            Text("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
-                            pendingTasks.forEach { detail ->
-                                Text(detail, style = MaterialTheme.typography.bodySmall)
+                    0 -> key(active.id) {
+                        val overviewScrollState = rememberScrollState()
+                        Column(
+                            Modifier.weight(1f).fillMaxWidth().verticalScroll(overviewScrollState).padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(active.description)
+                            val verified = active.tasks.count { it.status == "VERIFIED" }
+                            Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
+                            Text(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
+                            val pendingTasks = pendingTaskDetails(active.tasks)
+                            if (pendingTasks.isNotEmpty()) {
+                                Text("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
+                                pendingTasks.forEach { detail ->
+                                    Text(detail, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
+                            Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
+                            Text("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
+                            Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                         }
-                        Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
-                        Text("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
-                        Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
                         update(active.copy(blueprint = it))
