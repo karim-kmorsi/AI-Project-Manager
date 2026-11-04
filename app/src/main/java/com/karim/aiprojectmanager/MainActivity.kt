@@ -267,6 +267,13 @@ fun ProjectManagerApp(
                         val verified = active.tasks.count { it.status == "VERIFIED" }
                         Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
                         Text(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
+                        val pendingTasks = pendingTaskDetails(active.tasks)
+                        if (pendingTasks.isNotEmpty()) {
+                            Text("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
+                            pendingTasks.forEach { detail ->
+                                Text(detail, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                         Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
                         Text("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
                         Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
