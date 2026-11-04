@@ -414,6 +414,7 @@ private fun EditableDocument(
                 } catch (_: Exception) { saveError = true }
             }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
         }
+        Text(contextualTip(document), style = MaterialTheme.typography.bodySmall)
         Text(
             when {
                 recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
@@ -468,6 +469,8 @@ private fun EditableDocument(
 private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Boolean) {
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
     Column(Modifier.padding(16.dp)) {
+        Text(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
             label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
