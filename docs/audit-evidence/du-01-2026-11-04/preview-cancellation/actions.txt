@@ -1,0 +1,8 @@
+Verified fixture/export/source hash and prior real CreateDocument evidence.
+Tapped application preview button; verified real OpenDocument picker in Downloads.
+Tapped exact unique filename row; asserted preview name, 1 project, 1 task, no replace/merge text.
+Tapped application Close; verified dismissal.
+Tapped preview again; verified real picker; sent one Android Back without selecting.
+Verified MainActivity immediately and after five seconds; no preview/error.
+Opened existing project; task visible.
+Read final source bytes; byte equality and hashes confirmed. No new private files or Downloads documents.

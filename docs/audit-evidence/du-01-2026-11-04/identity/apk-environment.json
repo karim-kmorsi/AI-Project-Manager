@@ -1,0 +1,10 @@
+{
+  "branch": "codex/baseline-reconciliation-v0-2",
+  "commit": "fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c",
+  "serial": "emulator-5554",
+  "avd": "REDMAGIC_10_Pro_Test",
+  "api": 35,
+  "application_id": "com.karim.aiprojectmanager",
+  "source_before_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "installed_apk_sha256": "14f95b59bc12a99f7194bc54b8f03c76512b9e6324f35cbf562b06447c7e2acd"
+}

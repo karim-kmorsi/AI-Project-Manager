@@ -1,0 +1,24 @@
+{
+  "result": "INCONCLUSIVE",
+  "reason": "Unexpected UI state during one-task setup: after text-entry/Back sequence, project list displayed 0 / 0 tasks. Test stopped before document pickers.",
+  "observed_project_count": 1,
+  "observed_task_count": 0,
+  "source_at_stop_sha256": "62a0ebad0ca1e8a972f8d26eec6dd24b4a55ad00190f11d32f9b009ad702608d",
+  "steps": {
+    "baseline_and_emulator_checks": "PASS",
+    "candidate_identity_hash_certificate": "PASS",
+    "installed_certificate_match": "PASS",
+    "install_and_production_launch": "PASS",
+    "unique_project_creation": "PASS",
+    "exactly_one_task_setup": "FAIL",
+    "initial_post-task_snapshot": "NOT EXECUTED",
+    "CreateDocument_export": "NOT EXECUTED",
+    "export_byte_equality": "NOT EXECUTED",
+    "OpenDocument_preview": "NOT EXECUTED",
+    "preview_close": "NOT EXECUTED",
+    "picker_cancellation": "NOT EXECUTED",
+    "final_source_equality": "NOT EXECUTED"
+  },
+  "diagnosis": "Observed setup/navigation mismatch; probable automation focus/keyboard-dismissal interaction. No evidence of an export or preview defect. No speculative fix attempted.",
+  "cleanup": "None; disposable project retained."
+}

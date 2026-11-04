@@ -298,33 +298,54 @@ UI hierarchies; it is not used alone to claim correct preview or cancellation be
 No restore, merge or import operation was invoked. Final acceptance created no new project,
 task or export. Existing fixture and exports were left intact; no cleanup was authorized.
 
-### Local evidence locations and documentation verification
+### Durable evidence and documentation verification
 
-Evidence remains outside the repository in the host temporary directory (normally `/tmp`).
-The following directory names identify the existing local evidence; they are not repository-relative
-links or durable archived artifacts. No evidence was copied, deleted or altered by this update.
+The privacy-reviewed bundle is preserved under
+[`audit-evidence/du-01-2026-11-04/`](audit-evidence/du-01-2026-11-04/manifest.json).
+Its [provenance/checksum manifest](audit-evidence/du-01-2026-11-04/manifest.json) records the tested
+commit and emulator, APK hash and public certificate fingerprint, acceptance-criterion mappings,
+relative file paths, byte sizes, full SHA-256 values, source artifact hashes and transformations.
+The manifest distinguishes the scoped PASS from the two historical INCONCLUSIVE observations.
 
-- `DU01-filename-diagnosis-54b3msf4/`: `result.json`, `actions.txt`,
-  `01-picker-initial.png`, `02-after-filename-focus.png`, `04-before-save.png`,
-  `04-before-save.xml`, `05-after-save.xml`, `new-export.json`, source-before/after JSON,
-  `existing-default-export.json`, and `relevant-logcat.txt` establish the checked unique-name
-  CreateDocument export and preservation of the existing default export.
-- `DU01-final-av28ek0f/`: `result.json`, `actions.txt`, `hashes.json`,
-  `evidence-sha256.json`, `02-picker-component.txt`, `02-open-document.png`,
-  `03-read-only-preview.png`/XML, `04-preview-closed.xml`, `05-cancel-picker.png`/XML,
-  `06-cancel-return.png`/XML, `07-cancel-observed.png`/XML and `08-project-accessible.png`/XML
-  establish selection, preview contents, closure, cancellation and continued project access.
-  `source-before.json`, `exported.json`, `source-after.json`, private-file inventories,
-  `downloads-final.txt` and `relevant-logcat.txt` establish integrity and diagnostic observations.
-- Earlier APK identity is recorded in `DU01-resumed-1etke422/metadata.json` and
-  `installed-certificate.txt`; the final phase did not reinstall the application.
+- Export: [initial real picker](audit-evidence/du-01-2026-11-04/export/01-picker-initial.png),
+  [filename before Save](audit-evidence/du-01-2026-11-04/export/04-before-save.png),
+  [full filename hierarchy](audit-evidence/du-01-2026-11-04/export/04-before-save.xml),
+  [actions](audit-evidence/du-01-2026-11-04/export/actions.txt) and
+  [result](audit-evidence/du-01-2026-11-04/export/result.json).
+- Preview/cancellation: [real OpenDocument picker](audit-evidence/du-01-2026-11-04/preview-cancellation/02-open-document.png),
+  [read-only preview](audit-evidence/du-01-2026-11-04/preview-cancellation/03-read-only-preview.png),
+  [post-cancellation observation](audit-evidence/du-01-2026-11-04/preview-cancellation/07-cancel-observed.png)
+  and [final result](audit-evidence/du-01-2026-11-04/preview-cancellation/result.json).
+  Additional UI hierarchies, foreground component and action observations are mapped in the manifest.
+- Integrity: [initial source](audit-evidence/du-01-2026-11-04/integrity/source-before.json),
+  [export](audit-evidence/du-01-2026-11-04/integrity/exported.json),
+  [final source](audit-evidence/du-01-2026-11-04/integrity/source-after.json), private-file inventories
+  and final Downloads inventory preserve the synthetic fixture and byte-equality evidence.
+- Identity: [APK/environment metadata](audit-evidence/du-01-2026-11-04/identity/apk-environment.json)
+  and [public debug certificate](audit-evidence/du-01-2026-11-04/identity/installed-certificate.txt)
+  preserve prior checks without retaining an APK binary or private signing material.
+- History: [initial setup INCONCLUSIVE](audit-evidence/du-01-2026-11-04/history/initial-setup-inconclusive.json)
+  and [filename-entry INCONCLUSIVE](audit-evidence/du-01-2026-11-04/history/filename-entry-inconclusive.json)
+  remain separate from the successful acceptance result.
+- Diagnostics: [export excerpts](audit-evidence/du-01-2026-11-04/diagnostics/export-diagnostics.txt)
+  and [preview/cancellation excerpts](audit-evidence/du-01-2026-11-04/diagnostics/preview-cancellation-diagnostics.txt)
+  retain unexplained system messages with unrelated log content and transient identifiers omitted.
+  Excerpts are not complete logs or independent proof that errors were absent.
 
-During this documentation-only review, all final manifest checksums matched their preserved
-files; seven source/export JSON snapshots across the successful export and final directories
-matched the SHA-256 above and the expected fixture. UI hierarchies, representative screenshots,
-private-file inventories, Downloads inventory and log findings were inspected directly.
-No acceptance test, build, lint or emulator operation was rerun. Temporary evidence can be lost;
-repository-independent durable preservation requires a separately approved, privacy-reviewed task.
+The bundle contains 28 payload files plus the manifest. Screenshots were visually reviewed;
+selected text/UI records and synthetic JSON were inspected. Sanitized derivatives replace the
+temporary directory reference, normalize the foreground-component record and omit the earlier
+attempt's intended filename from identity metadata. Diagnostic extracts omit process/thread/user
+numbers and transient handles; timestamps, severity and relevant messages remain. Full source and
+preserved checksums and transformations are recorded. No raw logs, clipboard-content overlays,
+APK binaries, PID files, broad activity dumps, host paths, private keys or unrelated account data
+are included.
+
+All manifest checksums, local documentation links, source/export/final byte equality and original
+five-directory inventories were verified during preservation. All original evidence remains outside
+the repository, unchanged. No acceptance tests, builds, lint, emulator or GitHub operations were
+rerun. Prior absence-of-error and environment observations remain evidence from their original
+execution, not new claims inferred from sanitized excerpts.
 
 ### Earlier INCONCLUSIVE attempts and unexplained diagnostics
 
@@ -354,6 +375,9 @@ keyboard/background/restart workflows, or non-destructive physical-device update
 Existing 12 lint warnings and the unexplained system diagnostics remain recorded. No CI conclusion
 is inferred from this local acceptance evidence.
 
-Next: obtain separate authorization for privacy-reviewed durable preservation of the existing
-DU-01 evidence before temporary files expire. The [release gate](RELEASE_GATE_V0_2.md) remains
-open. This documentation commit authorizes no push, merge, release, migration or V1.5 implementation.
+Durable preservation is complete locally; it does not close the remaining gates. Recommended next
+acceptance test: separately authorize recreation of production MainActivity while the real
+OpenDocument picker is foreground, then selection/preview and source-byte preservation checks on
+the disposable emulator. This would test activity recreation, not process death. The
+[release gate](RELEASE_GATE_V0_2.md) remains open. This evidence/documentation update authorizes no
+push, merge, release, migration or V1.5 implementation.

@@ -1,0 +1,14 @@
+Selected diagnostic excerpts only; not a complete log or independent proof of error absence.
+PID/TID, user numbers and transient input-channel handles omitted.
+
+11-04 22:26:53.764 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:26:53.780 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:26:53.789 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:26:54.288 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:26:54.325 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:26:54.685 W PackageConfigPersister: App-specific configuration not found for packageName: com.google.android.documentsui
+11-04 22:27:11.903 W PackageConfigPersister: App-specific configuration not found for packageName: com.google.android.documentsui
+11-04 22:28:25.545 W DirectoryLoader: Failed to query
+11-04 22:28:25.545 W DirectoryLoader: android.os.OperationCanceledException: The operation has been canceled.
+11-04 22:28:25.613 W PackageConfigPersister: App-specific configuration not found for packageName: com.karim.aiprojectmanager
+11-04 22:28:25.689 W InputManager-JNI: Input channel object [transient handle omitted] was disposed without first being removed with the input manager!

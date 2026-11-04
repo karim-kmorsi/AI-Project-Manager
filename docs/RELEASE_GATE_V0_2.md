@@ -39,6 +39,15 @@ Visual/RTL/accessibility, very large lists/documents, actual system document pro
 process death, physical-device workflows, stable signing and non-destructive update preservation
 remain outstanding. V1.5 implementation is not included or authorized by this checkpoint.
 
+## DU-01 evidence update — 2026-11-04
+
+[DU-01 real DocumentsUI acceptance](V0_2_LOCAL_REGRESSION_AUDIT.md#du-01-real-documentsui-acceptance--2026-11-04)
+passed the scoped local-Downloads export, read-only preview and cancellation checks on tested commit
+`fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c`. The
+[durable privacy-reviewed evidence manifest](audit-evidence/du-01-2026-11-04/manifest.json)
+keeps earlier INCONCLUSIVE attempts separate. Broader provider/lifecycle, visual/accessibility,
+scale, signing and physical-device gates remain open; **NOT Ready for Release**.
+
 ## Reduced v0.2 release scope
 This gate reconciles the current release with the broader historical requirements in [V0_2_APPROVED_PLAN.md](V0_2_APPROVED_PLAN.md); deferred requirements remain on the roadmap. Earlier MVP, Gate 0 and next-step documents are historical snapshots where they conflict with this gate. Inclusion here describes release intent and implemented behavior, not completed acceptance testing.
 

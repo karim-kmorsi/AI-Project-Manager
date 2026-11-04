@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "scope": "Focused filename-entry diagnosis only; no preview or cancellation acceptance testing.",
+  "branch": "codex/baseline-reconciliation-v0-2",
+  "commit": "fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c",
+  "avd": "emulator-5554 / REDMAGIC_10_Pro_Test / API 35",
+  "filename": "DU-01-filename-54b3msf4.json",
+  "source_before_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "source_after_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "new_export_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "existing_export_unchanged": true,
+  "observations": [
+    "Real DocumentsUI filename field focused without closure.",
+    "MOVE_END and 29 DEL events cleared field; empty state verified.",
+    "Unique name entered and confirmed via hierarchy/screenshot before Save.",
+    "One explicit Save created the new correctly named file; JSON valid and exact source bytes preserved."
+  ],
+  "cause_assessment": "Prior action batch lacked intermediate UI checks. New per-action checked sequence succeeded without Back/Enter/Ctrl+A. No system/application closure reproduced; exact trigger in prior tap/Ctrl+A/text sequence remains unresolved.",
+  "crash_markers": 0,
+  "permission_markers": 0,
+  "cleanup": "None; both exports and existing fixture retained."
+}
