@@ -326,6 +326,7 @@ fun ProjectManagerApp(
         AlertDialog(onDismissRequest = { showNew = false },
             title = { Text("إنشاء مشروع") },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
                 if (writeError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
                 OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") })
                 OutlinedTextField(details, { details = it }, label = { Text("وصف مختصر") })

@@ -5,6 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ContextualTipsTest {
+    @Test fun newProjectTipExplainsRequiredInputAndNextStep() {
+        val tip = contextualTip("new_project")
+        assertTrue(tip.contains("اسمًا واضحًا"))
+        assertTrue(tip.contains("Blueprint"))
+    }
+
     @Test fun blueprintTipDescribesRequirements() {
         assertTrue(contextualTip("blueprint").contains("متطلباته"))
     }
