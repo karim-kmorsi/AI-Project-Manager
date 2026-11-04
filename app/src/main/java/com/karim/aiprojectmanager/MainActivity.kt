@@ -278,6 +278,7 @@ fun ProjectManagerApp(
                         val verified = active.tasks.count { it.status == "VERIFIED" }
                         Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
                         Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
+                        Text("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
                         Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
