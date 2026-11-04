@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="com.karim.aiprojectmanager.PendingTaskDetailsTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-04T15:03:38.304Z" time="0.007">
+  <testcase name="unknownLegacyStatusRemainsVisible" classname="com.karim.aiprojectmanager.PendingTaskDetailsTest" time="0.006" />
+  <testcase name="emptyAndFullyVerifiedProjectsHaveNoPendingDetails" classname="com.karim.aiprojectmanager.PendingTaskDetailsTest" time="0.0" />
+  <testcase name="pendingTasksKeepTitlesStatusesAndOriginalOrder" classname="com.karim.aiprojectmanager.PendingTaskDetailsTest" time="0.0" />
+  </testsuite>

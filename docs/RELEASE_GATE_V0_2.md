@@ -1,8 +1,43 @@
 # AI Project Manager — v0.2 release gate
 
-Updated: 2026-11-03
-Branch: `feature/v0-2-editor-ux`
+Updated: 2026-11-04
+Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
+
+## Current local reconciliation baseline — 2026-11-04
+
+Application/code baseline: `8824a110afbd2e936e6a14ee5464d0e929b59976`.
+Baseline Reconciliation is implemented and locally tested; **NOT Ready for Release**.
+The historical checkpoints below retain their original commit-specific findings and CI results.
+
+Six reference features are integrated: project-name/description search, offline Next-Step Guidance,
+editor/task Contextual Tips, project-creation guidance, current task-status summaries, and pending-task
+titles/statuses. These read saved data without inferring independent verification. Unknown task
+statuses and task order remain preserved. Original local backup-preview cancellation and
+lifecycle/provider protections remain intact.
+
+Overview now scrolls within the available area below the fixed project tabs. Existing content,
+16dp padding, 12dp spacing and navigation guards are preserved; scroll state is scoped to the
+selected project. A 40-task regression checks end-content access, navigation, project switching
+and unchanged stored bytes. The list still renders eagerly.
+
+Verification on this code, recorded before the local code commit:
+
+- Complete local JVM suite: **22 passed, 0 failures/errors/skips**.
+- Actual Android instrumentation: **107 passed, 0 failures/errors/skips**, 52.824 seconds,
+  on `emulator-5554`, `REDMAGIC_10_Pro_Test`, Android 15/API 35, 320 × 640 at 160 dpi.
+- Debug and Android test APK assembly: **previously reported successful**; no standalone build
+  transcript is preserved in this documentation update.
+- Lint: **0 errors, 12 existing warnings**; this does not imply warning-free validation.
+- Local work only: no GitHub push or main-branch changes were performed during reconciliation;
+  no cloud CI validation is claimed for this baseline.
+
+See the [reconciliation audit and preserved evidence](V0_2_LOCAL_REGRESSION_AUDIT.md#baseline-reconciliation--2026-11-04)
+for provenance, counts and limitations. Matching emulator debug certificates permit the tested
+emulator update; they do not close stable release-signing or phone update/data-continuity gates.
+Visual/RTL/accessibility, very large lists/documents, actual system document providers and grants,
+process death, physical-device workflows, stable signing and non-destructive update preservation
+remain outstanding. V1.5 implementation is not included or authorized by this checkpoint.
 
 ## Reduced v0.2 release scope
 This gate reconciles the current release with the broader historical requirements in [V0_2_APPROVED_PLAN.md](V0_2_APPROVED_PLAN.md); deferred requirements remain on the roadmap. Earlier MVP, Gate 0 and next-step documents are historical snapshots where they conflict with this gate. Inclusion here describes release intent and implemented behavior, not completed acceptance testing.
@@ -56,7 +91,7 @@ The current candidate still needs physical-device checks of keyboard-visible Sav
 ## Deferred beyond v0.2
 - Real restore/replacement/merge of user data. Isolated engines require deeper crash/concurrency verification before exposure.
 - Editing/expanding project metadata, archive/unarchive, richer task fields and structured milestone links.
-- Search, filters, decision records, audit log and history.
+- Broader task/decision search, active/archived and task-state filters, decision records, audit log and history. Simple project-name/description search is implemented in the current local baseline.
 - Multilingual settings and selectable light/dark/system themes.
 - GitHub account integration / automatic repository sync.
 - Cosmetic redesign or new data format.
@@ -74,6 +109,13 @@ The title, “v0.2: keep Blueprint and Roadmap Save button visible”, and “Fi
 - If the remaining included quota becomes insufficient, stop expensive cloud builds rather than incur unapproved charges.
 
 ## Next engineering task
+
+Current local next step: review and close the documentation/evidence handoff for the baseline
+above. Subsequent system DocumentsUI/provider, process-death, visual/accessibility, scale,
+physical-device and signing/update checks need separately scoped authorization. Do not infer
+release readiness or V1.5 authorization. The following paragraph records the prior 106-test
+checkpoint and its proposed follow-up, rather than the latest test count.
+
 The [2026-11-04 local follow-up](V0_2_LOCAL_REGRESSION_AUDIT.md#autonomous-engineering-follow-up--2026-11-04) extends the existing manual Save/navigation tests with actual Blueprint/Roadmap activity recreation, failed-save recovery and real ActivityResult callbacks using controlled debug picker/provider fixtures. All 106 local instrumentation tests pass; overlapping backup previews now cancel older reads to prevent stale results. These local changes have not been pushed or run in cloud CI.
 
 Next, cover actual system DocumentsUI export/preview success and cancellation on a disposable emulator; fixture callbacks do not establish system picker, third-party provider or URI-grant behavior. Actual process-death, physical-device and signing/update gates remain open. Do not wire real restore or treat this engineering result as release acceptance.

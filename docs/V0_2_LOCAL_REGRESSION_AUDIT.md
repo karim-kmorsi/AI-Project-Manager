@@ -134,3 +134,108 @@ stale UI publication; it does not guarantee interruption of a provider's blockin
 Next engineering task: add a focused emulator smoke test using actual system DocumentsUI for
 export/preview success and cancellation, with disposable documents and explicit emulator targeting.
 No physical-device, signing or release-readiness claim follows from this session.
+
+## Baseline Reconciliation — 2026-11-04
+
+Date: 2026-11-04 (Asia/Kathmandu). Branch: `codex/baseline-reconciliation-v0-2`.
+Application/code baseline: **`8824a110afbd2e936e6a14ee5464d0e929b59976`**.
+Status: reconciliation implemented and locally tested; **NOT Ready for Release**.
+This appended checkpoint supersedes earlier current-status counts without rewriting historical findings.
+
+### Exact provenance and scope
+
+Original local safety commit: `c8623f3cd4cd65aaf1b2bcaf5b11f4c774fabb4b`.
+Reference: `feature/project-list-search` at `07809a11cc92e514d7f5c271b9a24de501498dd9`.
+Their merge base was `fec49d59ac8ad05f1bfc387992a295cf9508460a`; the original local side
+had one unique commit and the reference had six. Integration was performed as scoped local
+changes on a separate branch, not a branch merge.
+
+| Feature/correction | Local commit |
+| --- | --- |
+| Project-list search by name/description | `7a82da5793e39c4fa8b28528f5e3663de7529d62` |
+| Next-Step Guidance | `c1d437a778c483c3b7694e63a50f0bdeb45558e2` |
+| Contextual Tips for editors/tasks | `b18f29376ffc1103f774dfbcbe74e011be9aa017` |
+| Project-creation guidance | `a66c6677040d02ef9c157f9a283455c53e2be3d0` |
+| Task Status Summaries | `5e1c9d23f60f02fb984ce9779164177a46c6bde0` |
+| Pending-Task Details | `a6adb9721ac4fdb157dc7f3a06b043aaff25431a` |
+| Overview scrolling fix and focused UI regression | `8824a110afbd2e936e6a14ee5464d0e929b59976` |
+
+The five feature helpers match the reference implementation; project-creation guidance shares
+ContextualTips. All reference feature-test bodies/assertions are represented in five JVM test
+classes, with Android runner imports/annotations removed. JUnit 4.13.2 was added for local JVM tests.
+Search retains project order and matches name/description without case sensitivity or surrounding
+query spaces. Guidance/tips are offline and informational. Status summaries and pending-task
+labels use saved manual statuses, preserve unknown values, and do not change task order/data or
+claim independent verification.
+
+Original local backup-preview cancellation, overridable lifecycle/provider test seams, debug
+fixtures, existing instrumentation tests, editor draft/save/navigation guards, and JSON persistence
+were preserved. No schema, storage implementation, signing, main-branch, GitHub or physical-phone
+changes were made. Reconciliation was not pushed and has no claimed cloud CI validation.
+
+Overview previously had no vertical scrolling path for long content. The correction bounds only
+Overview to the space below the fixed tabs and adds vertical scrolling keyed to project identity.
+All text, task order, 16dp padding, 12dp spacing, app bar, tab handlers and Back/dirty-editor guards
+are retained. `OverviewScrollingUiTest` reaches the footer and last pending task in a 40-task
+fixture, checks visible navigation and tab switching, opens another project at its own initial
+scroll position, and asserts unchanged stored bytes. It does not establish large-list performance.
+
+### Verification results and evidence provenance
+
+These are earlier executed results on the final code, inspected during documentation work;
+**no builds, tests, lint or device operations were rerun for this documentation update**.
+
+| JVM class | Passed | Failures/errors/skips |
+| --- | ---: | --- |
+| ProjectListSearchTest | 3 | 0/0/0 |
+| NextStepGuidanceTest | 8 | 0/0/0 |
+| ContextualTipsTest (including creation guidance) | 5 | 0/0/0 |
+| TaskStatusSummaryTest | 3 | 0/0/0 |
+| PendingTaskDetailsTest | 3 | 0/0/0 |
+| **Complete local JVM suite** | **22** | **0/0/0** |
+
+- Actual complete Android instrumentation run: **107 passed, 0 failures, 0 errors, 0 skips**,
+  **52.824 seconds**; the prior 106 tests plus the Overview regression in one run. This is actual
+  instrumentation execution, not merely compilation. Environment previously verified:
+  `emulator-5554`, AVD `REDMAGIC_10_Pro_Test`, Android 15/API 35, 320 × 640 at 160 dpi.
+- Debug and Android test APK assembly: **previously reported successful**. No standalone build
+  transcript was available for preservation; existing XML/log files do not independently prove
+  assembly. No build was rerun to manufacture evidence.
+- Existing lint report inspected: **0 errors and 12 warnings**. The known warning categories remain
+  SDK/dependency versions, application icon, data-extraction configuration and debug-fixture KTX use.
+- Earlier emulator safety checks reported no existing projects/drafts, matching installed/candidate
+  debug certificates, in-place APK updates without uninstall/reset, isolated fixtures, and no
+  projects/drafts remaining afterward. These environment/data-safety observations are prior session
+  evidence, not newly repeated device checks or proof of physical-device data preservation.
+
+Preserved artifacts under `audit-evidence/baseline-reconciliation-2026-11-04/`:
+
+- [Original instrumentation output, losslessly compressed](audit-evidence/baseline-reconciliation-2026-11-04/instrumentation.log.gz).
+- [Instrumentation results XML](audit-evidence/baseline-reconciliation-2026-11-04/instrumentation-results.xml): exact copy of the existing status-event-derived XML; per-test timings were not captured.
+- JVM XML: [search](audit-evidence/baseline-reconciliation-2026-11-04/TEST-com.karim.aiprojectmanager.ProjectListSearchTest.xml), [guidance](audit-evidence/baseline-reconciliation-2026-11-04/TEST-com.karim.aiprojectmanager.NextStepGuidanceTest.xml), [tips/creation](audit-evidence/baseline-reconciliation-2026-11-04/TEST-com.karim.aiprojectmanager.ContextualTipsTest.xml), [summaries](audit-evidence/baseline-reconciliation-2026-11-04/TEST-com.karim.aiprojectmanager.TaskStatusSummaryTest.xml), [pending tasks](audit-evidence/baseline-reconciliation-2026-11-04/TEST-com.karim.aiprojectmanager.PendingTaskDetailsTest.xml).
+- [Lint report](audit-evidence/baseline-reconciliation-2026-11-04/lint-results-debug.xml).
+- [Evidence provenance and SHA-256 checksums](audit-evidence/baseline-reconciliation-2026-11-04/evidence-provenance.json).
+
+JVM reports omit hostname and properties/output sections; test cases, outcomes, timings and timestamps
+are retained. Lint workspace paths are made repository-relative. Existing instrumentation artifacts
+were copied/compressed without changing results. The provenance file records source and preserved
+hashes and transformations. These are preservation operations, not regenerated test runs. Earlier
+tracked evidence is retained unchanged; the historical 106-test run is distinct from this 107-test run.
+
+### Remaining risks and local closure
+
+- Visual/RTL and mixed-language layout, large fonts, TalkBack/accessibility and keyboard-visible
+  behavior need broader verification. One narrow-emulator regression is not full visual acceptance.
+- Overview still eagerly composes all pending tasks. Very large lists/documents, synchronous
+  persistence costs and saved-state/Binder limits remain unprofiled.
+- Controlled picker/provider fixtures establish callbacks and error handling, not actual system
+  DocumentsUI, third-party providers, URI grants or every provider recreation path.
+- Actual process-death recovery, physical-device keyboard/background/restart workflows, stable
+  release signing/version policy and non-destructive installed-user-data update continuity remain open.
+- Matching debug certificates on this emulator do not establish stable release signing. Synthetic
+  fixtures do not establish preservation of the user's installed-phone data.
+
+The local engineering reconciliation is complete at the code baseline above. Documentation/evidence
+closure does not close the release gate. Further acceptance work requires separately scoped approval;
+no release, push/merge, data migration, live restore or V1.5 implementation is authorized here.
+The [release gate](RELEASE_GATE_V0_2.md) remains authoritative for current restrictions and next steps.

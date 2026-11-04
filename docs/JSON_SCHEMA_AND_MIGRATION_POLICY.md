@@ -37,7 +37,7 @@ Export preserves the validated source bytes in an app-private cache snapshot whi
 ## Existing coverage and remaining gate
 
 - CI build #77 ran 11 Android instrumentation tests successfully, including representative v0.1 load/save/reload tests.
-- Current `ProjectStorage` uses `AtomicFile` and blocks overwriting files it cannot read, but **full schema migration, version rejection, recovery snapshots, and backup export/import are not implemented**.
+- Current `ProjectStorage` uses `AtomicFile` and blocks overwriting files it cannot read, but **full schema migration, version rejection, recovery snapshots, and backup import/restore are not implemented**. Validated JSON export and read-only backup preview are implemented; neither applies an import or restores live data.
 - Tests use isolated synthetic files, **not a copy of data from the user's installed phone**.
 - APK signing/fingerprint compatibility and in-place update remain separate pending Gate 0 checks. Do not uninstall, clear app storage or deploy a differently signed APK to the existing installation.
 
