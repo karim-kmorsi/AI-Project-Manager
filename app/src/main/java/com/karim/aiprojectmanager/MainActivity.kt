@@ -239,11 +239,17 @@ fun ProjectManagerApp(
                 }) { Text("إعادة المحاولة") }
             }
         } else if (active == null) {
+            var searchQuery by rememberSaveable { mutableStateOf("") }
+            val visibleProjects = filterProjectsByQuery(projects, searchQuery)
             LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item { Text("مشاريعي", style = MaterialTheme.typography.headlineMedium) }
                 item { Text("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
                 if (projects.isEmpty()) item { Text("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
-                items(projects, key = { it.id }) { item ->
+                if (projects.isNotEmpty()) {
+                    item { OutlinedTextField(searchQuery, { searchQuery = it }, label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
+                    if (visibleProjects.isEmpty()) item { Text("لا توجد مشاريع تطابق البحث.") }
+                }
+                items(visibleProjects, key = { it.id }) { item ->
                     ElevatedCard(onClick = { activeId = item.id }, modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(item.name, fontWeight = FontWeight.Bold)
