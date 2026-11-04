@@ -10,14 +10,14 @@
   "assembly": "Previously reported successful; standalone build transcript not preserved.",
   "records": [
     {
-      "source": "/tmp/ai-pm-step11-hfctsj14/instrumentation.log",
+      "source": "Original Step 11 instrumentation runner output (instrumentation.log)",
       "source_sha256": "13bda565ee6eccf701c4b9dc5fc431f1cbb0531821734f8d6c1833abd65133bc",
       "preserved_file": "instrumentation.log.gz",
       "preserved_sha256": "b3579b5017e51fab066687679aa16b7df4f6148b3f5e8cfb5d5789c1e539c6de",
       "preservation": "Lossless gzip of original instrumentation output; no results changed."
     },
     {
-      "source": "/tmp/ai-pm-step11-hfctsj14/instrumentation-results.xml",
+      "source": "Original Step 11 status-event-derived results (instrumentation-results.xml)",
       "source_sha256": "6be1690a74999beeff81916403bfa49c6124df9245ef084475e50ecddb8f564c",
       "preserved_file": "instrumentation-results.xml",
       "preserved_sha256": "6be1690a74999beeff81916403bfa49c6124df9245ef084475e50ecddb8f564c",
