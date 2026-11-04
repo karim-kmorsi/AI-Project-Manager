@@ -239,3 +239,121 @@ The local engineering reconciliation is complete at the code baseline above. Doc
 closure does not close the release gate. Further acceptance work requires separately scoped approval;
 no release, push/merge, data migration, live restore or V1.5 implementation is authorized here.
 The [release gate](RELEASE_GATE_V0_2.md) remains authoritative for current restrictions and next steps.
+
+## DU-01 real DocumentsUI acceptance — 2026-11-04
+
+**Verdict: PASS for DU-01 only. v0.2 remains NOT Ready for Release.**
+Tested branch: `codex/baseline-reconciliation-v0-2`.
+Tested commit: `fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c`.
+This checkpoint covers the preserved successful CreateDocument interaction followed by the
+separately authorized final OpenDocument preview/closure/cancellation interaction. It is not a
+claim that the earlier attempts passed or that all steps ran in one uninterrupted session.
+The local Downloads happy path is now evidenced; broader provider/lifecycle gates remain open.
+
+### Environment, identity and fixture
+
+- Owner-approved disposable AVD: `REDMAGIC_10_Pro_Test`; explicitly targeted serial
+  `emulator-5554`; Android 15/API 35. No physical phone was operated on.
+- Production application: `com.karim.aiprojectmanager/.MainActivity`; debuggable local APK.
+  The real foreground picker was
+  `com.google.android.documentsui/com.android.documentsui.picker.PickActivity`.
+  No deterministic picker, mocked callback or isolated instrumentation host was substituted.
+- Previously verified installed APK SHA-256:
+  `14f95b59bc12a99f7194bc54b8f03c76512b9e6324f35cbf562b06447c7e2acd`.
+- Previously verified matching debug signing-certificate SHA-256:
+  `d0e3ac3b24d6fa7b592072df7ed61e25afe3c9f44d9af93fa656c18bb6699bf6`.
+  These earlier identity checks were not repeated with a device during this documentation task.
+- Exactly one disposable project, `DU-01-039c63f3f692`, and one task,
+  `DU-01 disposable task`, status `NOT_STARTED`.
+- Verified new export: `DU-01-filename-54b3msf4.json` in emulator-local Downloads.
+  The earlier default-name export was retained and not overwritten or deleted.
+
+### Acceptance evidence and results
+
+| Required observation | Result |
+| --- | --- |
+| Source fixture and fresh snapshot match the prior task-setup diagnosis | PASS |
+| Real CreateDocument picker; unique filename checked before one explicit Save | PASS |
+| Export exists, parses as JSON, and contains the expected one-project/one-task fixture | PASS |
+| Export is byte-for-byte identical to the private source snapshot | PASS |
+| Real OpenDocument picker selects the exact exported filename from local Downloads | PASS |
+| Preview displays project name, exactly one project and one task | PASS |
+| Preview explicitly states that no data will be replaced or merged | PASS |
+| Application `إغلاق` closes preview; MainActivity responds normally | PASS |
+| Reopened real picker cancelled with Android Back without selecting a document | PASS |
+| No unexpected preview/error immediately or after five seconds; project/task accessible | PASS |
+| Final private source bytes equal the initial snapshot; private file inventory unchanged | PASS |
+| Downloads retains the two prior exports, with no additional document from the final phase | PASS |
+| No relevant app crash/ANR, permission denial or document-read exception observed | PASS |
+
+Private source snapshots were read through authorized debuggable-app `run-as` access without
+modifying the source. The actual exported file was retrieved independently. All source-before,
+export, and source-after snapshots from the successful export/final phases have exact byte equality
+and this SHA-256:
+
+`46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd`
+
+The hash comparison is accompanied by actual UI screenshots, foreground-component records and
+UI hierarchies; it is not used alone to claim correct preview or cancellation behavior.
+No restore, merge or import operation was invoked. Final acceptance created no new project,
+task or export. Existing fixture and exports were left intact; no cleanup was authorized.
+
+### Local evidence locations and documentation verification
+
+Evidence remains outside the repository in the host temporary directory (normally `/tmp`).
+The following directory names identify the existing local evidence; they are not repository-relative
+links or durable archived artifacts. No evidence was copied, deleted or altered by this update.
+
+- `DU01-filename-diagnosis-54b3msf4/`: `result.json`, `actions.txt`,
+  `01-picker-initial.png`, `02-after-filename-focus.png`, `04-before-save.png`,
+  `04-before-save.xml`, `05-after-save.xml`, `new-export.json`, source-before/after JSON,
+  `existing-default-export.json`, and `relevant-logcat.txt` establish the checked unique-name
+  CreateDocument export and preservation of the existing default export.
+- `DU01-final-av28ek0f/`: `result.json`, `actions.txt`, `hashes.json`,
+  `evidence-sha256.json`, `02-picker-component.txt`, `02-open-document.png`,
+  `03-read-only-preview.png`/XML, `04-preview-closed.xml`, `05-cancel-picker.png`/XML,
+  `06-cancel-return.png`/XML, `07-cancel-observed.png`/XML and `08-project-accessible.png`/XML
+  establish selection, preview contents, closure, cancellation and continued project access.
+  `source-before.json`, `exported.json`, `source-after.json`, private-file inventories,
+  `downloads-final.txt` and `relevant-logcat.txt` establish integrity and diagnostic observations.
+- Earlier APK identity is recorded in `DU01-resumed-1etke422/metadata.json` and
+  `installed-certificate.txt`; the final phase did not reinstall the application.
+
+During this documentation-only review, all final manifest checksums matched their preserved
+files; seven source/export JSON snapshots across the successful export and final directories
+matched the SHA-256 above and the expected fixture. UI hierarchies, representative screenshots,
+private-file inventories, Downloads inventory and log findings were inspected directly.
+No acceptance test, build, lint or emulator operation was rerun. Temporary evidence can be lost;
+repository-independent durable preservation requires a separately approved, privacy-reviewed task.
+
+### Earlier INCONCLUSIVE attempts and unexplained diagnostics
+
+- `DU01-acceptance-kzmk_vn1/`: the initial attempt stopped with the project created but zero tasks
+  after a task-entry/Back sequence. The later setup-only diagnosis in
+  `DU01-setup-diagnosis-nj7nnoc1/` confirmed one Add action persisted the task and survived reopening.
+  Automation sequencing/navigation is supported as the setup issue; the precise earlier IME
+  interaction was not established. No application task-save defect was reproduced.
+- `DU01-resumed-1etke422/`: filename-entry automation returned from DocumentsUI and produced the
+  default-name export instead of the intended unique filename. The attempt stopped before preview.
+  The later controlled interaction verified focus, empty field and unique filename before Save.
+  The exact trigger in the earlier tap/Ctrl+A/text sequence remains unresolved. This historical
+  INCONCLUSIVE result is not relabelled as PASS or recorded as a proven application/system defect.
+- During the successful final phase, DocumentsUI logged
+  `No package ID ff found for resource ID 0xffffffff.` System PackageConfigPersister and input-channel
+  disposal warnings also appeared. No associated functional failure, app crash/ANR, permission
+  denial or document-read exception was observed. These diagnostics were not independently
+  root-caused and must not be represented as absent or definitively harmless.
+
+### Remaining release gates and next step
+
+DU-01 establishes a real local-Downloads export/preview/cancellation happy path on one disposable
+emulator. It does not verify process death or recreation while system pickers/providers are active,
+third-party/cloud providers, URI-grant failures, hostile/unavailable providers, large-file behavior,
+full visual/RTL/accessibility, large-list performance, stable release signing/version policy, physical
+keyboard/background/restart workflows, or non-destructive physical-device update/data continuity.
+Existing 12 lint warnings and the unexplained system diagnostics remain recorded. No CI conclusion
+is inferred from this local acceptance evidence.
+
+Next: obtain separate authorization for privacy-reviewed durable preservation of the existing
+DU-01 evidence before temporary files expire. The [release gate](RELEASE_GATE_V0_2.md) remains
+open. This documentation commit authorizes no push, merge, release, migration or V1.5 implementation.
