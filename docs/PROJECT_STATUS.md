@@ -5,6 +5,97 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Phase 2 theme batch — 2026-11-06
+
+Owner-authorized **development-only** theme implementation, starting at
+`1584ec5f62176f477ceef454103db111300ac7a9`. Implementation/tests commit:
+`86b5da7d753562bce666ac0b2ccd0c23878b8ee8`. **NOT Ready for Release**. Gate 0 remains open,
+Phase 1 acceptance remains incomplete, and reduced v0.2 release scope is unchanged. This specifically authorized
+increment does not approve release/distribution or language/localization work. Earlier settings
+checkpoint statements below describe their original scope and evidence.
+
+Implemented locally:
+
+- Exactly SYSTEM / LIGHT / DARK, with SYSTEM (Follow System) as the default and fallback for
+  missing/unsupported stored strings. Invalid values are not automatically rewritten.
+- Stable `AppTheme` at the existing application root; system appearance comes from
+  `isSystemInDarkTheme()`. Explicit modes ignore system appearance. There is no theme-keyed
+  app subtree, intentional Activity recreation, or dynamic-color path. MainActivity handles only
+  `uiMode` configuration changes; other configuration/recreation behavior is not intercepted.
+- Approved Dark backgrounds/cards/text (`#111418`, `#2A2F36`, white, `#C4CCD6`) and Light
+  backgrounds/cards/text (`#F6F8FB`, white, `#17263D`, `#536276`), with explicit semantic
+  surfaces, containers, error, outline and inverse roles. Accessible text/focus primary is cyan
+  `#00C2FF` in Dark and `#0B5ED7` in Light. Existing Save/Add filled actions remain
+  `#0D6EFD` with white content through a shared helper. Black interaction layers darken blue
+  instead of lowering white-text contrast. Existing typography, shapes, spacing, labels and
+  navigation remain; launcher assets are unchanged.
+- Existing private `application_preferences` store, one key `appearance_mode`, with stable
+  SYSTEM/LIGHT/DARK serialization. `ThemePreferences` exposes observable state, opens/reads/
+  commits off the main thread, rejects conflicting requests while saving and applies a choice
+  only after successful persistence. Missing/wrong-type/unreadable strings use the adapter's safe
+  default. Initialization errors show a retryable fallback; rejected/exceptional saves retain the
+  confirmed mode and requested selection for Retry, without treating in-memory values as durable.
+- A compact accessible radio group in Settings: Follow System / Light / Dark, loading/pending
+  feedback, inline live-region errors and Retry. Existing storage disclosures and export/preview
+  callbacks remain. The appearance section is injected through a composable slot; it does not
+  depend on project storage or expose Settings inside active editors.
+- Minimal light/night platform window resources and runtime system-bar foreground handling via
+  WindowCompat. Existing API 35 enforced edge-to-edge and pre-35 decor-fitting policy are retained;
+  no navigation-bar contrast protection, IME handling or content inset behavior is disabled.
+
+Verification actually executed:
+
+- Production Kotlin compilation: **passed**.
+- Focused host tests: **20 passed** (9 new `ThemePreferencesTest`, 4 new `ThemeColorsTest`,
+  7 existing `AppPreferencesTest`). These cover serialization/fallback without rewriting,
+  system resolution, save/reload, failed commit and retry, initialization/opening exceptions,
+  repeated/conflicting requests and off-caller-thread writes. Color checks cover normal text,
+  outlines, error/inverse/container pairs and sampled interaction overlays. Approved blue/white
+  contrast is approximately 4.501:1; visual and composited-state review remains necessary.
+- Android source compilation: **passed**. Nine new `ThemeUiTest` cases compile with isolated
+  synthetic files, fake preferences and injected system appearance. They cover selection/reload,
+  explicit/system resolution, failed save/Retry, project search/list scroll, Settings scroll/Back,
+  Blueprint/Roadmap pending drafts/guards, metadata reload and task-title discard dialogs, and
+  new-task/search/status-filter state plus unchanged project bytes. **None were executed.**
+  They do not establish actual Android configuration callbacks, Activity identity, real preference
+  filesystem durability, cold relaunch behavior, system bars or OEM/runtime visual acceptance.
+- Final full offline invocation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug`. Debug and test APK assembly passed, and all
+  **69 host tests passed**, 14 classes, zero failures/errors/skips. Lint initially failed on two
+  API-27-only `windowLightNavigationBar` XML attributes under minSdk 26. Those attributes were
+  removed; the existing runtime compatibility controller supplies navigation-icon appearance.
+- Only affected final checks were repeated after that resource correction:
+  `:app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**.
+  The complete host suite was not rerun after the XML-only correction. Final Lint: **0 errors,
+  12 warnings**: ApplySharedPref (1), OldTargetApi (1), GradleDependency (1), ObsoleteSdkInt (1),
+  approved legacy IconLauncherShape (5), and UseKtx (3). Confirmed `commit()` results are intentional;
+  switching to fire-and-forget apply would lose the required failure acknowledgement. SDK/launcher
+  and convenience cleanup findings remain deferred; no warning suppression was added for them.
+- An initial UI-fixture compile error (a theme read inside non-composable SideEffect) was corrected
+  by reading the color in composition and capturing it in the effect. Subsequent compilation passed.
+- Complete implementation/test diff and whitespace reviewed. `ProjectStorage` and stale writes
+  compare unchanged; document/task editor logic is unchanged except for filled-button styling.
+  Manifest changes are limited to the app-owned window theme and MainActivity `uiMode` handling.
+  No schema/migration, project persistence API, backup rule, signing, application ID, SDK/version,
+  dependency, launcher asset or release-gate scope changes. No emulator/AVD/physical-device,
+  installation, PD/DU, GitHub push or main-branch operations occurred.
+
+Current generated evidence (not committed): `app/build/test-results/testDebugUnitTest/`,
+`app/build/reports/lint-results-debug.xml`, Debug APK and Android test APK under `app/build/outputs/`.
+Historical counts and previous Settings UI evidence below are not reruns of this theme candidate.
+
+Deferred/known limits:
+
+- Actual system-night-mode delivery without Activity recreation, real preference persistence/
+  relaunch, system-bar contrast, large fonts, disabled/pressed states, keyboard/insets and broad
+  mixed-language/visual acceptance need separately authorized runtime verification.
+- A brief system-colored cold start before an explicit stored mode loads is owner-accepted.
+  Pending theme requests/errors are in memory, not a new durable recovery record.
+- Existing task search/filter and some transient warning/error state use ordinary remember and
+  can reset on unrelated Activity recreation. Full process death and large saved-state payloads
+  remain pre-existing gaps; this batch does not claim to solve them or change their storage.
+- `AGENTS.md` and `docs/ROADMAP.md` remain missing. Language selection is not implemented.
+
 ## Phase 2 Batch 1 — Core Application Settings — 2026-11-06
 
 Owner authorization explicitly permits this bounded **development-only** increment, starting at
@@ -194,6 +285,14 @@ this maintenance candidate. Earlier full 107-test/DU evidence remains commit-spe
 - `AGENTS.md` and `docs/ROADMAP.md` remain missing; their contents have not been invented.
 
 ## Recommended next step
+
+Separately authorize the nine focused theme UI tests and visual review on disposable data,
+including actual system-mode changes, native bars, keyboard/insets and state preservation.
+Do not treat compiled UI coverage or static contrast checks as runtime appearance acceptance.
+Keep language/localization and other release gates under separate authorization.
+
+The following Core Settings recommendation is historical; its request for theme authorization
+is superseded only for this explicitly authorized development batch:
 
 For this development increment, separately authorize focused Settings UI execution using disposable
 data before accepting navigation/restoration and visual behavior. Scope language/theme work only
