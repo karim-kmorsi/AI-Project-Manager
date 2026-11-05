@@ -39,6 +39,7 @@ data class ProjectItem(
 )
 
 open class MainActivity : ComponentActivity() {
+    private val themePreferences by lazy { ThemePreferences({ AndroidAppPreferences.open(applicationContext) }) }
     private lateinit var storage: ProjectStorage
     private var pendingExportToken: String? = null
     private var exportPreparing = false
@@ -89,7 +90,17 @@ open class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         pendingExportToken = savedInstanceState?.getString("pendingExportToken")
         storage = ProjectStorage(File(filesDir, "projects.json"))
-        setContent { MaterialTheme { ProjectManagerApp(storage, onRestorePreview = {
+        setContent {
+            val appearance by themePreferences.state.collectAsState()
+            LaunchedEffect(Unit) { themePreferences.load() }
+            val dark = appearance.mode.isDark(androidx.compose.foundation.isSystemInDarkTheme())
+            AppTheme(dark) {
+                SideEffect { updateWindowAppearance(this@MainActivity, dark) }
+                ProjectManagerApp(storage, appearanceSettings = {
+                    AppearanceSettings(appearance,
+                        onSelect = { mode -> lifecycleScope.launch { themePreferences.select(mode) } },
+                        onRetry = { lifecycleScope.launch { themePreferences.retry() } })
+                }, onRestorePreview = {
             // An older provider read must not publish into a newer picker/preview request.
             restorePreviewJob?.cancel()
             restorePreviewState = null
@@ -199,7 +210,8 @@ fun ProjectManagerApp(
     onRestorePreview: () -> Unit = {},
     restorePreview: RestorePreview.Summary? = null,
     restoreError: String? = null,
-    onDismissPreview: () -> Unit = {}
+    onDismissPreview: () -> Unit = {},
+    appearanceSettings: @Composable () -> Unit = {}
 ) {
     var loadError by remember { mutableStateOf(false) }
     val projects = remember {
@@ -247,7 +259,7 @@ fun ProjectManagerApp(
         if (active == null && !loadError && !settingsVisible) FloatingActionButton(onClick = { writeError = false; showNew = true }) { Text("+") }
     }) { padding ->
         if (settingsVisible) {
-            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview)
+            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, appearanceSettings)
         } else if (loadError) {
             Column(Modifier.padding(padding).padding(16.dp)) {
                 Text("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
@@ -517,7 +529,7 @@ private fun EditableDocument(
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-            Button(onClick = {
+            FilledActionButton(onClick = {
                 try {
                     draftStore.save(projectId, document, value, draft)
                     latestSave(draft)
@@ -649,7 +661,7 @@ private fun TaskScreen(
         OutlinedTextField(newTask, { newTask = it },
             label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        Button(onClick = {
+        FilledActionButton(onClick = {
             if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
                 newTask = ""
             }

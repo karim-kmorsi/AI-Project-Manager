@@ -16,9 +16,13 @@ import androidx.compose.ui.unit.dp
 
 /** Information and existing callbacks only: opening this destination never saves projects. */
 @Composable
-internal fun SettingsScreen(modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit) {
+internal fun SettingsScreen(
+    modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit,
+    appearanceSettings: @Composable () -> Unit = {}
+) {
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        appearanceSettings()
         Text("التخزين والنسخ الاحتياطي", style = MaterialTheme.typography.headlineSmall)
         ElevatedCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
