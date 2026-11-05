@@ -527,6 +527,7 @@ private fun EditableDocument(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TaskScreen(
     project: ProjectItem, onEditTitle: (String, String) -> Boolean, update: (ProjectItem) -> Boolean
@@ -608,7 +609,7 @@ private fun TaskScreen(
                         Text(task.title, fontWeight = FontWeight.Bold)
                         Text(task.status, style = MaterialTheme.typography.bodySmall)
                         TextButton(onClick = { editingTaskId = task.id }) { Text("تعديل العنوان") }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {
                                     if (it.id == task.id) it.copy(status = "IN_PROGRESS") else it
