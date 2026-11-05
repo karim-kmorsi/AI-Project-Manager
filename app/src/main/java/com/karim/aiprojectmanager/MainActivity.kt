@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -209,6 +210,9 @@ fun ProjectManagerApp(
     var writeError by remember { mutableStateOf(false) }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var projectSearchQuery by rememberSaveable { mutableStateOf("") }
+    val projectListState = rememberLazyListState()
     var editingProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var editorDirty by remember { mutableStateOf(false) }
     var warnOnExit by remember { mutableStateOf(false) }
@@ -221,24 +225,30 @@ fun ProjectManagerApp(
         }
     }
     val active = projects.find { it.id == activeId }
+    val settingsVisible = active == null && showSettings
     // Respect unsaved document edits when the system Back gesture/button is used.
     BackHandler(enabled = activeId != null) {
         if (editorDirty) warnOnExit = true else activeId = null
     }
 
+    BackHandler(enabled = settingsVisible) { showSettings = false }
+
     Scaffold(topBar = {
-        TopAppBar(title = { Text(if (active == null) "إدارة المشاريع" else active.name) },
-            actions = { if (active == null) {
+        TopAppBar(title = { Text(if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name) },
+            actions = { if (active == null && !settingsVisible) {
                 TextButton(onClick = onExport) { Text("تصدير JSON") }
                 TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
             } },
             navigationIcon = {
-                if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
+                if (settingsVisible) TextButton(onClick = { showSettings = false }) { Text("رجوع") }
+                else if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
     }, floatingActionButton = {
-        if (active == null && !loadError) FloatingActionButton(onClick = { writeError = false; showNew = true }) { Text("+") }
+        if (active == null && !loadError && !settingsVisible) FloatingActionButton(onClick = { writeError = false; showNew = true }) { Text("+") }
     }) { padding ->
-        if (loadError) {
+        if (settingsVisible) {
+            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview)
+        } else if (loadError) {
             Column(Modifier.padding(padding).padding(16.dp)) {
                 Text("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
                 TextButton(onClick = {
@@ -247,14 +257,19 @@ fun ProjectManagerApp(
                 }) { Text("إعادة المحاولة") }
             }
         } else if (active == null) {
-            var searchQuery by rememberSaveable { mutableStateOf("") }
-            val visibleProjects = filterProjectsByQuery(projects, searchQuery)
-            LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                item { Text("مشاريعي", style = MaterialTheme.typography.headlineMedium) }
+            val visibleProjects = filterProjectsByQuery(projects, projectSearchQuery)
+            LazyColumn(Modifier.padding(padding).padding(16.dp), state = projectListState,
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("مشاريعي", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                        TextButton(onClick = { showSettings = true }) { Text("الإعدادات") }
+                    }
+                }
                 item { Text("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
                 if (projects.isEmpty()) item { Text("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
                 if (projects.isNotEmpty()) {
-                    item { OutlinedTextField(searchQuery, { searchQuery = it }, label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
+                    item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
                     if (visibleProjects.isEmpty()) item { Text("لا توجد مشاريع تطابق البحث.") }
                 }
                 items(visibleProjects, key = { it.id }) { item ->
