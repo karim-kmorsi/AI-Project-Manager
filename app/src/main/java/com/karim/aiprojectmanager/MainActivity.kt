@@ -246,7 +246,7 @@ fun ProjectManagerApp(
     BackHandler(enabled = settingsVisible) { showSettings = false }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text(if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name) },
+        TopAppBar(title = { ParagraphText(if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name) },
             actions = { if (active == null && !settingsVisible) {
                 TextButton(onClick = onExport) { Text("تصدير JSON") }
                 TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
@@ -262,7 +262,7 @@ fun ProjectManagerApp(
             SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, appearanceSettings)
         } else if (loadError) {
             Column(Modifier.padding(padding).padding(16.dp)) {
-                Text("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
+                ParagraphText("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
                 TextButton(onClick = {
                     try { val loaded = storage.load(); projects.clear(); projects.addAll(loaded); loadError = false }
                     catch (_: Exception) { loadError = true }
@@ -274,22 +274,22 @@ fun ProjectManagerApp(
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("مشاريعي", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                        ParagraphText("مشاريعي", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
                         TextButton(onClick = { showSettings = true }) { Text("الإعدادات") }
                     }
                 }
-                item { Text("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
-                if (projects.isEmpty()) item { Text("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
+                item { ParagraphText("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
+                if (projects.isEmpty()) item { ParagraphText("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
                 if (projects.isNotEmpty()) {
                     item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
-                    if (visibleProjects.isEmpty()) item { Text("لا توجد مشاريع تطابق البحث.") }
+                    if (visibleProjects.isEmpty()) item { ParagraphText("لا توجد مشاريع تطابق البحث.") }
                 }
                 items(visibleProjects, key = { it.id }) { item ->
                     ElevatedCard(onClick = { activeId = item.id }, modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(item.name, fontWeight = FontWeight.Bold)
-                            Text(item.description)
-                            Text("المهام المتحققة: ${item.tasks.count { it.status == "VERIFIED" }} / ${item.tasks.size}")
+                            ParagraphText(item.name, fontWeight = FontWeight.Bold)
+                            ParagraphText(item.description)
+                            ParagraphText("المهام المتحققة: ${item.tasks.count { it.status == "VERIFIED" }} / ${item.tasks.size}")
                         }
                     }
                 }
@@ -310,20 +310,20 @@ fun ProjectManagerApp(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             TextButton(onClick = { editingProjectId = active.id }) { Text("تعديل المشروع") }
-                            Text(active.description)
+                            ParagraphText(active.description)
                             val verified = active.tasks.count { it.status == "VERIFIED" }
-                            Text("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
-                            Text(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
+                            ParagraphText("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
+                            ParagraphText(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
                             val pendingTasks = pendingTaskDetails(active.tasks)
                             if (pendingTasks.isNotEmpty()) {
-                                Text("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
+                                ParagraphText("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
                                 pendingTasks.forEach { detail ->
-                                    Text(detail, style = MaterialTheme.typography.bodySmall)
+                                    ParagraphText(detail, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
-                            Text("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
-                            Text("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
-                            Text("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
+                            ParagraphText("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
+                            ParagraphText("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
+                            ParagraphText("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                         }
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
@@ -356,27 +356,27 @@ fun ProjectManagerApp(
     }
     if (restorePreview != null || restoreError != null) {
         AlertDialog(onDismissRequest = onDismissPreview,
-            title = { Text(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
+            title = { ParagraphText(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
             text = {
-                if (restoreError != null) Text(restoreError)
+                if (restoreError != null) ParagraphText(restoreError)
                 else if (restorePreview != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
+                    ParagraphText("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
                     restorePreview.projects.take(30).forEach { project ->
-                        Text("${project.name} — ${project.taskCount} مهمة")
+                        ParagraphText("${project.name} — ${project.taskCount} مهمة")
                     }
-                    if (restorePreview.projects.size > 30) Text("تُعرض أول 30 مشروعًا فقط")
-                    Text("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
+                    if (restorePreview.projects.size > 30) ParagraphText("تُعرض أول 30 مشروعًا فقط")
+                    ParagraphText("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
                 }
             }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
     }
     if (writeError && !showNew) {
-        AlertDialog(onDismissRequest = { writeError = false }, title = { Text("تعذّر الحفظ") },
-            text = { Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
+        AlertDialog(onDismissRequest = { writeError = false }, title = { ParagraphText("تعذّر الحفظ") },
+            text = { ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
             confirmButton = { TextButton(onClick = { writeError = false }) { Text("إغلاق") } })
     }
     if (warnOnExit) {
-        AlertDialog(onDismissRequest = { warnOnExit = false }, title = { Text("تعديلات غير محفوظة") },
-            text = { Text("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
+        AlertDialog(onDismissRequest = { warnOnExit = false }, title = { ParagraphText("تعديلات غير محفوظة") },
+            text = { ParagraphText("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
             confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
     }
     val editingProject = active?.takeIf { it.id == editingProjectId }
@@ -392,11 +392,11 @@ fun ProjectManagerApp(
                 else editingProjectId = null
             }
             AlertDialog(onDismissRequest = { dismissEditor() },
-                title = { Text("تعديل المشروع") },
+                title = { ParagraphText("تعديل المشروع") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (saveError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
-                        if (saveError) Text("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
+                        if (saveError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
                         TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
                         OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") },
                             singleLine = true, isError = name.isBlank())
@@ -437,10 +437,10 @@ fun ProjectManagerApp(
         var name by rememberSaveable { mutableStateOf("") }
         var details by rememberSaveable { mutableStateOf("") }
         AlertDialog(onDismissRequest = { showNew = false },
-            title = { Text("إنشاء مشروع") },
+            title = { ParagraphText("إنشاء مشروع") },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
-                if (writeError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
+                ParagraphText(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
+                if (writeError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
                 OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") })
                 OutlinedTextField(details, { details = it }, label = { Text("وصف مختصر") })
             } },
@@ -528,7 +528,7 @@ private fun EditableDocument(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+            ParagraphText(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
             FilledActionButton(onClick = {
                 try {
                     draftStore.save(projectId, document, value, draft)
@@ -539,8 +539,8 @@ private fun EditableDocument(
                 } catch (_: Exception) { saveError = true }
             }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
         }
-        Text(contextualTip(document), style = MaterialTheme.typography.bodySmall)
-        Text(
+        ParagraphText(contextualTip(document), style = MaterialTheme.typography.bodySmall)
+        ParagraphText(
             when {
                 recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
                 conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
@@ -552,7 +552,7 @@ private fun EditableDocument(
             color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
         )
         if (recoveryError) {
-            if (preservationFailed) Text("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
+            if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
             TextButton(onClick = {
                 try {
                     draftStore.preserveUnreadable(projectId, document)
@@ -562,10 +562,10 @@ private fun EditableDocument(
                 } catch (_: Exception) { preservationFailed = true }
             }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
         }
-        if (preservationCount > 0) Text("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
+        if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
         if (conflictingDraft != null) {
-            Text("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
-            Text(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
+            ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
+            ParagraphText(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
             TextButton(onClick = {
                 // Explicit choice: recover the older text; a new draft records the current base.
                 draft = conflictingDraft!!
@@ -593,8 +593,8 @@ private fun EditableDocument(
 @Composable
 private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(onDismissRequest = onCancel,
-        title = { Text("تعديلات غير محفوظة") },
-        text = { Text(if (reload) "إعادة التحميل ستستبدل النص الذي أدخلته بالقيم المحفوظة حاليًا. هل تريد المتابعة؟"
+        title = { ParagraphText("تعديلات غير محفوظة") },
+        text = { ParagraphText(if (reload) "إعادة التحميل ستستبدل النص الذي أدخلته بالقيم المحفوظة حاليًا. هل تريد المتابعة؟"
             else "هل تريد تجاهل التعديلات غير المحفوظة؟") },
         confirmButton = { TextButton(onClick = onConfirm) { Text(if (reload) "تأكيد إعادة التحميل" else "تجاهل التعديلات") } },
         dismissButton = { TextButton(onClick = onCancel) { Text("متابعة التحرير") } })
@@ -625,11 +625,11 @@ private fun TaskScreen(
                 if (title != editingTask.title) discardAction = "close" else editingTaskId = null
             }
             AlertDialog(onDismissRequest = { dismissEditor() },
-                title = { Text("تعديل عنوان المهمة") },
+                title = { ParagraphText("تعديل عنوان المهمة") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (saveError) Text("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
-                        if (saveError) Text("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
+                        if (saveError) ParagraphText("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
                         TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
                         OutlinedTextField(title, { title = it }, label = { Text("عنوان المهمة") },
                             isError = title.isBlank(), modifier = Modifier.fillMaxWidth())
@@ -656,7 +656,7 @@ private fun TaskScreen(
         }
     }
     Column(Modifier.padding(16.dp)) {
-        Text(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
+        ParagraphText(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
             label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
@@ -698,13 +698,13 @@ private fun TaskScreen(
                 }
             }
             if (visibleTasks.isEmpty()) {
-                item { Text("لا توجد مهام تطابق خيارات البحث والتصفية.") }
+                item { ParagraphText("لا توجد مهام تطابق خيارات البحث والتصفية.") }
             }
             items(visibleTasks, key = { it.id }) { task ->
                 ElevatedCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
-                        Text(task.title, fontWeight = FontWeight.Bold)
-                        Text(task.status, style = MaterialTheme.typography.bodySmall)
+                        ParagraphText(task.title, fontWeight = FontWeight.Bold)
+                        ParagraphText(task.status, style = MaterialTheme.typography.bodySmall)
                         TextButton(onClick = { editingTaskId = task.id }) { Text("تعديل العنوان") }
                         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {

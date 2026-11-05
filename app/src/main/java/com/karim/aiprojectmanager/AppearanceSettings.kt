@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun AppearanceSettings(state: ThemeSettingsState, onSelect: (ThemeMode) -> Unit, onRetry: () -> Unit) {
-    Text("المظهر", style = MaterialTheme.typography.headlineSmall)
+    ParagraphText("المظهر", style = MaterialTheme.typography.headlineSmall)
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp).selectableGroup()) {
             ThemeMode.entries.forEach { mode ->
@@ -27,11 +27,11 @@ internal fun AppearanceSettings(state: ThemeSettingsState, onSelect: (ThemeMode)
                     Text(mode.label)
                 }
             }
-            if (state.loading || state.saving) Text(
+            if (state.loading || state.saving) ParagraphText(
                 if (state.loading) "جارٍ تحميل المظهر..." else "جارٍ حفظ المظهر: ${state.pendingMode?.label}...",
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             if (state.error != null) {
-                Text(if (state.error == ThemePreferenceError.LOAD)
+                ParagraphText(if (state.error == ThemePreferenceError.LOAD)
                     "تعذّر تحميل تفضيل المظهر. يُستخدم Follow System مؤقتًا؛ أعد المحاولة."
                 else "تعذّر حفظ المظهر: ${state.pendingMode?.label}. بقي المظهر السابق؛ أعد المحاولة.",
                     color = MaterialTheme.colorScheme.error,

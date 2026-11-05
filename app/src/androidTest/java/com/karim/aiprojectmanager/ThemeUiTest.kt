@@ -213,7 +213,7 @@ class ThemeUiTest {
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("بحث في المهام"))
         compose.onNodeWithText("بحث في المهام").performTextReplacement("Keep")
         compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
-        compose.onNodeWithText("قيد التنفيذ").performClick()
+        compose.onNode(hasText("قيد التنفيذ") and hasAnyAncestor(isPopup())).performClick()
         compose.runOnIdle { f.systemDark.value = true }
         compose.onNodeWithText("مهمة جديدة").assertTextContains("Pending new task")
         compose.onNodeWithText("بحث في المهام").assertTextContains("Keep")
