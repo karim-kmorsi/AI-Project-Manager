@@ -305,8 +305,16 @@ fun ProjectManagerApp(
                     2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
-                    3 -> TaskScreen(active, onEditTitle = { taskId, title ->
+                    3 -> TaskScreen(active, onReloadTitle = { taskId ->
+                        val loaded = storage.load()
+                        loaded.find { it.id == active.id }?.tasks?.find { it.id == taskId }
+                            ?: throw IOException("Task no longer exists; pending input retained")
+                        projects.clear()
+                        projects.addAll(loaded)
+                        loaded.first { it.id == active.id }
+                    }, onEditTitle = { taskId, title, base ->
                         try {
+                            if (editorSnapshot(active) != base) throw IOException("Editor base changed")
                             val edited = editedTaskTitle(active, taskId, title)
                             if (edited != active) update(edited)
                             true
@@ -349,12 +357,20 @@ fun ProjectManagerApp(
         key(editingProject.id) {
             var name by rememberSaveable { mutableStateOf(editingProject.name) }
             var description by rememberSaveable { mutableStateOf(editingProject.description) }
+            var editorBase by rememberSaveable { mutableStateOf(editorSnapshot(editingProject)) }
             var saveError by rememberSaveable { mutableStateOf(false) }
-            AlertDialog(onDismissRequest = { editingProjectId = null },
+            var discardAction by rememberSaveable { mutableStateOf<String?>(null) }
+            fun dismissEditor() {
+                if (name != editingProject.name || description != editingProject.description) discardAction = "close"
+                else editingProjectId = null
+            }
+            AlertDialog(onDismissRequest = { dismissEditor() },
                 title = { Text("تعديل المشروع") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (saveError) Text("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        if (saveError) Text("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
+                        TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
                         OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") },
                             singleLine = true, isError = name.isBlank())
                         OutlinedTextField(description, { description = it }, label = { Text("وصف مختصر") })
@@ -362,12 +378,32 @@ fun ProjectManagerApp(
                 },
                 confirmButton = { TextButton(onClick = {
                     try {
+                        if (editorSnapshot(editingProject) != editorBase) throw IOException("Editor base changed")
                         val edited = editedProjectMetadata(editingProject, name, description)
                         if (edited != editingProject) update(edited)
                         editingProjectId = null
                     } catch (_: Exception) { saveError = true }
                 }, enabled = name.isNotBlank()) { Text("حفظ") } },
-                dismissButton = { TextButton(onClick = { editingProjectId = null }) { Text("إلغاء") } })
+                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text("إلغاء") } })
+            if (discardAction != null) ConfirmDiscardEdits(
+                reload = discardAction == "reload",
+                onCancel = { discardAction = null },
+                onConfirm = {
+                    if (discardAction == "reload") {
+                        try {
+                            val loaded = storage.load()
+                            val latest = loaded.find { it.id == editingProject.id }
+                                ?: throw IOException("Project no longer exists; pending input retained")
+                            projects.clear()
+                            projects.addAll(loaded)
+                            name = latest.name
+                            description = latest.description
+                            editorBase = editorSnapshot(latest)
+                            saveError = false
+                        } catch (_: Exception) { saveError = true }
+                    } else editingProjectId = null
+                    discardAction = null
+                })
         }
     }
     if (showNew) {
@@ -527,10 +563,23 @@ private fun EditableDocument(
     }
 }
 
+@Composable
+private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(onDismissRequest = onCancel,
+        title = { Text("تعديلات غير محفوظة") },
+        text = { Text(if (reload) "إعادة التحميل ستستبدل النص الذي أدخلته بالقيم المحفوظة حاليًا. هل تريد المتابعة؟"
+            else "هل تريد تجاهل التعديلات غير المحفوظة؟") },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(if (reload) "تأكيد إعادة التحميل" else "تجاهل التعديلات") } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("متابعة التحرير") } })
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TaskScreen(
-    project: ProjectItem, onEditTitle: (String, String) -> Boolean, update: (ProjectItem) -> Boolean
+    project: ProjectItem,
+    onReloadTitle: (String) -> ProjectItem,
+    onEditTitle: (String, String, ArrayList<String>) -> Boolean,
+    update: (ProjectItem) -> Boolean
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var searchQuery by remember(project.id) { mutableStateOf("") }
@@ -542,20 +591,41 @@ private fun TaskScreen(
     if (editingTask != null) {
         key(project.id, editingTask.id) {
             var title by rememberSaveable { mutableStateOf(editingTask.title) }
+            var editorBase by rememberSaveable { mutableStateOf(editorSnapshot(project)) }
             var saveError by rememberSaveable { mutableStateOf(false) }
-            AlertDialog(onDismissRequest = { editingTaskId = null },
+            var discardAction by rememberSaveable { mutableStateOf<String?>(null) }
+            fun dismissEditor() {
+                if (title != editingTask.title) discardAction = "close" else editingTaskId = null
+            }
+            AlertDialog(onDismissRequest = { dismissEditor() },
                 title = { Text("تعديل عنوان المهمة") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (saveError) Text("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        if (saveError) Text("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
+                        TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
                         OutlinedTextField(title, { title = it }, label = { Text("عنوان المهمة") },
                             isError = title.isBlank(), modifier = Modifier.fillMaxWidth())
                     }
                 },
                 confirmButton = { TextButton(onClick = {
-                    if (onEditTitle(editingTask.id, title)) editingTaskId = null else saveError = true
+                    if (onEditTitle(editingTask.id, title, editorBase)) editingTaskId = null else saveError = true
                 }, enabled = title.isNotBlank()) { Text("حفظ") } },
-                dismissButton = { TextButton(onClick = { editingTaskId = null }) { Text("إلغاء") } })
+                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text("إلغاء") } })
+            if (discardAction != null) ConfirmDiscardEdits(
+                reload = discardAction == "reload",
+                onCancel = { discardAction = null },
+                onConfirm = {
+                    if (discardAction == "reload") {
+                        try {
+                            val latest = onReloadTitle(editingTask.id)
+                            title = latest.tasks.first { it.id == editingTask.id }.title
+                            editorBase = editorSnapshot(latest)
+                            saveError = false
+                        } catch (_: Exception) { saveError = true }
+                    } else editingTaskId = null
+                    discardAction = null
+                })
         }
     }
     Column(Modifier.padding(16.dp)) {

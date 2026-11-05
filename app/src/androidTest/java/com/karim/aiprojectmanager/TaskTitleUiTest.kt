@@ -68,6 +68,7 @@ class TaskTitleUiTest {
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("عنوان المهمة").assertTextContains("Not saved")
         compose.onNodeWithText("إلغاء").performClick()
+        compose.onNodeWithText("تجاهل التعديلات").performClick()
         compose.onNodeWithText("Original task").assertExists()
         compose.onAllNodesWithText("تعديل العنوان")[0].performScrollTo().performClick()
         compose.onNodeWithText("عنوان المهمة").assertTextContains("Original task")
@@ -112,6 +113,52 @@ class TaskTitleUiTest {
         compose.onNodeWithText("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.").assertExists()
         compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
         compose.onNodeWithText("إلغاء").performClick()
+        compose.onNodeWithText("تجاهل التعديلات").performClick()
         compose.runOnIdle { assertArrayEquals(newerBytes, file.readBytes()) }
     }
+    @Test fun conflictReloadRetainsInputUntilConfirmedAndPreservesNewStatus() = fixture { file, storage ->
+        val original = storage.load()
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent { ProjectManagerApp(storage) }
+        openFirstTaskEditor()
+        compose.onNodeWithText("عنوان المهمة").performTextReplacement("Pending title")
+        lateinit var newer: ByteArray
+        compose.runOnIdle {
+            storage.save(listOf(original[0].copy(tasks = listOf(original[0].tasks[0].copy(title = "Newer title", status = "VERIFIED"), original[0].tasks[1])), original[1]))
+            newer = file.readBytes()
+        }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithText("حفظ").performClick()
+        compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
+        compose.runOnIdle { assertArrayEquals(newer, file.readBytes()) }
+        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onNodeWithText("متابعة التحرير").performClick()
+        compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
+        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onNodeWithText("تأكيد إعادة التحميل").performClick()
+        compose.onNodeWithText("عنوان المهمة").assertTextContains("Newer title")
+        compose.runOnIdle { assertArrayEquals(newer, file.readBytes()) }
+        compose.onNodeWithText("عنوان المهمة").performTextReplacement("Reviewed title")
+        compose.onNodeWithText("حفظ").performClick()
+        compose.runOnIdle {
+            assertEquals("Reviewed title", storage.load()[0].tasks[0].title)
+            assertEquals("VERIFIED", storage.load()[0].tasks[0].status)
+            assertEquals(original[1], storage.load()[1])
+            assertEquals(42, JSONArray(file.readText()).getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getInt("extraTask"))
+        }
+    }
+
+    @Test fun failedReloadAndCancelledDismissalRetainTaskTitle() = fixture { file, storage ->
+        compose.setContent { ProjectManagerApp(storage) }
+        openFirstTaskEditor()
+        compose.onNodeWithText("عنوان المهمة").performTextReplacement("Pending title")
+        compose.onNodeWithText("إلغاء").performClick()
+        compose.onNodeWithText("متابعة التحرير").performClick()
+        compose.runOnIdle { file.writeText("broken JSON") }
+        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onNodeWithText("تأكيد إعادة التحميل").performClick()
+        compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
+        compose.runOnIdle { assertEquals("broken JSON", file.readText()) }
+    }
+
 }
