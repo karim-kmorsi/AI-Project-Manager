@@ -104,6 +104,8 @@ class SettingsUiTest {
     @Test fun settingsCannotBypassDirtyDocumentGuard() = withProjects { _, _ ->
         compose.onNodeWithText("Alpha").performClick()
         compose.onNodeWithText("Blueprint").performScrollTo().performClick()
+        // Let the tab change compose the editor before holding the autosave clock.
+        compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Original")
         compose.mainClock.autoAdvance = false
         compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending edit")
         compose.mainClock.advanceTimeBy(64)
