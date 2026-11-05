@@ -2,6 +2,7 @@ package com.karim.aiprojectmanager
 
 import org.junit.Assert.*
 import org.junit.Test
+import androidx.compose.runtime.saveable.SaverScope
 
 class EditorSnapshotTest {
     private val project = ProjectItem("p", "Name", "Description", "Blueprint", "Roadmap",
@@ -29,4 +30,25 @@ class EditorSnapshotTest {
         assertNotEquals(editorSnapshot(project.copy(name = "a, b", description = "c\n")),
             editorSnapshot(project.copy(name = "a", description = "b, c\n")))
     }
+    @Test fun saverRoundTripRetainsStaleBaseAndDoesNotAliasSavedOrRestoredLists() {
+        val scope = SaverScope { true }
+        val original = editorSnapshot(project)
+        val saved = with(EditorSnapshot.saver) { scope.save(original) }!!
+        val restored = EditorSnapshot.saver.restore(saved)!!
+        saved.clear()
+        assertEquals(original, restored)
+        assertEquals(original.hashCode(), restored.hashCode())
+        assertNotEquals(editorSnapshot(project.copy(name = "Newer saved name")), restored)
+        val savedAgain = with(EditorSnapshot.saver) { scope.save(restored) }!!
+        assertTrue(savedAgain.isNotEmpty())
+    }
+
+    @Test fun saverAcceptsPreviousArrayListRepresentationWithMixedLanguageText() {
+        val fields = arrayListOf("p", "اسم English", "\nDescription", "Blueprint", "Roadmap", "1", "t", "عنوان", "FUTURE")
+        val restored = EditorSnapshot.saver.restore(fields)!!
+        fields[1] = "Changed after restoration"
+        assertEquals(editorSnapshot(ProjectItem("p", "اسم English", "\nDescription", "Blueprint", "Roadmap",
+            listOf(TaskItem("t", "عنوان", "FUTURE")))), restored)
+    }
+
 }

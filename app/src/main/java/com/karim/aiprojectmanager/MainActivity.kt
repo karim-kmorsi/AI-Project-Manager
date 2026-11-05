@@ -357,7 +357,7 @@ fun ProjectManagerApp(
         key(editingProject.id) {
             var name by rememberSaveable { mutableStateOf(editingProject.name) }
             var description by rememberSaveable { mutableStateOf(editingProject.description) }
-            var editorBase by rememberSaveable { mutableStateOf(editorSnapshot(editingProject)) }
+            var editorBase by rememberSaveable(stateSaver = EditorSnapshot.saver) { mutableStateOf(editorSnapshot(editingProject)) }
             var saveError by rememberSaveable { mutableStateOf(false) }
             var discardAction by rememberSaveable { mutableStateOf<String?>(null) }
             fun dismissEditor() {
@@ -578,7 +578,7 @@ private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm
 private fun TaskScreen(
     project: ProjectItem,
     onReloadTitle: (String) -> ProjectItem,
-    onEditTitle: (String, String, ArrayList<String>) -> Boolean,
+    onEditTitle: (String, String, EditorSnapshot) -> Boolean,
     update: (ProjectItem) -> Boolean
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
@@ -591,7 +591,7 @@ private fun TaskScreen(
     if (editingTask != null) {
         key(project.id, editingTask.id) {
             var title by rememberSaveable { mutableStateOf(editingTask.title) }
-            var editorBase by rememberSaveable { mutableStateOf(editorSnapshot(project)) }
+            var editorBase by rememberSaveable(stateSaver = EditorSnapshot.saver) { mutableStateOf(editorSnapshot(project)) }
             var saveError by rememberSaveable { mutableStateOf(false) }
             var discardAction by rememberSaveable { mutableStateOf<String?>(null) }
             fun dismissEditor() {
