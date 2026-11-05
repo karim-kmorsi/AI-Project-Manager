@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -46,9 +47,11 @@ class LocaleDirectionUiTest {
         ) { AppTheme(dark = false, content = content) }
     }
 
-    private fun textLayout(tag: String): TextLayoutResult {
+    private fun textLayout(tag: String): TextLayoutResult = textLayout(compose.onNodeWithTag(tag))
+
+    private fun textLayout(node: SemanticsNodeInteraction): TextLayoutResult {
         val results = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
+        node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) {
             assertTrue(it(results))
         }
         return results.single()
@@ -104,6 +107,84 @@ class LocaleDirectionUiTest {
         compose.runOnIdle { locale.value = "ar" }
         assertTrue(labelCenter() > rowCenter())
         compose.onNodeWithText("Follow System").assertIsSelected()
+    }
+
+    @Test fun isolatedCountHasLeftToRightGlyphOrderInBothLocales() {
+        val locale = mutableStateOf("en")
+        val arabic = "المهام المتحققة: " + taskCountExpression(0, 1)
+        val english = "Verified tasks: " + taskCountExpression(0, 1)
+        compose.setContent {
+            InLocale(locale.value) {
+                Column(Modifier.width(280.dp)) {
+                    ParagraphText(arabic, Modifier.testTag("arabic-count"))
+                    ParagraphText(english, Modifier.testTag("english-count"))
+                }
+            }
+        }
+        for (tag in listOf("en", "ar")) {
+            compose.runOnIdle { locale.value = tag }
+            for ((nodeTag, text) in listOf("arabic-count" to arabic, "english-count" to english)) {
+                val layout = textLayout(nodeTag)
+                val zero = layout.getBoundingBox(text.indexOf('0'))
+                val slash = layout.getBoundingBox(text.indexOf('/'))
+                val one = layout.getBoundingBox(text.indexOf('1'))
+                assertTrue(zero.left < slash.left)
+                assertTrue(slash.left < one.left)
+            }
+        }
+    }
+
+    @Test fun englishBlueprintInputStartsAtLeftUnderArabicLocale() = withProject { file, changeLocale ->
+        val before = file.readBytes()
+        changeLocale("ar")
+        compose.onNodeWithText("Alpha").performClick()
+        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
+        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        val layout = textLayout(field)
+        assertEquals(ResolvedTextDirection.Ltr, layout.getParagraphDirection(0))
+        assertEquals(0f, layout.getLineLeft(0), 1f)
+        compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
+    }
+
+    @Test fun arabicRoadmapInputStartsAtRightUnderEnglishLocale() = withProject { file, _ ->
+        val before = file.readBytes()
+        compose.onNodeWithText("Alpha").performClick()
+        compose.onNodeWithText("Roadmap").performScrollTo().performClick()
+        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.mainClock.autoAdvance = false
+        field.performTextReplacement("خطة عربية")
+        compose.mainClock.advanceTimeBy(64)
+        val layout = textLayout(field)
+        assertEquals(ResolvedTextDirection.Rtl, layout.getParagraphDirection(0))
+        assertEquals(layout.size.width.toFloat(), layout.getLineRight(0), 1f)
+        field.assertTextContains("خطة عربية")
+        compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test fun mixedDocumentEditingPreservesSelectionTextAndParagraphDirections() = withProject { file, changeLocale ->
+        val before = file.readBytes()
+        changeLocale("ar")
+        compose.onNodeWithText("Alpha").performClick()
+        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
+        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        val text = "خطة عربية\nBlueprint task-42\n{\"count\":12345}"
+        compose.mainClock.autoAdvance = false
+        field.performTextReplacement(text)
+        compose.mainClock.advanceTimeBy(64)
+        val start = text.indexOf("42")
+        field.performTextInputSelection(TextRange(start, start + 2))
+        field.performTextInput("99")
+        compose.mainClock.advanceTimeBy(64)
+        field.assertTextContains(text.replace("42", "99"))
+        field.assert(SemanticsMatcher.expectValue(
+            androidx.compose.ui.semantics.SemanticsProperties.TextSelectionRange, TextRange(start + 2)))
+        val layout = textLayout(field)
+        assertEquals(ResolvedTextDirection.Rtl, layout.getParagraphDirection(0))
+        assertEquals(ResolvedTextDirection.Ltr, layout.getParagraphDirection(text.indexOf("Blueprint")))
+        assertEquals(ResolvedTextDirection.Ltr, layout.getParagraphDirection(text.indexOf('{')))
+        assertEquals(0f, layout.getLineLeft(1), 1f)
+        compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
     private fun withProject(block: (File, (String) -> Unit) -> Unit) {

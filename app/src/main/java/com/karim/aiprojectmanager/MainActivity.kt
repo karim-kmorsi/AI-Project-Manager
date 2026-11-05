@@ -281,7 +281,7 @@ fun ProjectManagerApp(
                 item { ParagraphText("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
                 if (projects.isEmpty()) item { ParagraphText("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
                 if (projects.isNotEmpty()) {
-                    item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
+                    item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
                     if (visibleProjects.isEmpty()) item { ParagraphText("لا توجد مشاريع تطابق البحث.") }
                 }
                 items(visibleProjects, key = { it.id }) { item ->
@@ -289,7 +289,7 @@ fun ProjectManagerApp(
                         Column(Modifier.padding(16.dp)) {
                             ParagraphText(item.name, fontWeight = FontWeight.Bold)
                             ParagraphText(item.description)
-                            ParagraphText("المهام المتحققة: ${item.tasks.count { it.status == "VERIFIED" }} / ${item.tasks.size}")
+                            ParagraphText("المهام المتحققة: " + taskCountExpression(item.tasks.count { it.status == "VERIFIED" }, item.tasks.size))
                         }
                     }
                 }
@@ -398,9 +398,9 @@ fun ProjectManagerApp(
                         if (saveError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
                         if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
                         TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
-                        OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") },
+                        OutlinedTextField(name, { name = it }, textStyle = contentTextStyle(), label = { Text("اسم المشروع") },
                             singleLine = true, isError = name.isBlank())
-                        OutlinedTextField(description, { description = it }, label = { Text("وصف مختصر") })
+                        OutlinedTextField(description, { description = it }, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })
                     }
                 },
                 confirmButton = { TextButton(onClick = {
@@ -441,8 +441,8 @@ fun ProjectManagerApp(
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ParagraphText(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
                 if (writeError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
-                OutlinedTextField(name, { name = it }, label = { Text("اسم المشروع") })
-                OutlinedTextField(details, { details = it }, label = { Text("وصف مختصر") })
+                OutlinedTextField(name, { name = it }, textStyle = contentTextStyle(), label = { Text("اسم المشروع") })
+                OutlinedTextField(details, { details = it }, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })
             } },
             confirmButton = { TextButton(onClick = {
                 if (name.isNotBlank()) {
@@ -584,7 +584,7 @@ private fun EditableDocument(
             value = draft, onValueChange = { draft = it },
             enabled = !recoveryError,
             modifier = Modifier.fillMaxWidth().weight(1f),
-            label = { Text("محتوى المستند") },
+            textStyle = contentTextStyle(), label = { Text("محتوى المستند") },
             placeholder = { Text("اكتب أو الصق الخطة هنا...") }
         )
     }
@@ -631,7 +631,7 @@ private fun TaskScreen(
                         if (saveError) ParagraphText("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
                         if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
                         TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
-                        OutlinedTextField(title, { title = it }, label = { Text("عنوان المهمة") },
+                        OutlinedTextField(title, { title = it }, textStyle = contentTextStyle(), label = { Text("عنوان المهمة") },
                             isError = title.isBlank(), modifier = Modifier.fillMaxWidth())
                     }
                 },
@@ -659,7 +659,7 @@ private fun TaskScreen(
         ParagraphText(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
-            label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
+            textStyle = contentTextStyle(), label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         FilledActionButton(onClick = {
             if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
@@ -669,7 +669,7 @@ private fun TaskScreen(
         Spacer(Modifier.height(12.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
-                OutlinedTextField(searchQuery, { searchQuery = it }, label = { Text("بحث في المهام") },
+                OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المهام") },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) { Text("مسح البحث") }

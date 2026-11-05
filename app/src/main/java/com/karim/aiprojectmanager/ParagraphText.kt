@@ -11,6 +11,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 
+/** Shared by display text and inputs; does not transform the value or reset selection. */
+@Composable
+internal fun contentTextStyle(base: TextStyle = LocalTextStyle.current): TextStyle =
+    base.copy(textDirection = TextDirection.Content, textAlign = TextAlign.Start)
+
 /**
  * Block text uses the available width and each paragraph's natural reading direction.
  * Arabic starts on the right and English on the left, even in mixed-language projects.
@@ -27,6 +32,5 @@ internal fun ParagraphText(
     maxLines: Int = Int.MAX_VALUE
 ) {
     Text(text, modifier = modifier.fillMaxWidth(), color = color, fontWeight = fontWeight,
-        style = style.copy(textDirection = TextDirection.Content), maxLines = maxLines,
-        textAlign = TextAlign.Start)
+        style = contentTextStyle(style), maxLines = maxLines)
 }
