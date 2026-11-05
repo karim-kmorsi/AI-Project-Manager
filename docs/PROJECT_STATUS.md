@@ -2,66 +2,93 @@
 
 Updated: 2026-11-05 (Asia/Kathmandu).
 Branch: `codex/baseline-reconciliation-v0-2`.
-Starting HEAD for this batch: `f18aaebf806df7197524102de7091e663fb3c411`.
+Starting HEAD for this maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
-## Implemented
+## Current implementation
 
-Existing project metadata editing, task-title editing, project/task search, task-status filters,
-overview summaries, guidance and tips remain in place. This batch adds:
+Existing metadata/title editing, project/task search, task-status filters, responsive status
+buttons, overview summaries, guidance and tips remain implemented. Confirmed reload/discard,
+pending-input retention after failures, and Blueprint/Roadmap dirty-navigation protection remain.
 
-- Wrapping task-status actions using the existing Material buttons, labels, spacing and behavior.
-  Task titles continue to wrap without a line limit.
-- Confirmed reload of current stored values in metadata and task-title editors. Reload reads storage
-  without writing it, refreshes the displayed project snapshot, and replaces pending text only after
-  explicit confirmation. Cancelling confirmation keeps pending text. Failed reads or missing targets
-  retain pending input and show an error. Subsequent Save still uses the existing stale-write guard.
-- Confirmation before Cancel, outside dismissal or Back discards changed editor input.
-- A saveable, structured editor baseline so restored pending text cannot silently adopt a newer
-  project as its original baseline after activity recreation. A changed baseline blocks Save until
-  the user confirms a reload and reviews/re-enters edits; no force-overwrite action is provided.
+This maintenance batch adds:
 
-Blueprint/Roadmap dirty-navigation protection and persistence APIs are retained. The JSON array
-format, ID/unknown-field preservation, statuses (including manually stored VERIFIED), signing,
-Application ID and release version are unchanged. Real restore/import remains disconnected.
+- Explicit platform backup exclusions while retaining `allowBackup=false`. API 26–30 uses
+  `fullBackupContent`; API 31+ uses `dataExtractionRules` with separate cloud-backup and
+  device-transfer sections. Every supported app-data domain is excluded, including credential-
+  and device-protected storage and app-specific external files. Project JSON, atomic sidecars,
+  recovery drafts and preserved drafts fall under these exclusions. Cache exports are already
+  excluded by Android. User-requested document export remains available and unchanged.
+- An immutable `EditorSnapshot` value with private, defensively copied fields and no mutation API.
+  Both editors use an explicit Compose state Saver. It saves/restores detached lists using the
+  previous ArrayList<String> representation, retaining exact field boundaries, IDs, statuses,
+  order and the original stale-edit baseline. Only saved UI state uses this representation;
+  project JSON is unchanged. Reload still replaces the baseline only after confirmation.
+- Host configuration checks for manifest references, legacy exclusions and each modern transport;
+  saver tests for round-trip equality, stale-base retention, old representation compatibility,
+  mixed-language input and independence from mutable saved/restored lists.
 
-## Verification performed in this batch
+No application storage contents were changed. There is no new backup/import/restore mechanism,
+JSON migration, signing/identity/version change, SDK change or UI redesign. Existing persistence
+and stale-write comparison paths are retained.
 
-- Focused editor-baseline unit tests: **3 passed**.
-- Production and Android instrumentation test source compilation: **passed**.
-- Final offline batch: `:app:assembleDebug :app:assembleDebugAndroidTest
-  :app:testDebugUnitTest :app:lintDebug` — **BUILD SUCCESSFUL** (21 seconds).
-- Complete host JVM suite: **44 tests passed**, 10 classes, zero failures/errors/skips.
-- Lint: **0 errors, 7 warnings** in the generated report; this is not warning-free validation.
-- Complete source/documentation diff reviewed; whitespace check passed.
+## Icon inspection
 
-An intermediate UI-test compilation failed because this Compose version does not expose the
-bounds-width property used by the new test. The assertion now compares supported left/right
-coordinates; subsequent test compilation and the final build passed.
+No usable application icon asset or corresponding approval record was found in the repository.
+There are no existing app drawable/mipmap icon resources; evidence screenshots are not approved
+icon assets. Icon integration is deferred. Before public release, obtain an approved asset and
+integrate appropriate launcher/adaptive icon resources and a manifest icon reference. No design
+was invented or substituted.
 
-Added seven isolated Android UI tests: task search/status interaction and clearing/empty results
-without writes; 240dp width at 2x font scale with status-action bounds and clicks; metadata transient
-save failure/retry; metadata/task stale recovery across saved-state restoration; failed reloads and
-cancelled dismissal. Existing metadata/title cancellation tests now explicitly confirm discard.
-These UI tests and the existing instrumentation suite were **compiled, not executed** in this batch.
-Unit XML is under `app/build/test-results/testDebugUnitTest/`; lint output is under
-`app/build/reports/`. Generated build reports are local and not committed.
+## Verification for this maintenance batch
 
-## Outstanding verification and limits
+- Focused host checks: **8 passed** (5 editor-snapshot tests, 3 backup-policy tests).
+- Production and Android test source compilation: **passed**.
+- Two existing isolated Compose UI regressions: **2 passed**, zero failures/errors/skips,
+  8.115 seconds of instrumentation time. Methods:
+  `ProjectMetadataUiTest#conflictReloadRequiresConfirmationAndAllowsEditAgainstNewBase` and
+  `TaskTitleUiTest#conflictReloadRetainsInputUntilConfirmedAndPreservesNewStatus`.
+  These check restored pending input, stale-save blocking, reload confirmation/cancellation,
+  unchanged bytes during reload, and subsequent safe saving with newer data retained.
+- Emulator only: `emulator-5554`, AVD `REDMAGIC_10_Pro_Test`, Android 15/API 35, x86_64,
+  320×640 at 160 dpi. No physical-device operations or full instrumentation/PD/DU suite ran.
+- Final offline validation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL** (8 seconds).
+- Complete host JVM suite: **49 passed**, 11 classes, zero failures/errors/skips.
+- Merged Debug manifest retains all three backup-policy attributes and correct resource references.
+- Lint: **0 errors, 4 warnings**. `DataExtractionRules` and both
+  `MutableCollectionMutableState` findings are gone without suppressions.
+- Complete diff reviewed and whitespace check passed. No push or cloud CI run.
 
-- Run the isolated metadata/title/control UI regressions in a separately scoped emulator session.
-  Runtime geometry, large-font behavior and UI recovery are not established by compilation.
-- No emulator, physical-device, PD or DU acceptance tests, installs, pushes or cloud CI were run.
-  Historical 107-test/DU evidence applies to its recorded commits, not this candidate.
-- Actual process death, visual/RTL/accessibility, very large lists/documents, provider lifecycle,
-  stable signing and non-destructive physical-device update/data continuity remain open gates.
-- Reload intentionally replaces pending text only after confirmation; there is no automatic merge
-  or persistent edit history. Pending form state uses Android saved state, not a new disk draft.
-- `AGENTS.md` and `docs/ROADMAP.md` are missing. Their contents have not been assumed or invented.
+Remaining Lint warnings: `OldTargetApi` (targetSdk 35), `GradleDependency` (compileSdk 35),
+`MissingApplicationIcon`, and debug-fixture `UseKtx`. SDK values are intentionally unchanged;
+icon integration awaits an approved asset; KTX convenience cleanup is deferred.
 
-## Recommended next batch
+Local reports: `app/build/test-results/testDebugUnitTest/`,
+`app/build/outputs/androidTest-results/connected/debug/`, and `app/build/reports/`.
+Generated reports are not committed. Platform policy references:
+[Android backup configuration](https://developer.android.com/identity/data/autobackup) and
+[Android 12 backup/transfer changes](https://developer.android.com/about/versions/12/behavior-changes-12#backup-restore).
 
-Execute the compiled isolated editor/task-control UI regressions, diagnose failures, and review
-narrow-screen/large-font RTL layouts. Keep heavy acceptance suites and physical-device/signing
-checks separately scoped. See [release gate](RELEASE_GATE_V0_2.md) and the preserved historical
-[approved requirements](V0_2_APPROVED_PLAN.md).
+## Previous focused UI checkpoint
+
+Before this maintenance batch, seven distinct added UI tests passed across focused runs: initial
+5/7 passed, followed by diagnosed test-only lazy-list scrolling fixes and successful retries.
+Commit `d8fb04f` records that fix. This is historical evidence, not a rerun of all seven against
+this maintenance candidate. Earlier full 107-test/DU evidence remains commit-specific.
+
+## Deferred verification and risks
+
+- Actual cloud-backup/device-transfer transport behavior across Android versions and OEMs is not
+  verified by static rules or Lint. No transport was invoked and no real data was transferred.
+- Full process death, large saved-state payloads, broad visual/RTL/accessibility, scale/provider
+  lifecycle, stable signing and non-destructive physical-device update/data continuity remain open.
+- Reload discards pending text only after confirmation; there is no automatic merge or edit history.
+  Pending form state uses Android saved state, not a new disk draft.
+- `AGENTS.md` and `docs/ROADMAP.md` remain missing; their contents have not been invented.
+
+## Recommended next step
+
+Review the explicit backup opt-out policy and separately scope platform/OEM transport verification
+using disposable data. Obtain an approved application icon before public distribution. Preserve
+all remaining [release gates](RELEASE_GATE_V0_2.md).

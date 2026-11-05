@@ -4,7 +4,22 @@ Updated: 2026-11-05
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
 
-## Latest development batch — 2026-11-05
+## Latest security/state maintenance — 2026-11-05
+
+Starting HEAD: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`. Explicit legacy backup and
+Android 12+ cloud/device-transfer exclusion policies now protect all app-data domains, retaining
+`allowBackup=false`. Metadata/title editor bases are immutable with explicit saved-state Savers;
+confirmed reload/discard and stale-save protection remain. No storage content, JSON schema,
+signing, identity, SDK or version changes were made. No approved icon asset was found; integration
+is deferred rather than substituting a design.
+
+[Current project status](PROJECT_STATUS.md) records 49 passing host tests, two passing isolated
+emulator restoration regressions, successful Debug/test APK assembly, and Lint with zero errors
+and four warnings (old target SDK, compile SDK update advisory, missing icon, debug-only KTX).
+No full emulator/PD/DU suite or physical-device work was performed. Real transport/OEM behavior,
+process death, signing/update and other acceptance gates remain open. **NOT Ready for Release**.
+
+## Previous UI development batch — 2026-11-05
 
 See [current project status](PROJECT_STATUS.md) for responsive task actions, confirmed stale-editor
 reload/discard, restored-editor baseline protection, and exact validation. Debug and test APK
