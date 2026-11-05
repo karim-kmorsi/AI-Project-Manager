@@ -55,6 +55,7 @@ This gate reconciles the current release with the broader historical requirement
 - Freeform Blueprint/Roadmap editing, explicit Save, autosave drafts and saved/pending/error feedback.
 - Simple task creation, existing task-title editing, and manual status changes, including VERIFIED; progress counts tasks with that stored status. Title editing validates nonblank input, supports Save/Cancel, and retains input on failed saves through the existing persistence path. It preserves IDs, statuses, ordering and stored extensions. Validation: 4 task-title JVM tests and 3 project-metadata regression tests passed; debug assembly and Android test compilation succeeded. The 4 new UI safety tests are compiled only and await execution at the end of the build cycle. The app does not independently verify evidence or code.
 - Selected-project task-title search uses case-insensitive substring matching with trimmed input, preserves saved ordering, and offers query clearing and a no-results message. The query is held only in memory; filtering does not save or alter tasks. Validation: 6 task-search JVM tests plus 7 adjacent task-title/project-search regressions passed; production and Android test compilation succeeded. UI acceptance remains deferred.
+- Selected-project task-status filtering offers All statuses and the existing NOT_STARTED, IN_PROGRESS, IMPLEMENTED_UNVERIFIED and VERIFIED values. It combines with title search using AND logic, keeps saved order, and holds selection only in UI memory. All statuses includes unknown stored statuses without rewriting them. Validation: 6 filter tests plus 9 task-search/status-summary regression tests passed; production and Android test compilation succeeded. UI acceptance remains deferred.
 - Existing-format JSON export to an external document.
 - Read-only inspection of an externally selected JSON backup, with errors, closing and cancellation; no import is applied.
 - Safe persistence of the existing unversioned JSON array schema.
@@ -101,7 +102,7 @@ The current candidate still needs physical-device checks of keyboard-visible Sav
 ## Deferred beyond v0.2
 - Real restore/replacement/merge of user data. Isolated engines require deeper crash/concurrency verification before exposure.
 - Expanding project metadata beyond the existing title/description, archive/unarchive, richer task fields and structured milestone links.
-- Broader cross-project task/decision search, active/archived and task-state filters, decision records, audit log and history. Simple project-name/description and selected-project task-title search are implemented in the current local baseline.
+- Broader cross-project task/decision search and filtering, active/archived project filters, decision records, audit log and history. Simple project-name/description search and selected-project task-title search/status filtering are implemented in the current local baseline.
 - Multilingual settings and selectable light/dark/system themes.
 - GitHub account integration / automatic repository sync.
 - Cosmetic redesign or new data format.

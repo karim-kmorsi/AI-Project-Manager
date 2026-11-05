@@ -533,7 +533,9 @@ private fun TaskScreen(
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var searchQuery by remember(project.id) { mutableStateOf("") }
-    val visibleTasks = filterTasksByQuery(project.tasks, searchQuery)
+    var selectedStatus by remember(project.id) { mutableStateOf<String?>(null) }
+    var statusMenuExpanded by remember(project.id) { mutableStateOf(false) }
+    val visibleTasks = filterTasksByQuery(project.tasks, searchQuery, selectedStatus)
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
     val editingTask = project.tasks.find { it.id == editingTaskId }
     if (editingTask != null) {
@@ -575,8 +577,30 @@ private fun TaskScreen(
                         if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) { Text("مسح البحث") }
                     })
             }
-            if (visibleTasks.isEmpty() && searchQuery.isNotBlank()) {
-                item { Text("لا توجد مهام تطابق البحث.") }
+            item {
+                val statusOptions = listOf(
+                    null to "كل الحالات",
+                    "NOT_STARTED" to "لم تبدأ",
+                    "IN_PROGRESS" to "قيد التنفيذ",
+                    "IMPLEMENTED_UNVERIFIED" to "كود غير متحقق",
+                    "VERIFIED" to "تم التحقق"
+                )
+                Box {
+                    TextButton(onClick = { statusMenuExpanded = true }) {
+                        Text("حالة المهام: " + statusOptions.first { it.first == selectedStatus }.second)
+                    }
+                    DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
+                        statusOptions.forEach { (status, label) ->
+                            DropdownMenuItem(text = { Text(label) }, onClick = {
+                                selectedStatus = status
+                                statusMenuExpanded = false
+                            })
+                        }
+                    }
+                }
+            }
+            if (visibleTasks.isEmpty()) {
+                item { Text("لا توجد مهام تطابق خيارات البحث والتصفية.") }
             }
             items(visibleTasks, key = { it.id }) { task ->
                 ElevatedCard(Modifier.fillMaxWidth()) {
