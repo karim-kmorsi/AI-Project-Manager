@@ -532,6 +532,8 @@ private fun TaskScreen(
     project: ProjectItem, onEditTitle: (String, String) -> Boolean, update: (ProjectItem) -> Boolean
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
+    var searchQuery by remember(project.id) { mutableStateOf("") }
+    val visibleTasks = filterTasksByQuery(project.tasks, searchQuery)
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
     val editingTask = project.tasks.find { it.id == editingTaskId }
     if (editingTask != null) {
@@ -566,7 +568,17 @@ private fun TaskScreen(
         }, enabled = newTask.isNotBlank()) { Text("إضافة") }
         Spacer(Modifier.height(12.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(project.tasks, key = { it.id }) { task ->
+            item {
+                OutlinedTextField(searchQuery, { searchQuery = it }, label = { Text("بحث في المهام") },
+                    modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) { Text("مسح البحث") }
+                    })
+            }
+            if (visibleTasks.isEmpty() && searchQuery.isNotBlank()) {
+                item { Text("لا توجد مهام تطابق البحث.") }
+            }
+            items(visibleTasks, key = { it.id }) { task ->
                 ElevatedCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
                         Text(task.title, fontWeight = FontWeight.Bold)
