@@ -5,6 +5,65 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Targeted editable-text / numeric bidi corrections — 2026-11-06
+
+Owner-authorized development-only correction, starting at
+`b00e9cd31950cf08b95446ee0acb9c5677111c04`. Implementation/tests commit:
+`7b1d85edbea9bab651e32edec0d4a14c39fd62f2`.
+**NOT Ready for Release**; existing acceptance and release gates remain open.
+
+Evidence motivating this batch:
+
+- The previous verification of **b00e9cd** passed all **15 Android UI tests** (6 locale-direction,
+  9 theme, including the corrected dropdown selector). Its retained XML, logs and screenshots are
+  under `/home/karim/.codex/ai-pm-rtl-verification-lyvy421e/`. This is prior-candidate evidence;
+  no emulator verification of the corrections below was performed.
+- Manual screenshots showed Latin-only Blueprint input right-aligned under Arabic locale, and
+  logical project count `0 / 1` displayed visually as `1 / 0`. No baseline comparison established
+  when those behaviors originated. The earlier batch's compiled-only statements below remain
+  historical records of that batch, rather than the later Android verification.
+
+Implemented corrections:
+
+- Shared `contentTextStyle` explicitly requests `TextDirection.Content` and `TextAlign.Start`,
+  preserving the supplied typography. `ParagraphText` and all nine existing text-field call sites
+  use this policy, including the shared Blueprint/Roadmap editor, metadata/task inputs and search.
+  Paragraph direction follows content; empty/neutral text retains the locale fallback. Surrounding
+  field labels and control ordering retain Android locale direction. No text transformation,
+  selection reset, new input state, Activity recreation or language selector was introduced.
+- `taskCountExpression` wraps only the displayed numerator / denominator with Unicode LTR isolate
+  and matching pop-directional-isolate (U+2066 / U+2069). The existing VERIFIED count and total
+  calculations are unchanged. Its only production caller is the project-card display; directional
+  controls are not inserted into project models, editable values, JSON or export data.
+- Three host regressions cover Arabic/English surrounding text, both paragraph base directions,
+  zero/nonzero/multiple-digit counts and balanced isolation. Four additional locale UI regressions
+  cover English Blueprint alignment under Arabic locale, Arabic Roadmap alignment under English
+  locale, mixed Arabic/English/JSON editing with selection replacement, and actual count glyph order
+  in both locales. Existing assertions remain; fixtures check unchanged project bytes while pending.
+
+Verification actually executed:
+
+- Focused host tests: **11 passed** (`TaskCountDisplayTest`, `TaskStatusSummaryTest`,
+  `EditorSnapshotTest`). The initial combined check took **4.34 s**; host tests passed but UI-test
+  compilation required explicit opt-in for Compose's experimental selection-testing API.
+  Added the annotation only to that test method; affected UI compilation then passed in **1.54 s**.
+- Final full offline invocation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**, **8.60 s**.
+  **72 host tests passed**, 15 classes, zero failures/errors/skips; Debug/test APK assembly passed.
+  Lint: **0 errors, 12 existing warnings** (ApplySharedPref 1, OldTargetApi 1,
+  GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3).
+- Complete diff/whitespace reviewed. MainActivity changes are limited to nine text-style arguments
+  and one display formatter; count arithmetic, editor callbacks, draft/dirty-navigation/stale-save
+  protection and persistence code are unchanged. No schema, migration, dependency, identity,
+  signing, version, launcher, emulator/device, installation, push or main-branch operations.
+- New Android regressions **compiled only; not executed**. JVM bidi results do not establish
+  Android glyph placement, IME composition, selection handles or TalkBack behavior. Repeat focused
+  disposable-emulator testing and visual inspection of both reported issues before acceptance;
+  broader dark/large-font/lifecycle/OEM and existing release-gate checks remain deferred.
+- Logs, XML and timings: `/home/karim/.codex/ai-pm-bidi-correction-nci_hkif/`.
+  Start: **2026-11-06 02:23:00 +05:45** (Asia/Kathmandu).
+  `AGENTS.md` and `docs/ROADMAP.md` remain missing; no contents were assumed.
+
 ## Arabic RTL / English LTR correction batch — 2026-11-06
 
 Owner-authorized bounded correction, starting at
