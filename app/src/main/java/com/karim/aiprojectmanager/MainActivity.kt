@@ -305,7 +305,13 @@ fun ProjectManagerApp(
                     2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
-                    3 -> TaskScreen(active) { item ->
+                    3 -> TaskScreen(active, onEditTitle = { taskId, title ->
+                        try {
+                            val edited = editedTaskTitle(active, taskId, title)
+                            if (edited != active) update(edited)
+                            true
+                        } catch (_: Exception) { false }
+                    }) { item ->
                         try { update(item); writeError = false; true }
                         catch (_: Exception) { writeError = true; false }
                     }
@@ -522,8 +528,31 @@ private fun EditableDocument(
 }
 
 @Composable
-private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Boolean) {
+private fun TaskScreen(
+    project: ProjectItem, onEditTitle: (String, String) -> Boolean, update: (ProjectItem) -> Boolean
+) {
+    var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
+    val editingTask = project.tasks.find { it.id == editingTaskId }
+    if (editingTask != null) {
+        key(project.id, editingTask.id) {
+            var title by rememberSaveable { mutableStateOf(editingTask.title) }
+            var saveError by rememberSaveable { mutableStateOf(false) }
+            AlertDialog(onDismissRequest = { editingTaskId = null },
+                title = { Text("تعديل عنوان المهمة") },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (saveError) Text("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
+                        OutlinedTextField(title, { title = it }, label = { Text("عنوان المهمة") },
+                            isError = title.isBlank(), modifier = Modifier.fillMaxWidth())
+                    }
+                },
+                confirmButton = { TextButton(onClick = {
+                    if (onEditTitle(editingTask.id, title)) editingTaskId = null else saveError = true
+                }, enabled = title.isNotBlank()) { Text("حفظ") } },
+                dismissButton = { TextButton(onClick = { editingTaskId = null }) { Text("إلغاء") } })
+        }
+    }
     Column(Modifier.padding(16.dp)) {
         Text(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
@@ -542,6 +571,7 @@ private fun TaskScreen(project: ProjectItem, update: (ProjectItem) -> Boolean) {
                     Column(Modifier.padding(12.dp)) {
                         Text(task.title, fontWeight = FontWeight.Bold)
                         Text(task.status, style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = { editingTaskId = task.id }) { Text("تعديل العنوان") }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {

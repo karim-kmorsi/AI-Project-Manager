@@ -53,7 +53,7 @@ This gate reconciles the current release with the broader historical requirement
 
 - Offline project creation with name/description, listing and selection. Overview now offers an explicit title/description edit dialog using the existing save path: blank titles are blocked, Cancel does not save, and save failures retain the form. Validation for this feature: 3 focused JVM tests passed; debug assembly and Android test compilation succeeded. The 3 new isolated UI tests are compiled only; UI/device acceptance remains deferred until the end of the build cycle.
 - Freeform Blueprint/Roadmap editing, explicit Save, autosave drafts and saved/pending/error feedback.
-- Simple task creation and manual status changes, including VERIFIED; progress counts tasks with that stored status. The app does not independently verify evidence or code.
+- Simple task creation, existing task-title editing, and manual status changes, including VERIFIED; progress counts tasks with that stored status. Title editing validates nonblank input, supports Save/Cancel, and retains input on failed saves through the existing persistence path. It preserves IDs, statuses, ordering and stored extensions. Validation: 4 task-title JVM tests and 3 project-metadata regression tests passed; debug assembly and Android test compilation succeeded. The 4 new UI safety tests are compiled only and await execution at the end of the build cycle. The app does not independently verify evidence or code.
 - Existing-format JSON export to an external document.
 - Read-only inspection of an externally selected JSON backup, with errors, closing and cancellation; no import is applied.
 - Safe persistence of the existing unversioned JSON array schema.
