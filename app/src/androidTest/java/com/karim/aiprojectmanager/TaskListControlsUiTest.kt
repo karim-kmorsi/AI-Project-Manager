@@ -32,6 +32,13 @@ class TaskListControlsUiTest {
         } finally { root.deleteRecursively() }
     }
 
+    // LazyColumn does not compose every off-screen card. Locate the item through its
+    // scroll-to-index semantics before asking a descendant to bring itself into view.
+    private fun taskText(text: String): SemanticsNodeInteraction {
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(text))
+        return compose.onNodeWithText(text).performScrollTo()
+    }
+
     @Test fun searchAndStatusCombineClearAndShowEmptyResultsWithoutWriting() = fixture { file, storage ->
         storage.save(listOf(ProjectItem("p", "Search project", "", tasks = listOf(
             TaskItem("a", "Alpha pending", "NOT_STARTED"),
@@ -43,20 +50,20 @@ class TaskListControlsUiTest {
         compose.setContent { MaterialTheme { ProjectManagerApp(storage) } }
         compose.onNodeWithText("Search project").performClick()
         compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("بحث في المهام").performScrollTo().performTextReplacement("  ALPHA  ")
-        compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
+        taskText("بحث في المهام").performTextReplacement("  ALPHA  ")
+        taskText("حالة المهام: كل الحالات").performClick()
         compose.onAllNodesWithText("قيد التنفيذ").onLast().performClick()
-        compose.onNodeWithText("Alpha active").performScrollTo().assertIsDisplayed()
+        taskText("Alpha active").assertIsDisplayed()
         compose.onNodeWithText("Alpha pending").assertDoesNotExist()
         compose.onNodeWithText("Beta active").assertDoesNotExist()
-        compose.onNodeWithText("بحث في المهام").performScrollTo().performTextReplacement("missing")
-        compose.onNodeWithText("لا توجد مهام تطابق خيارات البحث والتصفية.").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("مسح البحث").performScrollTo().performClick()
-        compose.onNodeWithText("Alpha active").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Beta active").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("حالة المهام: قيد التنفيذ").performScrollTo().performClick()
+        taskText("بحث في المهام").performTextReplacement("missing")
+        taskText("لا توجد مهام تطابق خيارات البحث والتصفية.").assertIsDisplayed()
+        taskText("مسح البحث").performClick()
+        taskText("Alpha active").assertIsDisplayed()
+        taskText("Beta active").assertIsDisplayed()
+        taskText("حالة المهام: قيد التنفيذ").performClick()
         compose.onNodeWithText("كل الحالات").performClick()
-        compose.onNodeWithText("Alpha legacy").performScrollTo().assertIsDisplayed()
+        taskText("Alpha legacy").assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
@@ -71,12 +78,12 @@ class TaskListControlsUiTest {
         }
         compose.onNodeWithText("Layout project").performClick()
         compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText(title).performScrollTo().assertIsDisplayed()
+        taskText(title).assertIsDisplayed()
         val labelsAndStatuses = listOf("قيد التنفيذ" to "IN_PROGRESS",
             "كود غير متحقق" to "IMPLEMENTED_UNVERIFIED", "تم التحقق" to "VERIFIED")
         for ((label, status) in labelsAndStatuses) {
-            val action = compose.onNodeWithText(label)
-            action.performScrollTo().assertIsDisplayed()
+            val action = taskText(label)
+            action.assertIsDisplayed()
             val bounds = action.getUnclippedBoundsInRoot()
             assertTrue("Action has positive width", bounds.right > bounds.left)
             assertTrue("Action does not overflow narrow content", bounds.left >= 0.dp && bounds.right <= 240.dp)
