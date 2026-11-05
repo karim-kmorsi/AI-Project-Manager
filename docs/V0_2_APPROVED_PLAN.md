@@ -3,6 +3,16 @@
 Status: **Historical broader approved requirements**. Approved 2026-11-02; retained below without removing the original requirements.
 Target: Android only; Kotlin + Jetpack Compose. GitHub PR review before merge.
 
+## Implementation clarification — 2026-11-05
+
+Existing title/description editing, project/task search and selected-project status filtering are
+now implemented. Current validation and remaining gates are recorded in
+[PROJECT_STATUS.md](PROJECT_STATUS.md) and [RELEASE_GATE_V0_2.md](RELEASE_GATE_V0_2.md).
+The scope paragraph dated 2026-11-03 below is a historical checkpoint: its metadata/search deferrals
+are superseded for those limited features. Metadata expansion, archival, broader search/history
+and the remaining requirements are still deferred. Original approved phases and acceptance
+criteria below are preserved; this clarification does not approve release or close Gate 0.
+
 ## Current release-scope reconciliation — 2026-11-03
 
 The original phases and acceptance criteria below are a requirements record, not a claim that all features are implemented or included in the reduced v0.2 release. [RELEASE_GATE_V0_2.md](RELEASE_GATE_V0_2.md) defines the current release scope, deferred requirements and outstanding verification; [V0_2_LOCAL_REGRESSION_AUDIT.md](V0_2_LOCAL_REGRESSION_AUDIT.md) records automated coverage and its limits.

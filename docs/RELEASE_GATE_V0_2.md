@@ -1,8 +1,16 @@
 # AI Project Manager — v0.2 release gate
 
-Updated: 2026-11-04
+Updated: 2026-11-05
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
+
+## Latest development batch — 2026-11-05
+
+See [current project status](PROJECT_STATUS.md) for responsive task actions, confirmed stale-editor
+reload/discard, restored-editor baseline protection, and exact validation. Debug and test APK
+assembly passed; all 44 host unit tests passed; lint reports zero errors and seven warnings.
+The added UI tests and existing instrumentation suite compiled but were not executed in this
+batch. Earlier results below remain historical, commit-specific evidence. **NOT Ready for Release**.
 
 ## Current local reconciliation baseline — 2026-11-04
 
