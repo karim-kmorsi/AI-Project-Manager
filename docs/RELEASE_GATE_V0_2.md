@@ -1,8 +1,46 @@
 # AI Project Manager — v0.2 release gate
 
-Updated: 2026-11-05
+Updated: 2026-11-06
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
+
+## Launcher icon integration closure — 2026-11-06
+
+Approved launcher icon integration is **complete locally** in commit
+`4583d33c7ed762b873558f9263c74551c104dd6e`. Fourteen approved resource files were added;
+AndroidManifest.xml gained `android:icon` and `android:roundIcon`. The integration does not change
+application identity, signing, version, backup policy or project storage.
+
+[Project status — icon inspection](PROJECT_STATUS.md#icon-inspection) records evidence and limits:
+all fourteen source resources match the approved ZIP byte-for-byte; all twelve packaged PNGs
+retain identical pixels and compiled references resolve. Debug build/resource compilation passed
+in the earlier execution report; no standalone build transcript is preserved and no build was
+rerun for this closure. Retained JUnit XML confirms **3 backup-policy configuration tests passed**.
+Static circle, squircle and rounded-square checks passed, including small previews. The packaged
+foreground's maximum radial extent is **320.765491px**, within the **330px** safe region.
+
+The saved screenshot and verification record support **PASS for one Pixel Launcher inspection**
+on a newly created disposable API 35 AVD (1080×1920, 420 dpi). The execution report records its
+shutdown/removal; the log records shutdown and the isolated AVD directory is absent. The report
+also records that existing AVDs and physical devices were not modified and no GitHub push or
+main-branch changes occurred. No device operations were performed to re-audit those claims.
+Local evidence paths and APK/ZIP hashes are listed in project status; evidence is not committed.
+This documentation-only closure runs no builds/tests and performs no push or main operations.
+
+Static mask checks and a single Pixel Launcher inspection do **not** close broader launcher
+acceptance. The following remain pending:
+
+- Other Android launchers and manufacturer-specific masks.
+- Launcher animation behavior.
+- Themed monochrome icon support, if required for release; none was invented or integrated.
+- Previously deferred backup/device-transfer transport and OEM verification.
+- All other existing release requirements, including process-death/lifecycle, visual/RTL/
+  accessibility, scale/provider, physical-device, stable signing and safe update/data-continuity gates.
+
+Earlier checkpoint statements about a missing icon or asset below are historical and superseded
+only for local icon integration. No post-integration Lint run is claimed; historical warning counts
+remain tied to their original checks. All existing criteria and historical evidence are preserved.
+**Application status: NOT Ready for Release.**
 
 ## Latest security/state maintenance — 2026-11-05
 
