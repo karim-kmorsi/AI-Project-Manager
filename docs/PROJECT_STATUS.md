@@ -5,6 +5,66 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Arabic RTL / English LTR correction batch — 2026-11-06
+
+Owner-authorized bounded correction, starting at
+`37a29fa254f02fe4711562a158ddb6b1f5c2c0ad`. Implementation and tests:
+`0256051` (`fix(ui): align bilingual paragraphs and scope theme dropdown test`).
+**NOT Ready for Release**; no Gate 0, Phase 1 or release acceptance is closed by this batch.
+
+Implementation inspected and corrected:
+
+- Android already supplies locale-aware Compose layout direction, and the manifest already has
+  `supportsRtl=true`. Existing Material fields, navigation, dialogs, radio rows, tabs and task
+  FlowRow actions use inherited start/end semantics. These mechanisms were retained without
+  forcing a global direction based on keyboard language or project content.
+- New shared `ParagraphText` gives block text the available width, `TextDirection.Content` and
+  `TextAlign.Start`: first-strong Arabic paragraphs start at the right and English at the left;
+  neutral-only paragraphs use the inherited layout direction. Standard bidi resolution handles
+  mixed content without changing strings, JSON, identifiers, statuses or numbers.
+- Applied to project-list/card/overview text, task titles/status text, Settings/storage/appearance
+  disclosures, Blueprint/Roadmap headings and recovery messages, and creation/edit/preview/error/
+  confirmation dialog text. Inline button, tab, dropdown and field labels retain intrinsic sizing.
+  Existing controls already mirror with the Android locale; no extra Activity recreation,
+  configuration interception, editor keys or navigation/state changes were introduced.
+- `ThemeUiTest.taskCreationSearchAndStatusFilterSurviveThemeChange` now scopes `قيد التنفيذ`
+  to a popup ancestor, distinguishing the dropdown option from the task action. All later
+  assertions remain. Retained prior execution evidence (`ai-pm-theme-verification-iqaxmdd7`)
+  records 8/9 passing and this selector failure before the theme change; that is historical
+  evidence, not a passing rerun of the corrected test.
+- Six new `LocaleDirectionUiTest` cases cover Arabic/English paragraph geometry, mixed JSON/
+  identifiers/numbers, appearance-control order, metadata pending-input/discard confirmation,
+  and document pending-input/dirty-navigation protection across injected locale direction changes.
+  Fixtures use only isolated synthetic files and simulated Android configurations.
+
+Verification actually executed:
+
+- Focused host tests: **18 passed** (`EditorSnapshotTest`, `ProjectMetadataTest`, `TaskTitleTest`,
+  `TaskListSearchTest`); Android UI Kotlin compilation passed. Combined invocation: **19.50 s**.
+- Final full offline invocation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**, **21.96 s**.
+  Debug/test APK assembly passed; **69 host tests passed**, 14 classes, zero failures/errors/skips.
+  Lint: **0 errors, 12 existing warnings** (ApplySharedPref 1, OldTargetApi 1,
+  GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3).
+- Complete diff and whitespace reviewed. Existing screen changes are only block-text call
+  substitutions; strings, colors, spacing values, field callbacks, storage, drafts and stale-write
+  logic remain unchanged. No manifest, dependency, identity, signing, version, launcher, backup,
+  schema or migration changes. No emulator/device operations, UI-test execution, push or main changes.
+- Logs, host XML, Lint XML and timings retained outside the repository at
+  `/home/karim/.codex/ai-pm-rtl-batch-esb9041k/`. Start: **2026-11-06 02:00:54 +05:45**
+  (Asia/Kathmandu). No build/test failure required diagnosis or re-execution.
+
+Remaining acceptance gaps:
+
+- New UI tests and the corrected theme test **compiled only; not executed in this batch**.
+  Actual Arabic/English device-locale delivery, all-screen visual layout, narrow screens/large fonts,
+  keyboard/mixed-text editing, dialog ordering and actual Activity lifecycle behavior remain unverified.
+  Injected composition tests do not establish real locale-change/recreation or process-death safety.
+- There is still no in-app language selector or full English UI translation; existing Android-locale
+  behavior and Arabic labels are preserved. This correction does not add that separate feature.
+- `AGENTS.md` and `docs/ROADMAP.md` are missing; no contents were assumed. Existing release
+  gates, backup/OEM checks and previously deferred lifecycle/physical-device acceptance remain open.
+
 ## Phase 2 theme batch — 2026-11-06
 
 Owner-authorized **development-only** theme implementation, starting at
