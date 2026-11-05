@@ -4,6 +4,27 @@ Updated: 2026-11-06
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
 
+## Development-only Phase 2 Batch 1 authorization — 2026-11-06
+
+The owner explicitly authorized a bounded Core Application Settings development increment:
+a project-list Settings destination, accurate local-storage/export/preview/backup disclosure,
+and an independent private-preferences foundation. See
+[project status](PROJECT_STATUS.md#phase-2-batch-1--core-application-settings--2026-11-06)
+for implementation and verification details. There are no active preference keys/options;
+language and theme switching remain unimplemented and require separate owner authorization.
+
+This specific development authorization does **not** close Gate 0, declare Phase 1 fully accepted,
+expand the reduced v0.2 release scope, waive historical requirements, or approve release or
+distribution. The broader historical phase prerequisites remain acceptance requirements;
+this increment is not evidence that their completion criteria have been met.
+
+Final Debug and test APK assembly passed; all **56 host unit tests passed**. Four new Settings
+UI tests compiled but were **not executed**. Settings runtime navigation/restoration, visual/
+accessibility behavior and actual platform preference durability are not accepted by these host
+results. No emulator/physical-device or PD/DU checks were performed. Existing backup exclusions
+are unchanged; actual transport/OEM verification remains pending. All existing release-gate
+criteria and historical evidence below are preserved. **NOT Ready for Release**.
+
 ## Launcher icon integration closure — 2026-11-06
 
 Approved launcher icon integration is **complete locally** in commit

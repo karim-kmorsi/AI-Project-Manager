@@ -5,6 +5,65 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Phase 2 Batch 1 — Core Application Settings — 2026-11-06
+
+Owner authorization explicitly permits this bounded **development-only** increment, starting at
+`b723b3b6698ad323e159c21c3cdd53847bb83b33`. Implementation/tests commit:
+`09a0604dd16a9e1bb1090afeb6b2b69bde0ae380`. This does **not** close Gate 0, declare Phase 1
+fully accepted, expand the reduced v0.2 release scope, or approve release/distribution.
+**NOT Ready for Release**.
+The historical phase ordering and requirements remain recorded; this is a specific authorization
+to develop the settings foundation while their acceptance conditions remain open.
+
+Implemented locally:
+
+- Project-list Settings entry and a Material3 informational destination. Toolbar/system Back
+  returns to the list. Search query and list scroll state are hoisted outside the destination
+  and use saved state; filtered results are derived from the retained query. Settings is not
+  accessible from active project editors; their existing dirty-navigation guards and
+  save/reload/discard behavior are unchanged.
+- Storage disclosure states that projects live in private local app storage, manual JSON export
+  creates a user-controlled external copy, and preview does not import, merge or replace data.
+  It explains configured automatic cloud/device-transfer exclusions, unverified manufacturer/
+  transfer behavior, and loss risk after uninstall/private-data loss without an external export.
+  It promises neither automatic external backup nor guaranteed recovery. Settings reuses the
+  existing export and read-only preview callbacks; no import/reset/delete action was added.
+- A small `AppPreferences` interface and private Android `SharedPreferences` adapter, separate
+  from project JSON and without new dependencies. Missing, incorrectly typed or unreadable
+  strings use the caller's default; rejected/exceptional writes return failure. Synchronous
+  commits require a background dispatcher when used. No preference keys, stored values, language
+  choices or theme choices were introduced. The informational screen does not instantiate/open
+  the store because there is no legitimate preference value to save in this batch.
+
+Verification actually executed:
+
+- Focused production Kotlin compilation: **passed**.
+- Focused host tests: **10 passed** (7 new `AppPreferencesTest`, 3 existing `BackupPolicyTest`).
+  Preference tests use a fake platform interface: defaults without writes, Unicode round-trip,
+  wrong-type fallback without mutation, read failure, rejected commit, write exception and blank
+  key rejection. They do not establish real Android filesystem durability.
+- Android test source compilation: **passed**. Four new `SettingsUiTest` cases cover toolbar Back,
+  system Back after saved-state restoration, retained search/results and unchanged project bytes,
+  disclosure/existing callback routing, and continued dirty-document navigation protection.
+  **These tests have not been executed**; compilation is not runtime acceptance. Fixtures are
+  isolated and include legacy unknown fields, IDs and VERIFIED status.
+- Final offline validation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest` — **BUILD SUCCESSFUL**. Complete host suite: **56 passed**,
+  12 classes, zero failures/errors/skips. Both Debug and test APK assembly passed.
+  Current JUnit evidence: `app/build/test-results/testDebugUnitTest/` (generated, not committed).
+- Complete code/test diff and whitespace checks passed. `ProjectStorage`, stale-write comparison,
+  document/task editors and their save paths were compared with the starting implementation and
+  are unchanged. No JSON schema/migration, project-data mutation path, manifest, icon, backup
+  exclusion, SDK/dependency/build configuration, signing, application ID or version changes.
+  No emulator, physical-device, PD/DU, Lint, GitHub push or main-branch operations ran.
+
+Remaining limitations: Settings navigation/restoration, disclosure layout on narrow/large-font
+screens and existing editor guards require the compiled UI tests plus separately authorized
+runtime review. Real preference platform durability remains unverified and no preference feature
+is active yet. Actual OEM backup/device-transfer behavior and all existing release gates remain
+open. `AGENTS.md` and `docs/ROADMAP.md` are missing; no contents were assumed.
+Language and theme selection require separate owner authorization and were not started.
+
 ## Current implementation
 
 Existing metadata/title editing, project/task search, task-status filters, responsive status
@@ -135,6 +194,10 @@ this maintenance candidate. Earlier full 107-test/DU evidence remains commit-spe
 - `AGENTS.md` and `docs/ROADMAP.md` remain missing; their contents have not been invented.
 
 ## Recommended next step
+
+For this development increment, separately authorize focused Settings UI execution using disposable
+data before accepting navigation/restoration and visual behavior. Scope language/theme work only
+with separate owner approval; do not treat the preferences foundation as those features.
 
 Review the explicit backup opt-out policy and separately scope platform/OEM transport verification
 using disposable data. Separately scope other-launcher/mask and animation checks, and decide
