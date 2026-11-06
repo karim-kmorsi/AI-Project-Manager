@@ -248,12 +248,12 @@ fun ProjectManagerApp(
     BackHandler(enabled = settingsVisible) { showSettings = false }
 
     Scaffold(topBar = {
-        TopAppBar(title = { ParagraphText(if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name) },
+        AccessibleAppBar(title = if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name,
             actions = { if (active == null && !settingsVisible) {
                 TextButton(onClick = onExport) { Text("تصدير JSON") }
                 TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
             } },
-            navigationIcon = {
+            navigation = {
                 if (settingsVisible) TextButton(onClick = { showSettings = false }) { Text("رجوع") }
                 else if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
@@ -301,7 +301,7 @@ fun ProjectManagerApp(
             }
         } else {
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
-            Column(Modifier.padding(padding)) {
+            Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 ScrollableTabRow(selectedTabIndex = tab) {
                     listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { index, label ->
                         Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index }, text = { Text(label) })
@@ -444,15 +444,8 @@ fun ProjectManagerApp(
     if (showNew) {
         var name by rememberSaveable { mutableStateOf("") }
         var details by rememberSaveable { mutableStateOf("") }
-        AlertDialog(onDismissRequest = { showNew = false },
-            title = { ParagraphText("إنشاء مشروع") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ParagraphText(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
-                if (writeError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
-                OutlinedTextField(name, { name = it }, textStyle = contentTextStyle(), label = { Text("اسم المشروع") })
-                OutlinedTextField(details, { details = it }, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })
-            } },
-            confirmButton = { TextButton(onClick = {
+        ProjectCreationDialog(name, details, writeError, { name = it }, { details = it },
+            onDismiss = { showNew = false }, onCreate = {
                 if (name.isNotBlank()) {
                     val p = ProjectItem(UUID.randomUUID().toString(), name.trim(), details.trim())
                     try {
@@ -461,8 +454,7 @@ fun ProjectManagerApp(
                         showNew = false; writeError = false
                     } catch (_: Exception) { writeError = true }
                 }
-            }, enabled = name.isNotBlank()) { Text("إنشاء") } },
-            dismissButton = { TextButton(onClick = { showNew = false }) { Text("إلغاء") } })
+            })
     }
 }
 
@@ -531,71 +523,72 @@ private fun EditableDocument(
             }
         }
     }
-    Column(
-        Modifier.fillMaxSize().imePadding().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            ParagraphText(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-            FilledActionButton(onClick = {
-                try {
-                    draftStore.save(projectId, document, value, draft)
-                    latestSave(draft)
-                    saveError = false
-                    recoveryError = false
-                    runCatching { draftStore.discard(projectId, document) }
-                } catch (_: Exception) { saveError = true }
-            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
-        }
-        ParagraphText(contextualTip(document), style = MaterialTheme.typography.bodySmall)
-        ParagraphText(
-            when {
-                recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
-                conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
-                saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
-                draft != value -> "تعديلات قيد الحفظ..."
-                else -> "تم الحفظ"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (recoveryError) {
-            if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
-            TextButton(onClick = {
-                try {
-                    draftStore.preserveUnreadable(projectId, document)
-                    recoveryError = false
-                    preservationFailed = false
-                    preservationCount++
-                } catch (_: Exception) { preservationFailed = true }
-            }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
-        }
-        if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
-        if (conflictingDraft != null) {
-            ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
-            ParagraphText(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
-            TextButton(onClick = {
-                // Explicit choice: recover the older text; a new draft records the current base.
-                draft = conflictingDraft!!
-                conflictingDraft = null
-            }) { Text("استخدام المسودة السابقة") }
-            TextButton(onClick = {
-                // Explicit user choice; remove only this conflicting recovery draft.
-                try {
-                    draftStore.discard(projectId, document)
+    ScrollableDocumentBody(
+        modifier = Modifier.fillMaxSize().imePadding().padding(16.dp),
+        chrome = {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                ParagraphText(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+                FilledActionButton(onClick = {
+                    try {
+                        draftStore.save(projectId, document, value, draft)
+                        latestSave(draft)
+                        saveError = false
+                        recoveryError = false
+                        runCatching { draftStore.discard(projectId, document) }
+                    } catch (_: Exception) { saveError = true }
+                }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
+            }
+            ParagraphText(contextualTip(document), style = MaterialTheme.typography.bodySmall)
+            ParagraphText(
+                when {
+                    recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
+                    conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
+                    saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
+                    draft != value -> "تعديلات قيد الحفظ..."
+                    else -> "تم الحفظ"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (recoveryError) {
+                if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
+                TextButton(onClick = {
+                    try {
+                        draftStore.preserveUnreadable(projectId, document)
+                        recoveryError = false
+                        preservationFailed = false
+                        preservationCount++
+                    } catch (_: Exception) { preservationFailed = true }
+                }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
+            }
+            if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
+            if (conflictingDraft != null) {
+                ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
+                ParagraphText(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
+                TextButton(onClick = {
+                    // Explicit choice: recover the older text; a new draft records the current base.
+                    draft = conflictingDraft!!
                     conflictingDraft = null
-                    recoveryError = false
-                } catch (_: IOException) { recoveryError = true }
-            }) { Text("الاحتفاظ بنص المشروع الحالي") }
+                }) { Text("استخدام المسودة السابقة") }
+                TextButton(onClick = {
+                    // Explicit user choice; remove only this conflicting recovery draft.
+                    try {
+                        draftStore.discard(projectId, document)
+                        conflictingDraft = null
+                        recoveryError = false
+                    } catch (_: IOException) { recoveryError = true }
+                }) { Text("الاحتفاظ بنص المشروع الحالي") }
+            }
+        }, editor = {
+            OutlinedTextField(
+                value = draft, onValueChange = { draft = it },
+                enabled = !recoveryError,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = contentTextStyle(), label = { Text("محتوى المستند") },
+                placeholder = { Text("اكتب أو الصق الخطة هنا...") }
+            )
         }
-        OutlinedTextField(
-            value = draft, onValueChange = { draft = it },
-            enabled = !recoveryError,
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            textStyle = contentTextStyle(), label = { Text("محتوى المستند") },
-            placeholder = { Text("اكتب أو الصق الخطة هنا...") }
-        )
-    }
+    )
 }
 
 @Composable

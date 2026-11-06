@@ -5,6 +5,69 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Focused accessibility layout corrections — 2026-11-06
+
+Starting HEAD: `94757c60744a66d0c5a514090f304f287851738b`, verified clean on the continuing
+branch. These are development corrections, **not passed live accessibility acceptance**.
+
+The preceding disposable-API-35 acceptance evidence is retained outside Git at
+`/home/karim/.codex/ai-pm-accessibility-retxqbrm/REPORT.md`. Seven selected Android tests and
+all eight real font/locale/theme preview cases passed, but actual IME checks exposed creation
+controls behind the keyboard, hidden Blueprint glyphs and a clipped large-font toolbar title.
+TalkBack speech and reliable focus-order/no-trap acceptance remained blocked.
+
+Implemented within the three-fix scope:
+
+- **Creation:** the form previously used a non-scrolling Column and did not explicitly reserve
+  the IME area. The extracted `ProjectCreationDialog` retains its strings, controls, validation
+  and callbacks; its edge-to-edge dialog consumes safe drawing/IME insets in its own window.
+  The form scrolls independently of Create/Cancel. Name/description state and the exact save
+  callback remain owned by `ProjectManagerApp`, including pending input after failed saves.
+- **Blueprint/Roadmap:** fixed guidance/status/recovery content could consume almost all available
+  height, leaving a weighted field too short for its label and text. `ScrollableDocumentBody`
+  measures that chrome and retains the remaining field height when space permits. In compact
+  space it preserves a typography-scaled minimum (three content lines, label and padding),
+  scrolling the body instead of collapsing the field. Save/guidance/recovery controls can scroll
+  in that compact layout and remain reachable. Scaffold padding is consumed before child IME
+  padding. The same field stays composed; no new text state, selection reset or editor key was
+  introduced. Draft, autosave, manual-save, conflict and dirty-navigation callbacks are unchanged.
+- **Toolbar:** fixed single-row app-bar height and actions crowded the title at large fonts.
+  `AccessibleAppBar` measures actual themed text/buttons, moves actions to a wrapping row only
+  when needed and lets heading height grow. Existing labels, callbacks, minimum bar height,
+  theme typography/colors and traversal grouping are retained; placement uses start/end semantics.
+
+Verification actually executed:
+
+- Eight focused `LayoutSizingTest` host regressions passed, covering inline/wrapped toolbar
+  allocation, navigation, enlarged typography, compact editor space and large measurement values.
+- Six new `AccessibilityLayoutUiTest` cases **compiled only; not executed**. They cover LTR/RTL
+  creation with injected bottom insets at 2x fonts, blank-name validation and retained failed input;
+  drawable mixed-text glyph bounds and retained selection under compact viewport resizing; and
+  large-font title/action separation and existing callbacks. These are simulated constraints,
+  not actual Android IME delivery, nonlinear system font scaling or TalkBack evidence.
+- Final full offline invocation ran once: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**, 24 s. All **80 host tests**
+  passed across 16 classes, zero failures/errors/skips. Both Debug APK assemblies passed.
+- Final review then changed only the dialog modifier's native-inset lookup to resolve within the
+  dialog window. Affected Debug/test APK assembly and Lint were checked again; the full host suite
+  was not repeated after this UI-only modifier correction. Host sizing/persistence logic is unchanged.
+  Affected checks passed (12 s). Final Lint: **0 errors, 12 existing warnings** — ApplySharedPref 1,
+  OldTargetApi 1, GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3. No new
+  warnings or warning suppressions were introduced.
+- Source comparisons confirm byte-identical models, Activity/provider callbacks, ProjectStorage/
+  safe-update code, draft/autosave logic and the creation save callback. No existing application
+  project files or drafts were accessed by this batch. No schema, serialization, manifest, signing,
+  Application ID, SDK, dependency, version, backup-policy or launcher changes.
+
+Evidence: `/home/karim/.codex/ai-pm-a11y-fixes-z637k82z/` (focused/full logs, host XML, Lint,
+source-invariant checks and final diff). No emulator/AVD/device operations, Android test execution,
+PD/DU, process-death, backup transport, GitHub push or main changes occurred.
+
+All three original live failures remain **pending separately authorized manual re-verification**.
+Check actual keyboard insets, cursor/selection, scrolling and reachable Save/Create/Cancel under
+normal/maximum Android fonts, both locale directions and themes. Spoken TalkBack, focus order,
+OEM/device compatibility and every other release gate remain open. **NOT Ready for Release**.
+
 ## Approved v0.2 stabilization batch — completed locally, 2026-11-06
 
 Starting HEAD: `c70a72f2593a5e9b3394bedd81f121de06ff4b14`. Local implementation commits:
