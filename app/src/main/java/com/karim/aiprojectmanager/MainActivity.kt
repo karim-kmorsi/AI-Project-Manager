@@ -358,14 +358,17 @@ fun ProjectManagerApp(
         AlertDialog(onDismissRequest = onDismissPreview,
             title = { ParagraphText(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
             text = {
-                if (restoreError != null) ParagraphText(restoreError)
-                else if (restorePreview != null) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ParagraphText("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
-                    restorePreview.projects.take(30).forEach { project ->
-                        ParagraphText("${project.name} — ${project.taskCount} مهمة")
+                Column(Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (restoreError != null) ParagraphText(restoreError)
+                    else if (restorePreview != null) {
+                        ParagraphText("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
+                        restorePreview.projects.take(30).forEach { project ->
+                            ParagraphText("${project.name} — ${project.taskCount} مهمة")
+                        }
+                        if (restorePreview.projects.size > 30) ParagraphText("تُعرض أول 30 مشروعًا فقط")
+                        ParagraphText("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
                     }
-                    if (restorePreview.projects.size > 30) ParagraphText("تُعرض أول 30 مشروعًا فقط")
-                    ParagraphText("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
                 }
             }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
     }
