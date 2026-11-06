@@ -1,9 +1,67 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-06 (Asia/Kathmandu).
+Updated: 2026-11-07 (Asia/Kathmandu).
 Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
+
+## Caret-visibility regression coverage and interrupted-batch closure — 2026-11-07
+
+Continuing baseline: `1e792af4d85ffae3b49a5f7ae75213553d9dc7f1`. The interrupted batch left
+only the new `CaretVisibilityUiTest.kt` untracked; branch and HEAD still matched on resumption.
+Existing instructions, status, roadmap and release gate were present. The owner explicitly
+deferred TalkBack acceptance; no TalkBack testing was resumed.
+
+Four new Android regressions exercise the existing Blueprint/Roadmap implementation in LTR/RTL,
+both themes, actual 2.0x system fonts and real keyboard show/hide/show transitions. Each checks
+beginning/middle/end cursor positions and movement after internal document scrolling, retained
+selection/focus, visible Save/heading, unchanged text and byte-identical synthetic project data.
+They use the rendered cursor-color vertical run inside the ancestor-clipped field intersected
+with the visible Android window frame. The decor-view transform maps window to screenshot
+coordinates; geometry is refreshed during bounded Compose-clock blink sampling. Text-layout
+cursor height supplies the expected height only, not proof of visibility. One physical pixel
+of height tolerance and small RGB tolerance account for rasterization; field outlines are
+excluded. This is a rendered-caret observable for the approved palettes, not a direct OS
+insertion-marker API or proof for every keyboard, window size or accessibility overlay.
+
+Initial test-authoring failures are retained in the evidence: a missing experimental-test API
+opt-in caused compilation failure; coordinate-origin mismatch and stale geometry during focus
+scrolling produced false caret failures. Those were corrected in the test harness. Another
+gesture scrolled into the separate guidance region; the internal-scroll scenario was corrected
+to start within the document before moving the cursor. Failure diagnostics also needed to handle
+multiple Compose roots. No confirmed production defect or production repair was required.
+
+Completed evidence reviewed on resumption:
+
+- Four distinct caret tests passed: Blueprint LTR 18.179 s / RTL 17.086 s, Roadmap LTR 18.732 s /
+  RTL 16.775 s. The eight existing `AccessibilityLayoutUiTest` cases also passed. These were two
+  focused runs (1 + 11 tests), not a full instrumentation suite.
+- The final offline Debug/host/test-APK/Lint invocation succeeded in 8 s. The host task was
+  **UP-TO-DATE**: retained XML records **86 passing host tests**, 17 classes, no failures/errors/
+  skips; this is reused evidence, not 86 freshly executed tests. Lint: **0 errors, 12 warnings**.
+- Closure review found that the actual-font prerequisite would fail ordinary normal-font CI runs.
+  Added an API-35 minimum test filter and a JUnit assumption for the dedicated 2x environment;
+  all caret and data-safety assertions remain. This is a test-only prerequisite correction.
+  Only affected test-APK assembly and Lint were repeated: successful, 0 errors/12 warnings.
+  Then **all four caret cases passed again** (74.822 s combined wall time), and a normal-font
+  run produced **four expected assumption skips**, zero failures (4.624 s wall time). The prior
+  eight passing regressions and full host suite were not repeated. Production APK hash is unchanged.
+
+Evidence: `/home/karim/.codex/ai-pm-caret-talkback-zqxw2u1h/`, including `caret-ltr-pass/`,
+`final-focused/`, `closure-2x/`, `closure-normal-font/`, archived host XML, build/Lint logs,
+artifact signatures/hashes, initial failure diagnostics and cleanup verification.
+
+The single owned API 35 AVD `AI_PM_Caret_TalkBack_zqxw2u1h` / `emulator-5588` remained running
+after interruption. Its identity and process were verified; TalkBack was disabled for cleanup,
+the owned emulator stopped, and only its dedicated AVD/Android-home directories removed.
+Protected existing AVD inventory is unchanged. Synthetic fixtures and prior limited programmatic
+node-observation evidence remain outside the repository; those observations do not establish
+TalkBack gesture traversal or spoken-output acceptance. **TalkBack remains deferred by owner**.
+
+No production, persistence, Save/draft/navigation, schema, signing, Application ID, dependency,
+theme, launcher or release-configuration changes. No physical-device access, main changes or push.
+Other keyboards/devices/window constraints, TalkBack, process death, backup/transfer and remaining
+release gates are still open. **NOT Ready for Release**.
 
 ## Editor accessibility recovery — 2026-11-06
 
