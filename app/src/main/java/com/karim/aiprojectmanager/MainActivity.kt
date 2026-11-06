@@ -16,6 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.json.JSONArray
@@ -256,7 +258,10 @@ fun ProjectManagerApp(
                 else if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
             })
     }, floatingActionButton = {
-        if (active == null && !loadError && !settingsVisible) FloatingActionButton(onClick = { writeError = false; showNew = true }) { Text("+") }
+        if (active == null && !loadError && !settingsVisible) FloatingActionButton(
+            onClick = { writeError = false; showNew = true },
+            modifier = Modifier.semantics { contentDescription = "إنشاء مشروع" }
+        ) { Text("+") }
     }) { padding ->
         if (settingsVisible) {
             SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, appearanceSettings)
