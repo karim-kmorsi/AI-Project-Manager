@@ -4,14 +4,36 @@ Updated: 2026-11-06
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
 
-## Development-only Phase 2 Batch 1 authorization — 2026-11-06
+## Current interpretation and stabilization authorization — 2026-11-06
+
+The owner selected `codex/baseline-reconciliation-v0-2` as the continuing development baseline,
+without merging or deleting branches. At `c70a72f`, Settings/storage disclosure, private theme
+preferences, Light/Dark/Follow System, approved launcher resources, metadata/task editing,
+search/filtering and the six guidance/overview features are implemented locally. RTL/Bidi
+corrections and their focused selection-test synchronization fix are also present. In-app language
+selection/full translation remain unimplemented. Later implementation supersedes earlier missing-
+feature statements only for those implemented capabilities, not their outstanding acceptance.
+
+The approved stabilization batch reconstructs current [contributor instructions](../AGENTS.md)
+and [roadmap](ROADMAP.md), improves long read-only previews and labels project creation accessibly.
+See [project status](PROJECT_STATUS.md) for actual results and pending checks. This authorization
+does not activate restore/import, change the JSON schema, close Gate 0/Phase 1, waive historical
+requirements or approve release. Heavy emulator/PD/DU, physical-device and actual process-death
+execution remain outside this batch. **NOT Ready for Release**.
+
+Historical sections below retain their original commit-specific requirements and evidence.
+Compiled-only statements are about those checkpoints; later focused executions must be recorded
+separately rather than treated as a new full-suite or device acceptance result.
+
+## Development-only Phase 2 Batch 1 authorization — historical checkpoint, 2026-11-06
 
 The owner explicitly authorized a bounded Core Application Settings development increment:
 a project-list Settings destination, accurate local-storage/export/preview/backup disclosure,
 and an independent private-preferences foundation. See
 [project status](PROJECT_STATUS.md#phase-2-batch-1--core-application-settings--2026-11-06)
-for implementation and verification details. There are no active preference keys/options;
-language and theme switching remain unimplemented and require separate owner authorization.
+for implementation and verification details. At that checkpoint there were no active preference
+keys/options; language and theme switching were unimplemented. Theme switching was subsequently
+owner-authorized and implemented; language selection still requires separate authorization.
 
 This specific development authorization does **not** close Gate 0, declare Phase 1 fully accepted,
 expand the reduced v0.2 release scope, waive historical requirements, or approve release or
@@ -185,7 +207,8 @@ The current candidate still needs physical-device checks of keyboard-visible Sav
 - Real restore/replacement/merge of user data. Isolated engines require deeper crash/concurrency verification before exposure.
 - Expanding project metadata beyond the existing title/description, archive/unarchive, richer task fields and structured milestone links.
 - Broader cross-project task/decision search and filtering, active/archived project filters, decision records, audit log and history. Simple project-name/description search and selected-project task-title search/status filtering are implemented in the current local baseline.
-- Multilingual settings and selectable light/dark/system themes.
+- Multilingual settings. Selectable light/dark/system themes were originally deferred and later
+  implemented under explicit development-only authorization; broader theme acceptance remains open.
 - GitHub account integration / automatic repository sync.
 - Cosmetic redesign or new data format.
 

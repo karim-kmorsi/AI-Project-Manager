@@ -5,6 +5,34 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Approved v0.2 stabilization batch — documentation checkpoint, 2026-11-06
+
+Starting HEAD: `c70a72f2593a5e9b3394bedd81f121de06ff4b14`, verified clean on the continuing
+development branch. The owner approved documentation recovery, long read-only preview accessibility
+and an accessible name for project creation. No branch reconciliation/merge is needed.
+
+- Created newly authored, dated `AGENTS.md` and `docs/ROADMAP.md`. Both explicitly identify
+  themselves as reconstructed current documents, not recovered historical originals. Earlier
+  missing-document statements below remain accurate for their original checkpoints.
+- Reviewed README, current implementation, release gate, broader plan and JSON compatibility policy.
+  README now points to current status/roadmap; the release gate distinguishes implemented Settings,
+  themes and RTL/Bidi work from historical deferrals and remaining acceptance. No historical
+  requirements, Gate 0, Phase 1 or reduced-scope safety conditions were waived.
+- Preview scrolling and project-creation semantics are pending at this documentation checkpoint.
+  Their final implementation/results will be recorded after verification. Actual process death,
+  heavy emulator/PD/DU, physical-device work and release readiness remain deferred.
+
+Prior focused RTL/Bidi closure (not rerun for documentation recovery):
+
+- Retained evidence at `/home/karim/.codex/ai-pm-final-bidi-verification-64kcjtc6/` records 3/4
+  targeted Android regressions passing on `abf9f58`; mixed editing failed because insertion used
+  the old selection while automatic Compose frames were paused.
+- Commit `c70a72f2593a5e9b3394bedd81f121de06ff4b14` adds one frame and an explicit selected-range
+  assertion. The previously failing method then passed **1/1**, 2.675 s runner time, on the existing
+  API 35 emulator. XML/log evidence: `/home/karim/.codex/ai-pm-bidi-selection-sync-j1ts5k9_/`.
+  All original assertions remain and existing private-file hashes were unchanged. This was a
+  test-only correction, not a full-suite rerun or broad IME/process-death acceptance.
+
 ## Targeted editable-text / numeric bidi corrections — 2026-11-06
 
 Owner-authorized development-only correction, starting at
