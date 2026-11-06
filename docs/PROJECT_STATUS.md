@@ -5,6 +5,83 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Saved-state reliability development batch — 2026-11-07
+
+Starting HEAD: `75b8de7ab481dcd00565d4b231fda6c491fae871`, verified clean on the continuing
+branch. Implementation/source-and-test ending commit:
+`e3d9d7263050d9193c52eb42e010baa525f76fe9`. This documentation closure follows that commit;
+its own final Git SHA is recorded in the batch report. All six required documents were present.
+
+**Task A — measured characterization:** `SavedStatePayloadTest` uses JDK 17 ObjectOutputStream
+to serialize the actual Saver's ArrayList and a deliberately limited form-state model. These
+are actual **Java serialization bytes**, not Android Bundle/Parcel sizes, memory usage or Binder
+limits. Baseline measurements ran before compaction. Reproducible fixtures use 64 or 262,144
+UTF-16 units in each document; 3 or 2,000 tasks have deterministic IDs, titles with 64-character
+suffixes and alternating FUTURE/VERIFIED statuses. Pending strings have 32 or 131,072 units.
+
+| Scenario | Units per document / tasks / pending units | Legacy baseline Java bytes | Compact baseline Java bytes | Current modeled form Java bytes |
+| --- | --- | ---: | ---: | ---: |
+| Small | 64 / 3 / 32 | 516 | 143 | 286 |
+| Large | 262,144 / 2,000 / 32 | 797,567 | 143 | 286 |
+| Large pending input | 262,144 / 2,000 / 131,072 | 797,567 | 143 | 150,052 |
+
+The old large baseline contains 6,006 strings / 1,404,176 logical raw UTF-16 bytes. This measured,
+avoidable duplication justified Task B. Java serialization uses reference sharing and modified
+UTF encoding; its numbers are **not** an Android byte-budget estimate. The form model excludes
+Compose registries/window envelopes and other screens. No Binder failure or crash was reproduced.
+New Android tests would measure real Parcel slices and full Activity saved-state Bundles for
+small/large metadata, task-title and pending-document scenarios, followed by recreation and
+unchanged-data checks. They were **compiled only**, so no Android size results are claimed.
+
+**Task B — compact conflict baseline:** immutable EditorSnapshot now retains a SHA-256 token.
+Canonical input includes the same project fields, IDs, document text, task count, ordered task
+IDs/titles/statuses, field counts and lengths. Exact UTF-16 code units preserve field boundaries,
+empty strings, Unicode distinctions and unpaired surrogates. Model fields remain non-null;
+malformed restored null values fail closed. The ArrayList<String> Saver container is retained;
+previous full-field lists restore to the equivalent fingerprint. Unsupported/corrupt tokens stay
+invalid rather than silently rebasing pending input. Confirmed reload is still the recovery path.
+Fingerprint equality has a nonzero SHA-256 collision risk, unlike literal list equality; this
+tradeoff is explicit, and the token is not authentication. No text is normalized, truncated or
+written to project JSON. Existing storage CAS, reload/discard and failed-save callbacks remain.
+
+**Task C — per-project task context:** a project-ID-keyed Compose SaveableStateHolder owns the
+task destination across temporary tab/project switches; query/status are saveable and the list
+uses explicit rememberLazyListState. Each visited project retains its own context across saved-
+state restoration. The dropdown uses ordinary remember and restores closed. Existing saveable
+task-entry/title-form state also remains within this owner. Search/filter logic, order, statuses,
+labels, styling and project data are unchanged. Runtime acceptance remains pending.
+
+Verification actually executed, offline with installed JDK 17 / Gradle 8.13:
+
+- Pre-change characterization: 1 host test passed. Focused snapshot/measurement/search/filter
+  checks passed; Android test source compilation passed. No failures or repair retries occurred.
+- Final full invocation ran once after the final source change: `:app:assembleDebug
+  :app:testDebugUnitTest :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**,
+  14 s reported. **91 host tests passed**, 18 classes, zero failures/errors/skips. Debug and test
+  APKs assembled. Lint: **0 errors, 12 existing warnings**, without suppressions.
+- Four additional snapshot host tests cover a pinned canonical digest, bounded saver size,
+  exact Unicode/boundaries, invalid-state rejection and legacy marker interpretation; all
+  existing snapshot assertions remain. The characterization test records the measured sizes.
+- **Seven new Android tests compiled, none executed:** five payload/Activity measurement cases
+  and two task-context cases covering recreation, tab return, project isolation, exact query/
+  filter retention, scroll restoration, closed popups and unchanged synthetic project bytes.
+  Existing metadata/title stale-save and failed-save UI regressions compiled; they were not rerun.
+
+Evidence: `/home/karim/.codex/ai-pm-saved-state-i6o5yp64/` (before/after measurement XML/logs,
+compaction decision, final host XML, Lint, source invariants and reviewed diff). Full diff reviewed.
+ProjectStorage/persistProjectChange and the document editor are byte-identical to the starting
+implementation. No project schema/migration, signing, Application ID, dependency, release-config,
+launcher, backup-policy or approved styling changes. No real user data was accessed or changed.
+No emulator/AVD/ADB, instrumentation execution, actual process death, device installation,
+physical-device, main or push operations occurred.
+
+Remaining risks: pending descriptions/documents/new-task text and retained contexts for many
+visited projects can still grow total saved state; compaction does not bound the whole Activity
+Bundle. Fingerprint computation remains proportional to compared content. Real Android sizes,
+runtime restoration and platform compatibility await focused disposable-data verification.
+TalkBack remains owner-deferred; process death, backup/transfer and other release gates stay open.
+**NOT Ready for Release**.
+
 ## Caret-visibility regression coverage and interrupted-batch closure — 2026-11-07
 
 Continuing baseline: `1e792af4d85ffae3b49a5f7ae75213553d9dc7f1`. The interrupted batch left
