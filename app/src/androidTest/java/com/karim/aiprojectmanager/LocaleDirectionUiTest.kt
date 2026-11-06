@@ -174,6 +174,10 @@ class LocaleDirectionUiTest {
         compose.mainClock.advanceTimeBy(64)
         val start = text.indexOf("42")
         field.performTextInputSelection(TextRange(start, start + 2))
+        // Publish selection to the input session while automatic frames are paused.
+        compose.mainClock.advanceTimeByFrame()
+        field.assert(SemanticsMatcher.expectValue(
+            androidx.compose.ui.semantics.SemanticsProperties.TextSelectionRange, TextRange(start, start + 2)))
         field.performTextInput("99")
         compose.mainClock.advanceTimeBy(64)
         field.assertTextContains(text.replace("42", "99"))
