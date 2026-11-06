@@ -37,9 +37,12 @@ remain missing. Current feature evidence and its limits are in project status.
 3. **Accessible project creation:** name the symbolic + action meaningfully through Compose
    semantics, retaining its appearance, placement and behavior.
 
-Steps 2–3 are pending implementation/verification at this documentation checkpoint. Add focused
-regressions, review the diff and record actual final build/test results. No heavy emulator,
-physical-device, PD/DU or actual process-death execution is part of this batch.
+All three steps are now implemented locally: documentation `903809d`, preview `85b2c2e`, creation
+semantics `b044800`. Final Debug/test APK assembly and Lint passed; 72 host tests and seven focused
+Android regressions passed. The preview regressions use composition-injected narrow density and
+2x fonts in both directions; accessible-name coverage is automated semantics, not manual TalkBack
+acceptance. See project status for exact evidence and limits. No heavy emulator, physical-device,
+PD/DU or actual process-death execution was performed. **NOT Ready for Release**.
 
 ## Outstanding release acceptance
 

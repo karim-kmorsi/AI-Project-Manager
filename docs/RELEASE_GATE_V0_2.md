@@ -25,6 +25,22 @@ Historical sections below retain their original commit-specific requirements and
 Compiled-only statements are about those checkpoints; later focused executions must be recorded
 separately rather than treated as a new full-suite or device acceptance result.
 
+### Stabilization outcome — 2026-11-06
+
+Documentation reconstruction, scrollable long preview and named creation action are complete
+locally (`903809d`, `85b2c2e`, `b044800`). The preview retains validation, counts, its 30-entry
+cap and read-only boundary; Close remains outside the scroll body. Creation retains its existing
+visual symbol and behavior. Final Debug/test APK assembly passed, all 72 host tests passed,
+and Lint reported zero errors/12 existing warnings. Seven focused Android regressions passed on
+the verified existing API 35 emulator with isolated synthetic files; existing project/preference
+bytes were unchanged. Narrow viewport and 2x font conditions were composition-injected.
+
+These focused checks do not close manual TalkBack, actual large-font/OEM, lifecycle/process-death,
+backup/device-transfer, physical-device, signing/update or broader release acceptance. The full
+Android instrumentation/acceptance suite was not rerun. No heavy emulator/PD/DU, physical-device
+or actual process-death execution occurred. See [project status](PROJECT_STATUS.md) for evidence.
+All earlier criteria remain in force. **NOT Ready for Release**.
+
 ## Development-only Phase 2 Batch 1 authorization — historical checkpoint, 2026-11-06
 
 The owner explicitly authorized a bounded Core Application Settings development increment:

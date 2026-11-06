@@ -5,6 +5,61 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Approved v0.2 stabilization batch — completed locally, 2026-11-06
+
+Starting HEAD: `c70a72f2593a5e9b3394bedd81f121de06ff4b14`. Local implementation commits:
+
+- `903809df07e1d217844e3b6daa1a401b96d747b3`: reconstructed current AGENTS.md/roadmap,
+  README pointers and release-gate reconciliation. Both new documents explicitly state that they
+  are newly authored reconstructions, not recovered historical originals. The documentation
+  checkpoint below records the initial state before the UI tasks were implemented.
+- `85b2c2e0d6665f8a706f7d3824d17e2c234fb97b`: preview text now scrolls inside the existing
+  AlertDialog; title/Close stay outside that scroll area. All displayed entries, cap notice and
+  read-only disclaimer are reachable. The 30-entry limit, counts, validation and Close callback
+  are unchanged; error text uses the same scrollable body. No import/restore action was added.
+- `b044800849834ac695b9442ec2476102309cf8a7`: the existing creation FAB has semantic name
+  `إنشاء مشروع` (Create project). Its + text, button role, appearance, placement and click handler
+  remain. Existing + selectors and new accessible-name navigation both work.
+
+Verification actually executed for this batch:
+
+- Focused production/Android test Kotlin compilation passed before final validation.
+- Final full offline invocation ran **once**: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL** (25 s reported by Gradle).
+  Debug and Android test APK assembly passed. All **72 host tests passed**, 15 classes,
+  zero failures/errors/skips. Lint: **0 errors, 12 existing warnings** (ApplySharedPref 1,
+  OldTargetApi 1, GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3).
+- **7 focused Android tests passed**, zero failures/skips, 15.01 s command wall time on the
+  verified existing `REDMAGIC_10_Pro_Test`, `emulator-5554`, API 35. Two new
+  `BackupPreviewAccessibilityUiTest` cases inject an effective narrow viewport (<=320x640dp)
+  and 2x Compose font scale in LTR/RTL: each scrolls to all 30 displayed entries and both
+  disclaimers, excludes entry 31, checks stationary/accessible Close, dismisses and compares bytes.
+  One new `ProjectCreationAccessibilityUiTest` checks accessible name/role/click, unchanged +,
+  existing validation and cancellation without writes. Existing `RestorePreviewTest` (2) and
+  the two relevant creation/preview-error `ProjectWorkflowUiTest` methods also passed.
+- Both candidate APKs matched the installed signing certificates and were updated in place only
+  after identity/boot/foreground checks; no uninstall/clear/reset was performed. Existing project
+  JSON and application preferences remained byte-for-byte unchanged and private file inventory
+  was unchanged. Android's runtime profile marker changed after the APK update/startup.
+- Complete diff/whitespace reviewed. Changes are limited to reconstructed/reconciled documentation,
+  preview scrolling, creation semantics and focused test sources. Persistence/model/validation,
+  schema, signing configuration, Application ID, dependencies, version, backup rules, icon assets,
+  main and GitHub were not changed. No verification failure or retry occurred.
+
+Evidence retained outside the repository: `/home/karim/.codex/ai-pm-v02-stabilization-o5bbr1vq/`
+(build/compile logs, host XML, Lint XML, focused instrumentation XML/log, signing and data hashes).
+
+Remaining verification:
+
+- The complete Android instrumentation/acceptance suite was **not** rerun; only the seven focused
+  cases ran. All Android test sources compiled. No heavy emulator, PD/DU, physical-device or actual
+  process-death tests ran. No emulator settings, graphics, AVDs, locale or theme settings changed;
+  viewport/direction/font conditions were injected into test composition only.
+- Automated semantics and simulated font/viewport checks do not establish manual TalkBack speech,
+  real platform nonlinear large-font scaling, every OEM/window size or broad accessibility acceptance.
+  Existing lifecycle/process-death, backup transport/OEM, signing/update/data-continuity and release
+  gates remain open. **NOT Ready for Release**.
+
 ## Approved v0.2 stabilization batch — documentation checkpoint, 2026-11-06
 
 Starting HEAD: `c70a72f2593a5e9b3394bedd81f121de06ff4b14`, verified clean on the continuing
