@@ -32,15 +32,43 @@ class LayoutSizingTest {
         // Former weighted field was only 48dp; a readable minimum now makes the body scroll.
         assertEquals(120, documentFieldHeight(220, 160, 12, 120))
         assertEquals(120, documentFieldHeight(220, 600, 12, 120))
-        assertEquals(120, documentFieldHeight(0, 600, 12, 120))
+        assertEquals(0, documentFieldHeight(0, 600, 12, 120))
     }
 
-    @Test fun enlargedTypographyMinimumSurvivesACompactViewport() {
-        assertEquals(208, documentFieldHeight(150, 240, 12, 208))
+    @Test fun fieldNeverExceedsItsVisibleViewportAtEnlargedTypography() {
+        assertEquals(150, documentFieldHeight(150, 240, 12, 208))
     }
 
     @Test fun editorArithmeticIsSafeForLargeMeasuredContent() {
         assertEquals(120, documentFieldHeight(360, Int.MAX_VALUE, 12, 120))
         assertEquals(Int.MAX_VALUE, documentFieldHeight(Int.MAX_VALUE, 0, 0, 120))
     }
+
+    @Test fun roomyEditorRetainsTopSaveAndNormalPadding() {
+        assertEquals(DocumentBodyAllocation(false, 16, 328, 420),
+            documentBodyAllocation(328, 500, 95, 48, 12, 16, 112))
+    }
+
+    @Test fun compactKeyboardViewportSharesHeightWithSaveWithoutCoveringText() {
+        val allocation = documentBodyAllocation(328, 128, 95, 60, 12, 16, 112)
+        assertEquals(DocumentBodyAllocation(true, 0, 221, 128), allocation)
+        assertTrue(allocation.bodyHeight >= 112)
+        assertEquals(128, documentFieldHeight(allocation.bodyHeight, 500, 12, 208))
+    }
+
+    @Test fun paddingIsReclaimedBeforeChangingActionPlacement() {
+        assertEquals(DocumentBodyAllocation(false, 0, 328, 122),
+            documentBodyAllocation(328, 170, 95, 48, 12, 16, 112))
+    }
+
+    @Test fun insufficientWidthDoesNotAllocateANegativeEditor() {
+        assertEquals(DocumentBodyAllocation(false, 0, 100, 68),
+            documentBodyAllocation(100, 128, 95, 60, 12, 16, 112))
+    }
+
+    @Test fun allocationArithmeticDoesNotOverflowWithLargeMeasurements() {
+        assertEquals(DocumentBodyAllocation(false, 0, 360, Int.MAX_VALUE),
+            documentBodyAllocation(360, Int.MAX_VALUE, Int.MAX_VALUE, 0, Int.MAX_VALUE, Int.MAX_VALUE, 112))
+    }
+
 }

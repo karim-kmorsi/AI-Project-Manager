@@ -5,6 +5,77 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Editor accessibility recovery — 2026-11-06
+
+Starting HEAD: `f588fe5bf8d9f17984b2586efce891e883567e53`, verified clean on the continuing
+branch. This section supersedes the earlier pending editor-readability and inset-test outcomes
+only for the scenarios verified below; broader release acceptance remains outstanding.
+
+Baseline evidence was reviewed from `/home/karim/.codex/ai-pm-a11y-final-y9s6a7zr/` and reproduced
+before editing. With actual 2x fonts and the keyboard visible, the old input had only 109px of
+visible height on the disposable 1080x1920 / 480 DPI phone: its oversized measured minimum was
+clipped by the remaining viewport, so internal scrolling could not reliably expose the caret.
+Save and heading geometry already worked. Of the two previously failing inset tests, this run's
+baseline LTR case passed and RTL failed the same heading assertion. Window evidence shows that
+their ComponentActivity host used `adjustPan`; a late real keyboard moved the host in addition
+to the fixture's injected IME/status insets. This was a test-host defect, not evidence for changing
+the already-correct production heading or resize policy.
+
+One repair attempt per defect was used (maximum two authorized); no second repair was needed:
+
+- `ScrollableDocumentBody` retains normal spacing and Save above the editor when space permits.
+  It first reclaims vertical padding, then places the existing Save action beside the input only
+  when the remaining height cannot fit one themed text line, label and field padding. Relative
+  placement mirrors RTL. The field is capped to its actual visible viewport so internal scrolling
+  can expose the active line/caret; its composition and state ownership remain stable. Guidance,
+  recovery feedback and document hints remain scrollable, with no essential content removed.
+- The synthetic inset fixtures explicitly disable native host adjustment, preventing a real IME
+  from applying a second pan/resize. Existing assertions remain; new assertions check readable
+  field height, IME separation and Save/input non-overlap. MainActivity's native resize policy
+  is unchanged and was verified separately with the actual keyboard.
+- Five host sizing regressions cover normal spacing, compact action placement, padding reclamation,
+  insufficient width and overflow safety. Existing viewport expectations now reject externally
+  oversized fields. No font-scale breakpoint, device-specific offset or dependency was added.
+
+Verification actually executed, offline using installed JDK 17 / Gradle 8.13:
+
+- Focused host checks: **14 passed**. Debug and Android test APK assembly passed.
+- All eight `AccessibilityLayoutUiTest` cases: **8 passed, 0 failed/skipped**, 17.341 s, including
+  both corrected heading/Save cases, existing toolbar/creation cases and selection/text assertions.
+- Final full invocation ran once after the last source change: `:app:assembleDebug
+  :app:testDebugUnitTest :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**,
+  8.489 s measured; **86 host tests passed**, 17 classes, zero failures/errors/skips. All Android
+  tests compiled. Final APK hashes match the APKs exercised by the focused UI tests.
+- Lint: **0 errors, 12 existing warnings** — ApplySharedPref 1, OldTargetApi 1,
+  GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3; no suppression added.
+- Live API 35 checks used one isolated Google Play x86_64 disposable AVD at 360x640dp, actual
+  system font scale 2.0 and the real keyboard: **all eight editor combinations passed** (Blueprint
+  / Roadmap × English LTR / Arabic RTL × Light / Dark). Active text and carets were readable,
+  Save remained directly tappable, and the long heading stayed below status icons. The compact
+  field viewport increased from 109px to 385px on this configuration; longer content scrolls
+  internally. Cursor/selection handles and scrolling were inspected, including English word
+  selection and Arabic-context internal scrolling; native selection menus can temporarily overlay
+  controls. Automated LTR/RTL tests additionally verify selection retention and replacement.
+- Creation-dialog regression checks passed at actual 2x fonts with the keyboard in both languages
+  and themes: name/description retained through scrolling, Create/Cancel reachable, Cancel usable.
+  Both cancellation runs left project bytes unchanged. Eight intended single-character editor
+  insertions were verified exactly, preserving all other fields, task/project IDs, statuses and
+  unknown legacy fields. No crash-buffer entries or ANR were recorded.
+
+Evidence: `/home/karim/.codex/ai-pm-editor-recovery-qh560rpi/` (baseline and repaired JUnit/logs,
+screenshots/window dumps, host/Lint XML, APK hashes, attempt records and data-integrity checks).
+The owned `AI_PM_Editor_Recovery_qh560rpi` / `emulator-5588` was stopped; only its dedicated AVD
+and Android-home directories were removed. Protected existing AVD file inventory is unchanged.
+No physical devices or real user data were accessed. The first locale-reorder gesture did not
+apply; it was corrected and the actual system locale was checked before Arabic verification.
+
+Complete diff reviewed. Production changes are confined to editor layout allocation/padding;
+toolbar/creation implementations and all editor save, draft, conflict, input and navigation logic
+are unchanged. No schema, serialization, backup policy, signing, Application ID, SDK, dependency,
+version, theme or launcher changes; no main changes or push. TalkBack spoken-output acceptance,
+other devices/keyboards/window sizes, process death, backup/transfer and physical-device release
+checks remain deferred. This focused pass does not close the broader release gate.
+
 ## Accessibility follow-up: native IME policy and reachable Save — 2026-11-06
 
 Starting HEAD: `81cbf8e688f78d5dcc1545ce39af2fb3fdb97d16`, verified clean on the continuing

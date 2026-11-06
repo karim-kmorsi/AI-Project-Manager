@@ -524,7 +524,7 @@ private fun EditableDocument(
         }
     }
     ScrollableDocumentBody(
-        modifier = Modifier.fillMaxSize().imePadding().padding(16.dp),
+        modifier = Modifier.fillMaxSize().imePadding(),
         action = {
             FilledActionButton(onClick = {
                 try {

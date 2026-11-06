@@ -10,7 +10,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.activity.ComponentActivity
+import android.view.WindowManager
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Density
@@ -26,7 +28,7 @@ import org.junit.runner.RunWith
 /** Geometry under injected constraints/insets, not real IME or spoken TalkBack acceptance. */
 @RunWith(AndroidJUnit4::class)
 class AccessibilityLayoutUiTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Composable
     private fun Narrow(direction: LayoutDirection, font: Float, content: @Composable () -> Unit) {
@@ -132,6 +134,11 @@ class AccessibilityLayoutUiTest {
     /** Simulates delivered insets; actual Android window panning/IME still needs live acceptance. */
     @OptIn(ExperimentalTestApi::class)
     private fun editorInsets(direction: LayoutDirection) {
+        // This fixture injects its own IME/status insets. A late real keyboard must not
+        // pan/resize the test host as well; MainActivity's native resize is tested live.
+        compose.runOnUiThread {
+            compose.activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+        }
         var imeBottom by mutableIntStateOf(0)
         var dark by mutableStateOf(false)
         var text by mutableStateOf("English 42\nخطة عربية\n{\"n\":1}")
@@ -139,11 +146,16 @@ class AccessibilityLayoutUiTest {
         var backs = 0
         var statusTop = 0
         var keyboardHeight = 0
+        var minimumFieldHeight = 0
         compose.setContent {
             InsetPhone(direction, dark) {
                 AppTheme(dark) {
                     statusTop = with(LocalDensity.current) { 45.dp.roundToPx() }
                     keyboardHeight = with(LocalDensity.current) { 299.dp.roundToPx() }
+                    minimumFieldHeight = with(LocalDensity.current) {
+                        (MaterialTheme.typography.bodyLarge.lineHeight.toDp() +
+                            MaterialTheme.typography.bodySmall.lineHeight.toDp() + 32.dp).roundToPx()
+                    }
                     val navigationBottom = with(LocalDensity.current) { 24.dp.roundToPx() }
                     Box(Modifier.width(360.dp).height(640.dp).testTag("viewport")) {
                         Scaffold(contentWindowInsets = WindowInsets(top = statusTop, bottom = navigationBottom),
@@ -159,7 +171,7 @@ class AccessibilityLayoutUiTest {
                                     }
                                 }
                                 ScrollableDocumentBody(
-                                    Modifier.fillMaxSize().windowInsetsPadding(WindowInsets(bottom = imeBottom)).padding(16.dp),
+                                    Modifier.fillMaxSize().windowInsetsPadding(WindowInsets(bottom = imeBottom)),
                                     action = { FilledActionButton(onClick = { saved = text }) { Text("حفظ") } },
                                     chrome = {
                                         ParagraphText("المخطط الهندسي للمشروع")
@@ -195,6 +207,12 @@ class AccessibilityLayoutUiTest {
             assertTrue("Save must be entirely above the IME", bounds.bottom <= root.bottom - keyboardHeight + 1f)
             assertTrue("Save must fit horizontally", bounds.left >= root.left && bounds.right <= root.right)
             compose.onNodeWithText("رجوع").assertIsDisplayed().assertHasClickAction()
+            val fieldBounds = field.assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            assertTrue("Visible field must fit a text line, label and padding",
+                fieldBounds.height >= minimumFieldHeight - 1f)
+            assertTrue("Visible field must be above the IME", fieldBounds.bottom <= root.bottom - keyboardHeight + 1f)
+            assertTrue("Save must not cover the input", bounds.right <= fieldBounds.left || bounds.left >= fieldBounds.right ||
+                bounds.bottom <= fieldBounds.top)
         }
         assertSafeGeometry()
         field.performTextInput("99")

@@ -5,8 +5,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.isTraversalGroup
@@ -84,7 +84,7 @@ internal fun ProjectCreationDialog(
     )
 }
 
-/** Keep Save outside focus-driven scrolling; scroll guidance and a readable field below it. */
+/** Reserve readable input space without moving Save into focus-driven scrolling. */
 @Composable
 internal fun ScrollableDocumentBody(
     modifier: Modifier = Modifier,
@@ -93,34 +93,48 @@ internal fun ScrollableDocumentBody(
     editor: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
-    // Three content lines, the floating label and Material field padding, scaled with typography.
-    val readableMinimum = with(density) {
-        (MaterialTheme.typography.bodyLarge.lineHeight.toDp() * 3 +
-            MaterialTheme.typography.bodySmall.lineHeight.toDp() + 32.dp).roundToPx()
-    }
-    Column(modifier) {
-        // Independently measured, so neither a tall focused field nor recovery guidance can
-        // scroll the existing Save action out of reach. The editor keeps the same composition.
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { action() }
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            val viewport = constraints.maxHeight
-            Layout(
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                content = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = chrome)
-                    editor()
-                }
-            ) { children, constraints ->
-                val width = constraints.maxWidth
-                val header = children[0].measure(Constraints(maxWidth = width))
-                val gap = 12.dp.roundToPx()
-                val field = children[1].measure(Constraints.fixed(width,
-                    documentFieldHeight(viewport, header.height, gap, readableMinimum)))
-                layout(width, header.height + gap + field.height) {
-                    header.placeRelative(0, 0)
-                    field.placeRelative(0, header.height + gap)
+    val lineHeight = with(density) { MaterialTheme.typography.bodyLarge.lineHeight.toDp() }
+    val labelHeight = with(density) { MaterialTheme.typography.bodySmall.lineHeight.toDp() }
+    // Material's floating label/padding plus actual themed line metrics, including font scaling.
+    val minimumLine = with(density) { (lineHeight + labelHeight + 32.dp).roundToPx() }
+    val readableMinimum = with(density) { (lineHeight * 3 + labelHeight + 32.dp).roundToPx() }
+    Layout(
+        modifier = modifier.padding(horizontal = 16.dp),
+        content = {
+            Box { action() }
+            BoxWithConstraints(Modifier.clipToBounds()) {
+                val viewport = constraints.maxHeight
+                Layout(
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    content = {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = chrome)
+                        editor()
+                    }
+                ) { children, constraints ->
+                    val width = constraints.maxWidth
+                    val header = children[0].measure(Constraints(maxWidth = width))
+                    val gap = 12.dp.roundToPx()
+                    // The field itself must know its real viewport, so its internal scrolling
+                    // can keep the cursor in view instead of relying on an externally clipped field.
+                    val field = children[1].measure(Constraints.fixed(width,
+                        documentFieldHeight(viewport, header.height, gap, readableMinimum)))
+                    layout(width, header.height + gap + field.height) {
+                        header.placeRelative(0, 0)
+                        field.placeRelative(0, header.height + gap)
+                    }
                 }
             }
+        }
+    ) { children, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val save = children[0].measure(Constraints(maxWidth = width, maxHeight = height))
+        val allocation = documentBodyAllocation(width, height, save.width, save.height,
+            12.dp.roundToPx(), 16.dp.roundToPx(), minimumLine)
+        val body = children[1].measure(Constraints.fixed(allocation.bodyWidth, allocation.bodyHeight))
+        layout(width, height) {
+            save.placeRelative(width - save.width, allocation.verticalPadding)
+            body.placeRelative(0, if (allocation.sideAction) 0 else allocation.verticalPadding + save.height)
         }
     }
 }
