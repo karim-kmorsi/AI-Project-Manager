@@ -51,4 +51,44 @@ class EditorSnapshotTest {
             listOf(TaskItem("t", "عنوان", "FUTURE")))), restored)
     }
 
+    @Test fun compactSaverIsBoundedAndDeterministicWithCanonicalGoldenVector() {
+        val scope = SaverScope { true }
+        val small = with(EditorSnapshot.saver) { scope.save(editorSnapshot(project)) }!!
+        assertEquals(listOf("sha256-utf16-v1", "64be9f1ed2f0beee76e120f6d0a54de499c5cea9e3f902b9896fa6f96a56a75e"), small)
+        val large = project.copy(blueprint = "x".repeat(262_144), roadmap = "خطة".repeat(100_000),
+            tasks = (0 until 2_000).map { TaskItem("id-$it", "Long task $it", "FUTURE") })
+        val saved = with(EditorSnapshot.saver) { scope.save(editorSnapshot(large)) }!!
+        assertEquals(2, saved.size)
+        assertEquals(small.sumOf { it.length }, saved.sumOf { it.length })
+        assertEquals(editorSnapshot(large), EditorSnapshot.saver.restore(saved))
+        assertEquals(saved, with(EditorSnapshot.saver) { scope.save(editorSnapshot(large)) })
+    }
+
+    @Test fun exactUtf16EmptyFieldsAndUnicodeNormalizationAreNotCollapsed() {
+        for ((a, b) in listOf("\uD800" to "\uD801", "\uD800" to "?", "é" to "e\u0301", "" to "\u0000")) {
+            assertNotEquals(editorSnapshot(project.copy(blueprint = a)), editorSnapshot(project.copy(blueprint = b)))
+        }
+        assertNotEquals(editorSnapshot(project.copy(name = "ab", description = "c")),
+            editorSnapshot(project.copy(name = "a", description = "bc")))
+    }
+
+    @Test fun unsupportedOrMalformedRestoredTokensFailClosedInsteadOfAdoptingCurrentBase() {
+        @Suppress("UNCHECKED_CAST")
+        val nullLegacy = arrayListOf<Any?>("p", null, "", "", "", "0") as ArrayList<String>
+        for (value in listOf(arrayListOf(), arrayListOf("sha256-utf16-v1", "invalid"),
+            arrayListOf("future-format", "0".repeat(64)), nullLegacy)) {
+            val restored = EditorSnapshot.saver.restore(value)
+            assertNotNull(restored)
+            assertNotEquals(editorSnapshot(project), restored)
+            val saved = with(EditorSnapshot.saver) { SaverScope { true }.save(restored!!) }!!
+            assertNotEquals(editorSnapshot(project), EditorSnapshot.saver.restore(saved))
+        }
+    }
+
+    @Test fun legacyProjectIdResemblingFormatMarkerDoesNotChangeInterpretation() {
+        val p = project.copy(id = "sha256-utf16-v1", tasks = emptyList())
+        val legacy = arrayListOf(p.id, p.name, p.description, p.blueprint, p.roadmap, "0")
+        assertEquals(editorSnapshot(p), EditorSnapshot.saver.restore(legacy))
+    }
+
 }

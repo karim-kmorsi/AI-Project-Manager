@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -227,6 +228,7 @@ fun ProjectManagerApp(
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var projectSearchQuery by rememberSaveable { mutableStateOf("") }
     val projectListState = rememberLazyListState()
+    val taskScreenStates = rememberSaveableStateHolder()
     var editingProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var editorDirty by remember { mutableStateOf(false) }
     var warnOnExit by remember { mutableStateOf(false) }
@@ -337,23 +339,25 @@ fun ProjectManagerApp(
                     2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
-                    3 -> TaskScreen(active, onReloadTitle = { taskId ->
-                        val loaded = storage.load()
-                        loaded.find { it.id == active.id }?.tasks?.find { it.id == taskId }
-                            ?: throw IOException("Task no longer exists; pending input retained")
-                        projects.clear()
-                        projects.addAll(loaded)
-                        loaded.first { it.id == active.id }
-                    }, onEditTitle = { taskId, title, base ->
-                        try {
-                            if (editorSnapshot(active) != base) throw IOException("Editor base changed")
-                            val edited = editedTaskTitle(active, taskId, title)
-                            if (edited != active) update(edited)
-                            true
-                        } catch (_: Exception) { false }
-                    }) { item ->
-                        try { update(item); writeError = false; true }
-                        catch (_: Exception) { writeError = true; false }
+                    3 -> taskScreenStates.SaveableStateProvider(active.id) {
+                        TaskScreen(active, onReloadTitle = { taskId ->
+                            val loaded = storage.load()
+                            loaded.find { it.id == active.id }?.tasks?.find { it.id == taskId }
+                                ?: throw IOException("Task no longer exists; pending input retained")
+                            projects.clear()
+                            projects.addAll(loaded)
+                            loaded.first { it.id == active.id }
+                        }, onEditTitle = { taskId, title, base ->
+                            try {
+                                if (editorSnapshot(active) != base) throw IOException("Editor base changed")
+                                val edited = editedTaskTitle(active, taskId, title)
+                                if (edited != active) update(edited)
+                                true
+                            } catch (_: Exception) { false }
+                        }) { item ->
+                            try { update(item); writeError = false; true }
+                            catch (_: Exception) { writeError = true; false }
+                        }
                     }
                 }
             }
@@ -610,10 +614,11 @@ private fun TaskScreen(
     update: (ProjectItem) -> Boolean
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
-    var searchQuery by remember(project.id) { mutableStateOf("") }
-    var selectedStatus by remember(project.id) { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable(project.id) { mutableStateOf("") }
+    var selectedStatus by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var statusMenuExpanded by remember(project.id) { mutableStateOf(false) }
     val visibleTasks = filterTasksByQuery(project.tasks, searchQuery, selectedStatus)
+    val taskListState = rememberLazyListState()
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
     val editingTask = project.tasks.find { it.id == editingTaskId }
     if (editingTask != null) {
@@ -668,7 +673,7 @@ private fun TaskScreen(
             }
         }, enabled = newTask.isNotBlank()) { Text("إضافة") }
         Spacer(Modifier.height(12.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(state = taskListState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المهام") },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,

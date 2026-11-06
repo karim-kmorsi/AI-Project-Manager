@@ -1,0 +1,98 @@
+package com.karim.aiprojectmanager
+
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
+import org.junit.Before
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+
+/** Isolated files; actual Activity recreation, never actual process death. */
+@RunWith(AndroidJUnit4::class)
+class TaskContextRestorationUiTest {
+    @get:Rule val compose = createAndroidComposeRule<IsolatedWorkflowActivity>()
+    private lateinit var file: File
+    private lateinit var original: ByteArray
+
+    @Before fun seed() {
+        compose.activityRule.scenario.onActivity { activity ->
+            file = File(activity.filesDir, "projects.json")
+            val storage = ProjectStorage(file)
+            storage.save(storage.load().mapIndexed { project, p -> p.copy(tasks = (0 until 80).map {
+                TaskItem("task-$it", "${if (project == 0) "A" else "B"} task $it",
+                    if (it % 2 == 0) "IN_PROGRESS" else "NOT_STARTED")
+            }) })
+            original = file.readBytes()
+        }
+        compose.activityRule.scenario.recreate()
+    }
+    @After fun cleanFixture() {
+        val root = compose.activity.fixtureRoot
+        compose.activityRule.scenario.close()
+        root.deleteRecursively()
+    }
+    private fun list() = compose.onNode(hasScrollToIndexAction())
+    private fun open(name: String) {
+        compose.onNodeWithText(name).performClick()
+        compose.onNodeWithText("المهام").performScrollTo().performClick()
+    }
+    private fun select(query: String, label: String) {
+        list().performScrollToIndex(0)
+        compose.onNodeWithText("بحث في المهام").performTextReplacement(query)
+        compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
+        compose.onNode(hasText(label) and hasAnyAncestor(isPopup())).performClick()
+    }
+    private fun position() = list().fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+    private fun assertContext(query: String, status: String, scroll: Float) {
+        assertEquals("Restore scroll before scrolling to inspect controls", scroll, position(), 1f)
+        list().performScrollToIndex(0)
+        compose.onNodeWithText("بحث في المهام").assertTextContains(query)
+        compose.onNodeWithText("حالة المهام: $status").assertExists()
+        compose.onNode(isPopup()).assertDoesNotExist()
+        assertArrayEquals(original, file.readBytes())
+    }
+    @Test fun queryFilterAndScrollSurviveActivityRecreationAndMenuRestoresClosed() {
+        open("Lifecycle project")
+        select("  A TASK  ", "قيد التنفيذ")
+        list().performScrollToIndex(12)
+        val scroll = position()
+        compose.activityRule.scenario.recreate()
+        assertContext("  A TASK  ", "قيد التنفيذ", scroll)
+        compose.onNodeWithText("حالة المهام: قيد التنفيذ").performScrollTo().performClick()
+        compose.onNode(isPopup()).assertExists()
+        compose.activityRule.scenario.recreate()
+        compose.onNode(isPopup()).assertDoesNotExist()
+        compose.onNodeWithText("بحث في المهام").assertTextContains("  A TASK  ")
+        compose.onNodeWithText("حالة المهام: قيد التنفيذ").assertExists()
+        assertArrayEquals(original, file.readBytes())
+    }
+    @Test fun tabRoundTripAndProjectSwitchesRetainIndependentContextsWithoutWrites() {
+        open("Lifecycle project")
+        select("A task", "قيد التنفيذ")
+        list().performScrollToIndex(12)
+        val a = position()
+        compose.onNodeWithText("Roadmap").performScrollTo().performClick()
+        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        assertEquals(a, position(), 1f)
+        compose.onNodeWithText("رجوع").performClick()
+        open("Unrelated project")
+        assertEquals(0f, position(), 1f)
+        compose.onNodeWithText("بحث في المهام").assert(SemanticsMatcher.expectValue(
+            SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
+        compose.onNodeWithText("حالة المهام: كل الحالات").assertExists()
+        select("B task", "لم تبدأ")
+        list().performScrollToIndex(5)
+        val b = position()
+        compose.onNodeWithText("رجوع").performClick()
+        open("Lifecycle project")
+        assertContext("A task", "قيد التنفيذ", a)
+        compose.onNodeWithText("رجوع").performClick()
+        open("Unrelated project")
+        assertContext("B task", "لم تبدأ", b)
+    }
+}
