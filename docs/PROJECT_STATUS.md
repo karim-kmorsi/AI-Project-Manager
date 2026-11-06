@@ -5,6 +5,75 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Accessibility follow-up: native IME policy and reachable Save — 2026-11-06
+
+Starting HEAD: `81cbf8e688f78d5dcc1545ce39af2fb3fdb97d16`, verified clean on the continuing
+branch. Implementation/checks below do **not** constitute passed live keyboard acceptance.
+
+Prior re-verification evidence: `/home/karim/.codex/ai-pm-a11y-reverify-6hj84wd7/REPORT.md`.
+At that checkpoint all six `AccessibilityLayoutUiTest` cases passed (13.328 s, no failures/skips),
+and creation worked with actual 2x fonts, keyboard, both directions/themes. The original
+normal-font hidden editor text and project-list title clipping were resolved. Extended 2x editor
+checks still found Save unreached by attempted scrolling and project headings overlapping status
+icons. These later results supersede the earlier section's pending/compiled-only statements only
+for that tested commit; they do not establish acceptance of the follow-up code.
+
+Diagnosis from source and retained window/screenshots:
+
+- The manifest had no explicit soft-input policy; both failing window dumps report `adjust=pan`.
+  With the IME open, heading top moved from y=136 to y=15/16 into a 136px status-bar region.
+  The shared app bar already reserved system-bar insets and wrapped the heading. Whole-window
+  displacement bypassed that protection; missing title padding was not the evidenced problem.
+- Save shared the outer scroller with guidance/recovery and a minimum-height, internally scrolling
+  field. When available space dropped below that field's measured minimum, reaching Save depended
+  on scrolling away from the focused input. The live gestures did not achieve that at 2x. Window
+  panning and this shared-scroll structure are evidenced contributors; the exact focus/IME gesture
+  arbitration was not independently reproduced in this emulator-free implementation batch.
+
+Implemented minimal corrections:
+
+- MainActivity explicitly requests `adjustResize`; existing Compose IME/system-bar padding and
+  consumption remain. No extra offsets, font-scale breakpoints or Activity recreation were added.
+- `ScrollableDocumentBody` measures the existing Save action in a separate trailing-aligned row
+  above the scroller. Guidance, heading, recovery feedback and the readable field scroll below it;
+  field viewport measurement uses the space left after Save. This prevents content/focus scrolling
+  from carrying Save off-screen. Save moves from beside the document hint to its own row, retaining
+  the same label, theme button, enabled condition and callback. RTL uses end alignment.
+- The same text field remains composed; state, cursor/selection ownership, draft/autosave/manual-save,
+  conflict/recovery and navigation guards are unchanged. Creation dialog source is byte-identical.
+  App bar measurement is unchanged; its existing inset value is injectable for focused tests.
+
+Verification actually executed, offline with JDK 17 / installed Gradle 8.13:
+
+- Focused host checks: **9 passed** (eight sizing regressions plus explicit manifest-resize policy).
+  Focused Android UI compilation passed.
+- Final full invocation ran **once**: `:app:assembleDebug :app:testDebugUnitTest
+  :app:assembleDebugAndroidTest :app:lintDebug` — **BUILD SUCCESSFUL**, 14 s (14.247 s measured).
+  **81 host tests passed**, 17 classes, zero failures/errors/skips. Debug and test APKs assembled.
+  Packaged manifest inspection confirms `windowSoftInputMode=0x10` (`adjustResize`).
+- Lint: **0 errors, 12 existing warnings** — ApplySharedPref 1, OldTargetApi 1,
+  GradleDependency 1, ObsoleteSdkInt 1, IconLauncherShape 5, UseKtx 3. No warning suppression.
+- Two new LTR/RTL UI cases compile for a constrained phone at injected 2x font/IME/status insets:
+  focused selection retention, replacement, pending input across Light/Dark, direct Save visibility
+  and callback, long-heading top boundary/no overflow and Back callback. Existing editor cases now
+  assert Save is displayed directly, without scrolling it into view; all original text/selection/
+  glyph assertions remain. Existing creation and toolbar cases are retained.
+  **All eight UI cases compiled only in this batch; none executed.** Simulated inset geometry is
+  not proof of real window/keyboard, nonlinear system fonts, TalkBack or OEM behavior.
+
+Evidence: `/home/karim/.codex/ai-pm-a11y-followup-e3o3f4lf/` (focused/final logs, JUnit XML,
+Lint XML, packaged manifest, artifact hashes and source-invariant checks). Complete diff reviewed.
+Models, persistence/serialization and provider callbacks are unchanged; Save logic and its enabled
+condition match exactly ignoring indentation. Manifest change is limited to resize policy. No schema,
+backup, signing, Application ID, SDK, dependency, version, launcher or user-data changes. No emulator,
+AVD, ADB, installation, physical-device, process-death, PD/DU, push or main operations.
+
+Remaining acceptance: actual 2x keyboard-visible Save and text/cursor/selection in Blueprint and
+Roadmap; long headings below the status bar in RTL/LTR and both themes; normal-font and creation
+regressions after the native policy change. Extremely constrained input space and IME/focus-driven
+scrolling still require live observation. TalkBack/focus order and all other release gates remain
+open. **NOT Ready for Release**. Next: separately authorize focused disposable-emulator verification.
+
 ## Focused accessibility layout corrections — 2026-11-06
 
 Starting HEAD: `94757c60744a66d0c5a514090f304f287851738b`, verified clean on the continuing

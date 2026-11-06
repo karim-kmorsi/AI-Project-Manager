@@ -83,8 +83,9 @@ class AccessibilityLayoutUiTest {
         var value by mutableStateOf("English 42\nخطة عربية\n{\"n\":1}")
         compose.setContent {
             Narrow(direction, 1f) {
-                ScrollableDocumentBody(Modifier.width(360.dp).height(height.dp), chrome = {
+                ScrollableDocumentBody(Modifier.width(360.dp).height(height.dp), action = {
                     TextButton(onClick = {}) { Text("حفظ") }
+                }, chrome = {
                     ParagraphText("إرشاد طويل للعربية والإنجليزية\nEditor guidance and recovery status\nMore guidance")
                     ParagraphText("تم الحفظ")
                 }, editor = {
@@ -109,7 +110,101 @@ class AccessibilityLayoutUiTest {
             assertTrue("Glyph must fit the text viewport", glyph.top >= 0f && glyph.bottom <= text.size.height + 1f)
         }
         compose.runOnIdle { assertEquals("English 42\nخطة عربية\n{\"n\":1}", value) }
-        compose.onNodeWithText("حفظ").performScrollTo().assertIsDisplayed().assertHasClickAction()
+        compose.onNodeWithText("حفظ").assertIsDisplayed().assertHasClickAction()
+    }
+
+
+    @Test fun focusedEditorSaveAndLongHeadingRespectInsetsLtr() = editorInsets(LayoutDirection.Ltr)
+    @Test fun focusedEditorSaveAndLongHeadingRespectInsetsRtl() = editorInsets(LayoutDirection.Rtl)
+
+    @Composable
+    private fun InsetPhone(direction: LayoutDirection, dark: Boolean, content: @Composable () -> Unit) {
+        // Fit the simulated 360x640dp phone inside the test window; its real system bars
+        // must not shrink that fixture again before the deliberately injected insets.
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val scale = minOf(constraints.maxWidth / 360f, constraints.maxHeight / 640f)
+            CompositionLocalProvider(LocalDensity provides Density(scale, 2f), LocalLayoutDirection provides direction) {
+                AppTheme(dark, content)
+            }
+        }
+    }
+
+    /** Simulates delivered insets; actual Android window panning/IME still needs live acceptance. */
+    @OptIn(ExperimentalTestApi::class)
+    private fun editorInsets(direction: LayoutDirection) {
+        var imeBottom by mutableIntStateOf(0)
+        var dark by mutableStateOf(false)
+        var text by mutableStateOf("English 42\nخطة عربية\n{\"n\":1}")
+        var saved: String? = null
+        var backs = 0
+        var statusTop = 0
+        var keyboardHeight = 0
+        compose.setContent {
+            InsetPhone(direction, dark) {
+                AppTheme(dark) {
+                    statusTop = with(LocalDensity.current) { 45.dp.roundToPx() }
+                    keyboardHeight = with(LocalDensity.current) { 299.dp.roundToPx() }
+                    val navigationBottom = with(LocalDensity.current) { 24.dp.roundToPx() }
+                    Box(Modifier.width(360.dp).height(640.dp).testTag("viewport")) {
+                        Scaffold(contentWindowInsets = WindowInsets(top = statusTop, bottom = navigationBottom),
+                            topBar = {
+                                AccessibleAppBar("Accessibility العربية English 42", navigation = {
+                                    TextButton(onClick = { backs++ }) { Text("رجوع") }
+                                }, actions = {}, windowInsets = WindowInsets(top = statusTop))
+                            }) { padding ->
+                            Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
+                                ScrollableTabRow(selectedTabIndex = 1) {
+                                    listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { i, label ->
+                                        Tab(selected = i == 1, onClick = {}, text = { Text(label) })
+                                    }
+                                }
+                                ScrollableDocumentBody(
+                                    Modifier.fillMaxSize().windowInsetsPadding(WindowInsets(bottom = imeBottom)).padding(16.dp),
+                                    action = { FilledActionButton(onClick = { saved = text }) { Text("حفظ") } },
+                                    chrome = {
+                                        ParagraphText("المخطط الهندسي للمشروع")
+                                        ParagraphText("إرشاد للمحرر\nEditor guidance\nDraft recovery status\nMore guidance")
+                                    }, editor = {
+                                        OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth().testTag("inset-field"),
+                                            textStyle = contentTextStyle(), label = { Text("محتوى المستند") })
+                                    })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        val field = compose.onNodeWithTag("inset-field")
+        field.performScrollTo().performTextInputSelection(TextRange(8, 10))
+        compose.mainClock.advanceTimeByFrame()
+        compose.runOnIdle { imeBottom = keyboardHeight }
+        field.assert(SemanticsMatcher.expectValue(SemanticsProperties.TextSelectionRange, TextRange(8, 10)))
+        field.assertIsFocused()
+        // No performScrollTo on Save: focus-driven scrolling must never move it off screen.
+        fun assertSafeGeometry() {
+            val root = compose.onNodeWithTag("viewport").fetchSemanticsNode().boundsInRoot
+            val title = compose.onNodeWithText("Accessibility العربية English 42").assertIsDisplayed()
+            val titleBounds = title.fetchSemanticsNode().boundsInRoot
+            assertTrue("Heading must remain below the status-bar inset", titleBounds.top >= root.top + statusTop - 1f)
+            val layouts = mutableListOf<TextLayoutResult>()
+            title.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { assertTrue(it(layouts)) }
+            assertFalse("Long heading must remain fully laid out", layouts.single().hasVisualOverflow)
+            val save = compose.onNodeWithText("حفظ").assertIsDisplayed().assertIsEnabled()
+            val bounds = save.fetchSemanticsNode().boundsInRoot
+            assertTrue("Save must remain below the heading", bounds.top >= titleBounds.bottom)
+            assertTrue("Save must be entirely above the IME", bounds.bottom <= root.bottom - keyboardHeight + 1f)
+            assertTrue("Save must fit horizontally", bounds.left >= root.left && bounds.right <= root.right)
+            compose.onNodeWithText("رجوع").assertIsDisplayed().assertHasClickAction()
+        }
+        assertSafeGeometry()
+        field.performTextInput("99")
+        compose.runOnIdle { dark = true }
+        field.assertTextContains("English 99\nخطة عربية\n{\"n\":1}")
+        assertSafeGeometry()
+        compose.onNodeWithText("حفظ").performClick()
+        compose.runOnIdle { assertEquals("English 99\nخطة عربية\n{\"n\":1}", saved) }
+        compose.onNodeWithText("رجوع").performClick()
+        compose.runOnIdle { assertEquals(1, backs) }
     }
 
     @Test fun toolbarWrapsWithoutClippingTitleOrLosingActionsLtr() = toolbar(LayoutDirection.Ltr)

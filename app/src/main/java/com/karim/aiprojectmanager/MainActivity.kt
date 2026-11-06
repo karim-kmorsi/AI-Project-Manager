@@ -525,19 +525,19 @@ private fun EditableDocument(
     }
     ScrollableDocumentBody(
         modifier = Modifier.fillMaxSize().imePadding().padding(16.dp),
+        action = {
+            FilledActionButton(onClick = {
+                try {
+                    draftStore.save(projectId, document, value, draft)
+                    latestSave(draft)
+                    saveError = false
+                    recoveryError = false
+                    runCatching { draftStore.discard(projectId, document) }
+                } catch (_: Exception) { saveError = true }
+            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
+        },
         chrome = {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                ParagraphText(hint, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-                FilledActionButton(onClick = {
-                    try {
-                        draftStore.save(projectId, document, value, draft)
-                        latestSave(draft)
-                        saveError = false
-                        recoveryError = false
-                        runCatching { draftStore.discard(projectId, document) }
-                    } catch (_: Exception) { saveError = true }
-                }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
-            }
+            ParagraphText(hint, fontWeight = FontWeight.Medium)
             ParagraphText(contextualTip(document), style = MaterialTheme.typography.bodySmall)
             ParagraphText(
                 when {

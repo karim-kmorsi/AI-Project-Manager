@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -21,12 +22,13 @@ import androidx.compose.ui.window.DialogProperties
 internal fun AccessibleAppBar(
     title: String,
     navigation: @Composable () -> Unit,
-    actions: @Composable () -> Unit
+    actions: @Composable () -> Unit,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets
 ) {
     Surface(modifier = Modifier.semantics { isTraversalGroup = true; traversalIndex = -1f },
         color = MaterialTheme.colorScheme.surface) {
         Layout(
-            modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets).padding(start = 16.dp, end = 4.dp),
+            modifier = Modifier.windowInsetsPadding(windowInsets).padding(start = 16.dp, end = 4.dp),
             content = {
                 Box { navigation() }
                 ParagraphText(title, style = MaterialTheme.typography.titleLarge)
@@ -82,10 +84,11 @@ internal fun ProjectCreationDialog(
     )
 }
 
-/** Keep the original spacious field; scroll the whole body only when chrome cannot fit. */
+/** Keep Save outside focus-driven scrolling; scroll guidance and a readable field below it. */
 @Composable
 internal fun ScrollableDocumentBody(
     modifier: Modifier = Modifier,
+    action: @Composable () -> Unit,
     chrome: @Composable ColumnScope.() -> Unit,
     editor: @Composable () -> Unit
 ) {
@@ -95,23 +98,28 @@ internal fun ScrollableDocumentBody(
         (MaterialTheme.typography.bodyLarge.lineHeight.toDp() * 3 +
             MaterialTheme.typography.bodySmall.lineHeight.toDp() + 32.dp).roundToPx()
     }
-    BoxWithConstraints(modifier) {
-        val viewport = constraints.maxHeight
-        Layout(
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-            content = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = chrome)
-                editor()
-            }
-        ) { children, constraints ->
-            val width = constraints.maxWidth
-            val header = children[0].measure(Constraints(maxWidth = width))
-            val gap = 12.dp.roundToPx()
-            val field = children[1].measure(Constraints.fixed(width,
-                documentFieldHeight(viewport, header.height, gap, readableMinimum)))
-            layout(width, header.height + gap + field.height) {
-                header.placeRelative(0, 0)
-                field.placeRelative(0, header.height + gap)
+    Column(modifier) {
+        // Independently measured, so neither a tall focused field nor recovery guidance can
+        // scroll the existing Save action out of reach. The editor keeps the same composition.
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { action() }
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val viewport = constraints.maxHeight
+            Layout(
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                content = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = chrome)
+                    editor()
+                }
+            ) { children, constraints ->
+                val width = constraints.maxWidth
+                val header = children[0].measure(Constraints(maxWidth = width))
+                val gap = 12.dp.roundToPx()
+                val field = children[1].measure(Constraints.fixed(width,
+                    documentFieldHeight(viewport, header.height, gap, readableMinimum)))
+                layout(width, header.height + gap + field.height) {
+                    header.placeRelative(0, 0)
+                    field.placeRelative(0, header.height + gap)
+                }
             }
         }
     }
