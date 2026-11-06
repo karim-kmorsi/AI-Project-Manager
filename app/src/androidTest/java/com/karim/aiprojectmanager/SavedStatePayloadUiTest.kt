@@ -85,6 +85,8 @@ class SavedStatePayloadUiTest {
             }
             else -> {
                 compose.onNodeWithText(editor).performScrollTo().performClick()
+                // Finish loading the editor before freezing autosave time.
+                compose.onNodeWithText("محتوى المستند").assertTextContains("B".repeat(units))
                 compose.mainClock.autoAdvance = false
                 compose.onNodeWithText("محتوى المستند").performTextReplacement(pending)
                 compose.mainClock.advanceTimeByFrame()

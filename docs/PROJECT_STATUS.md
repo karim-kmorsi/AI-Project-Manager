@@ -5,6 +5,87 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Saved-state Android verification — 2026-11-07 (incomplete)
+
+Starting HEAD: `49ada6e0f49e67d7a42a83da720e815e6ca68e0b`, verified clean on the expected
+branch with the expected GitHub origin. All required current documents were present. Evidence:
+`/home/karim/.codex/ai-pm-state-android-vu8v_ck_/` (initial-seven XML/JSON/logs, interrupted
+retry, APK hashes/certificates, payload logcat, kernel/boot diagnostics, screenshots and cleanup).
+
+Preflight: 6.6 GiB available RAM, 2.5 GiB free of 4 GiB swap, 359 GiB available disk; memory
+pressure averages were zero. No Android device/emulator was connected. Installed API 35 Google
+Play x86_64 revision 9 and emulator 37.2.12 were used without downloads. A dedicated temporary
+AVD/home, `AI_PM_State_vu8v_ck_` / `emulator-5588`, used 2,560 MiB guest RAM, 1080×1920 at
+480 dpi, no snapshots and headless graphics auto. Identity/API/boot and fresh package absence
+were checked before installing the existing matching-signed Debug/app-test APKs. The six source
+hashes match the previous successful build evidence; this is provenance evidence, not a new build.
+
+**Initial seven Android regressions:** 6 passed, 1 failed, none skipped; runner wall time 25.043 s.
+
+| Class / method | Result | Seconds |
+| --- | --- | ---: |
+| SavedStatePayloadUiTest.largeTaskTitleActivityBundle | PASS | 5.378 |
+| SavedStatePayloadUiTest.parcelSlicesCharacterizeBaselineAndPendingInputSeparately | PASS | 1.149 |
+| SavedStatePayloadUiTest.largeMetadataActivityBundleWithPendingDescription | PASS | 5.861 |
+| SavedStatePayloadUiTest.smallMetadataActivityBundle | PASS | 1.506 |
+| SavedStatePayloadUiTest.largePendingDocumentActivityBundle | FAIL; retry blocked | 1.345 |
+| TaskContextRestorationUiTest.queryFilterAndScrollSurviveActivityRecreationAndMenuRestoresClosed | PASS | 2.905 |
+| TaskContextRestorationUiTest.tabRoundTripAndProjectSwitchesRetainIndependentContextsWithoutWrites | PASS | 4.793 |
+
+The document test paused the Compose clock before the editor field appeared, failing node lookup
+before input. One test-only repair adds the existing-pattern original-content assertion before
+freezing time; all original safety assertions remain. A new focused test measures a full Activity
+Bundle after two project task contexts and checks both contexts after recreation. Minimum offline
+`:app:assembleDebugAndroidTest` passed (1 s); no production code, full host suite or Lint rerun.
+Both test changes are **compiled, not runtime accepted**.
+
+The affected-test retry plus the new measurement and four targeted metadata/title conflict/failure
+checks was interrupted in its first case after 12.300 s, with zero completed results. The guest
+rebooted without a requested restart. Retained Android DropBox SYSTEM_LAST_KMSG includes kernel
+fault stacks (`_raw_spin_lock`, memory-fault paths) and CPU shutdown; new boot/uptime records
+corroborate reboot. No system_server_crash entry was found. This establishes infrastructure failure,
+not its trigger or an application defect. Further execution stopped; no second repair was tried.
+The retry XML's zero cases is **incomplete**, not a passing suite. The new context measurement and
+four stale-conflict/failed-save checks remain blocked, not skipped or passed.
+
+**Actual Android measurements:** `Parcel.writeBundle` / `dataSize`, in bytes:
+
+| Measured scope / fixture | Legacy slice | Compact slice | Compact slice with pending input |
+| --- | ---: | ---: | ---: |
+| Slice: each document 64 UTF-16 units, 3 tasks, pending 32 units | 848 | 408 | 472 |
+| Slice: each document 262,144 units, 2,000 tasks, pending 32 units | 1,208,160 | 408 | 472 |
+| Slice: each document 262,144 units, 2,000 tasks, pending 131,072 units | 1,208,160 | 408 | 262,552 |
+
+| Full Activity saved-instance-state Bundle | Bytes |
+| --- | ---: |
+| Metadata: 64 units/document, 3 tasks, 32 pending units | 4,304 |
+| Metadata: 262,144 units/document, 200 tasks, 131,072 pending units | 266,384 |
+| Task title: 262,144 units/document, 200 tasks, 32 pending units | 5,248 |
+
+Slices include baseline/pending strings, project/task identifiers and a confirmation marker, not
+Compose/window registries. Full Activity Bundles use the real onSaveInstanceState callback and
+include its registered state, but not app files, recovery-draft contents or a complete Binder
+transaction. Full Activity fixtures contain **200**, not 2,000 tasks; the 2,000-task case was only
+a slice. Large pending-document and accumulated-context Activity sizes were not obtained. These
+are Android bytes, distinct from earlier Java serialization figures. No Binder failure threshold
+or process-death safety is established; no deliberate failure stress/process death was requested.
+
+Passing cases confirm pending metadata/title restoration, exact task query/filter/scroll retention,
+closed restored menus, independent contexts across tabs/projects and byte-identical synthetic
+project JSON. Legacy baseline compatibility remains supported by the existing passing host XML
+and source review, not a new Android legacy-restoration execution. Current-run stale-write and
+failed-save acceptance remains unverified; historical tests are not new passes. No import/restore/
+merge, TalkBack, physical-device, existing-AVD, main or push operations occurred. No real user data
+was accessed. The unexpected disposable-guest reboot is not controlled process-death acceptance.
+
+Cleanup stopped only the verified owned emulator and removed only its dedicated AVD/home data;
+evidence was retained. Protected AVD file sizes/mtimes and small configuration hashes match before
+and after. No unrelated processes were terminated. Remaining work: diagnose the guest kernel fault
+in a separately approved stable environment, then run only unfinished cases. Do not repeat the six
+successful cases without a concrete reason. Raw pending text and many retained contexts still risk
+large saved state. TalkBack stays owner-deferred; all other open release gates remain open.
+**NOT Ready for Release**.
+
 ## Saved-state reliability development batch — 2026-11-07
 
 Starting HEAD: `75b8de7ab481dcd00565d4b231fda6c491fae871`, verified clean on the continuing
