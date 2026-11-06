@@ -63,12 +63,15 @@ class SavedStatePayloadUiTest {
     @Test fun largePendingDocumentActivityBundle() = activity("Blueprint", 262_144, 200, 131_072)
 
     private fun activity(editor: String, units: Int, count: Int, pendingUnits: Int) {
+        fun phase(name: String) = Log.i("SavedStatePhase", "editor=$editor phase=$name")
+        phase("fixture-start")
         lateinit var file: File
         compose.activityRule.scenario.onActivity {
             file = File(it.filesDir, "projects.json")
             ProjectStorage(file).save(listOf(project(units, count)))
         }
         compose.activityRule.scenario.recreate()
+        phase("fixture-recreated")
         val original = file.readBytes()
         compose.onNodeWithText("Lifecycle project").performClick()
         val pending = "x".repeat(pendingUnits)
@@ -85,24 +88,34 @@ class SavedStatePayloadUiTest {
             }
             else -> {
                 compose.onNodeWithText(editor).performScrollTo().performClick()
+                phase("editor-readiness-start")
                 // Finish loading the editor before freezing autosave time.
                 compose.onNodeWithText("محتوى المستند").assertTextContains("B".repeat(units))
+                phase("editor-ready")
                 compose.mainClock.autoAdvance = false
+                phase("pending-input-start")
                 compose.onNodeWithText("محتوى المستند").performTextReplacement(pending)
+                phase("pending-input-entered")
                 compose.mainClock.advanceTimeByFrame()
             }
         }
+        phase("state-capture-start")
         val state = Bundle()
         compose.activityRule.scenario.onActivity {
             InstrumentationRegistry.getInstrumentation().callActivityOnSaveInstanceState(it, state)
         }
+        phase("state-captured")
         val bytes = size(state)
         Log.i("SavedStatePayload", "ACTIVITY_BUNDLE editor=$editor unitsEach=$units tasks=$count pending=$pendingUnits bytes=$bytes")
         assertTrue(bytes > 0)
         assertArrayEquals(original, file.readBytes())
+        phase("pending-recreation-start")
         compose.activityRule.scenario.recreate()
+        phase("pending-recreated")
         if (editor == "Blueprint") compose.mainClock.advanceTimeByFrame()
+        phase("restoration-assertions-start")
         compose.onNodeWithText(when (editor) { "metadata" -> "وصف مختصر"; "title" -> "عنوان المهمة"; else -> "محتوى المستند" }).assertTextContains(pending)
         assertArrayEquals(original, file.readBytes())
+        phase("restoration-assertions-passed")
     }
 }

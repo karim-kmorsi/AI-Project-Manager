@@ -96,6 +96,8 @@ class TaskContextRestorationUiTest {
         assertContext("B task", "لم تبدأ", b)
     }
     @Test fun accumulatedProjectContextsMeasureActivityBundleAndRestoreIndependently() {
+        fun phase(name: String) = android.util.Log.i("SavedStatePhase", "contexts=2 phase=$name")
+        phase("context-entry-start")
         open("Lifecycle project")
         select("A task", "قيد التنفيذ")
         list().performScrollToIndex(12)
@@ -105,21 +107,26 @@ class TaskContextRestorationUiTest {
         select("B task", "لم تبدأ")
         list().performScrollToIndex(5)
         val b = position()
+        phase("state-capture-start")
         val state = android.os.Bundle()
         compose.activityRule.scenario.onActivity {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                 .callActivityOnSaveInstanceState(it, state)
         }
+        phase("state-captured")
         val parcel = android.os.Parcel.obtain()
         val bytes = try { parcel.writeBundle(state); parcel.dataSize() } finally { parcel.recycle() }
         android.util.Log.i("SavedStatePayload", "ACTIVITY_CONTEXTS projects=2 tasksEach=80 bytes=$bytes")
         assertTrue(bytes > 0)
         assertArrayEquals(original, file.readBytes())
+        phase("recreation-start")
         compose.activityRule.scenario.recreate()
+        phase("restoration-assertions-start")
         assertContext("B task", "لم تبدأ", b)
         compose.onNodeWithText("رجوع").performClick()
         open("Lifecycle project")
         assertContext("A task", "قيد التنفيذ", a)
+        phase("restoration-assertions-passed")
     }
 
 }

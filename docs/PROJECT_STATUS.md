@@ -5,6 +5,61 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Saved-state completion attempt — 2026-11-07 (infrastructure blocked)
+
+Starting HEAD: `08dccaaef8fd58d3439ae11f34d28a67506e49fe`, clean on the expected branch
+and GitHub origin. Required documents and previous run evidence were reviewed. The separate
+read-only diagnosis is recorded in the owner conversation; no standalone diagnostic report was
+created. Evidence: `/home/karim/.codex/ai-pm-state-completion-2ktn49hf/`.
+
+Added only instrumentation phase logging for editor readiness, pending input, state capture,
+recreation and restoration assertions, including the accumulated-context case. The existing
+readiness correction and every safety assertion remain intact. Prepared an external single-test
+runner that records wall-clock timestamps and treats a nonzero instrumentation exit or missing
+result as an abort/error, rather than interpreting zero cases as success. Its abort path has not
+been exercised by instrumentation in this attempt. Minimum offline `:app:assembleDebugAndroidTest`
+passed (1 s). No production changes, full host-suite, full build or Lint repetition.
+
+Preflight: 6.4 GiB available RAM, 2.5 GiB free swap, 359 GiB available disk and zero memory-pressure
+averages; no connected Android devices/emulators. Used the installed API 35 Google Play x86_64
+revision 9 image, with no downloads. The unique `AI_PM_State_Completion_2ktn49hf` AVD used dedicated
+AVD/user homes, 2,560 MiB guest RAM, 1080×1920 / 480 dpi, no snapshots, headless graphics auto and
+serial `emulator-5584`. Kernel console output, continuous logcat and host-resource samples were
+retained. Recorded available RAM during collection stayed at least 2.84 GiB.
+
+After identity/API/boot completion and package absence checks, the candidate app APK certificate
+verified locally. The first explicitly targeted installation returned exit 1, `adb: device offline`.
+No installation retry or instrumentation execution occurred: the owner's transport-loss stop rule
+was applied. A later diagnostic package query remained empty. Initial and diagnostic boot IDs
+match; kernel output shows startup adbd service restarts, not a demonstrated guest reboot or kernel
+fault. These events suggest startup transport instability, but do not conclusively identify the
+failed installation's cause. This is distinct from the previous run's guest kernel-fault evidence.
+No graphics, kernel or host configuration adjustment was made to work around it.
+
+All six requested checks are **BLOCKED, not executed** (durations unavailable):
+
+1. `TaskContextRestorationUiTest.accumulatedProjectContextsMeasureActivityBundleAndRestoreIndependently`.
+2. `SavedStatePayloadUiTest.largePendingDocumentActivityBundle`.
+3. `ProjectMetadataUiTest.transientFailureKeepsMetadataAndRetrySucceeds`.
+4. `ProjectMetadataUiTest.conflictReloadRequiresConfirmationAndAllowsEditAgainstNewBase`.
+5. `TaskTitleUiTest.failedSaveRetainsInputAndAllowsRetryWithoutChangingStatus`.
+6. `TaskTitleUiTest.conflictReloadRetainsInputUntilConfirmedAndPreservesNewStatus`.
+
+Machine-readable blocked-test records and an infrastructure-error XML report distinguish this
+from PASS or SKIP. No new Bundle measurements were obtained. The six prior passes were not rerun
+or invalidated. Newly added phase logging is compiled only; pending-document and accumulated-
+context full Activity measurements, stale-conflict and failed-save execution remain unfinished.
+No production defect was established and no repair/retest attempt was made after the stop trigger.
+
+Cleanup stopped only the verified owned emulator/collectors and removed its dedicated AVD/user
+homes. Protected existing AVD file inventories (size/mtime and small configuration hashes) match
+before/after; evidence remains outside the repository. No physical-device, existing-AVD, real-data,
+process-death, import/restore/merge, main or push operations occurred. TalkBack remains deferred.
+Recommended next step: separately authorize a bounded disposable-emulator startup/ADB stability
+check, with a sustained-ready gate before installation; retain current settings until evidence
+justifies a change. Do not repeat the six previously successful tests. All release gates remain.
+**NOT Ready for Release**.
+
 ## Saved-state Android verification — 2026-11-07 (incomplete)
 
 Starting HEAD: `49ada6e0f49e67d7a42a83da720e815e6ca68e0b`, verified clean on the expected
