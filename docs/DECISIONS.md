@@ -1,11 +1,15 @@
 # AI Project Manager — Decision Register
 
 **Prepared:** 2026-11-07
-**Status:** DRAFT — awaiting owner review
+**Status:** Historical decision register; publication status updated below
 **Purpose:** Preserve approved decisions, rationale and restrictions.
 
 This register distinguishes binding decisions, operational
 authorizations, implemented work and proposals awaiting approval.
+
+## Publication update — 2026-11-07
+
+The owner authorized and completed the GitHub push through `86f2a4082711e3b3f647371762509a31fff4586c`; `docs/CHAT_HANDOVER.md` and `docs/DECISIONS.md` were committed and published. `docs/DISCUSSED_IDEAS.md` was added subsequently. Statements below that handover publication, commits, or push are pending are **historical**, not current restrictions on already completed actions. Future pushes still require authorization. The original decision records are retained for provenance; do not reinterpret proposals as approvals. Release remains NOT Ready for Release.
 
 ## A. Approved project decisions
 
