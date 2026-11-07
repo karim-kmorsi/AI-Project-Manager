@@ -1,8 +1,12 @@
 # AI Project Manager — Project Handover
 
 **Prepared:** 2026-11-07
-**Status:** DRAFT — awaiting owner review
+**Status:** Historical handover snapshot; supplemented by docs/DISCUSSED_IDEAS.md
 **Release:** NOT Ready for Release
+
+## Current publication update — 2026-11-07
+
+The development branch was pushed and verified at `86f2a4082711e3b3f647371762509a31fff4586c` with a clean local working tree. The additional discussed-ideas record was published subsequently in `docs/DISCUSSED_IDEAS.md`. References below to eight unpublished commits, untracked documents, and pending push are historical snapshots and **no longer describe the current GitHub state**. Reverify the branch HEAD before new work. Codex Desktop was unavailable at handover; execution may move to another approved tool. Release remains NOT Ready for Release.
 
 ## 1. Project identity
 
