@@ -11,6 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -20,6 +24,7 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit,
     appearanceSettings: @Composable () -> Unit = {}
 ) {
+    var showSnapshot by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         appearanceSettings()
@@ -36,5 +41,7 @@ internal fun SettingsScreen(
         }
         TextButton(onClick = onExport) { Text("تصدير JSON") }
         TextButton(onClick = onPreview) { Text("معاينة نسخة") }
+        TextButton(onClick = { showSnapshot = true }) { Text("معاينة لقطة Backlog") }
     }
+    if (showSnapshot) BacklogSnapshotPreview(onClose = { showSnapshot = false })
 }

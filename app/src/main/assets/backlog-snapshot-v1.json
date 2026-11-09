@@ -1,0 +1,156 @@
+{
+  "blockers": [
+    {
+      "dependsOn": [
+        "TASK-3"
+      ],
+      "taskId": "TASK-4"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-11-09T07:36:00Z",
+      "id": "decision-1",
+      "status": "accepted",
+      "title": "Keep Android untouched; verification requires evidence"
+    }
+  ],
+  "generatedAt": "2026-11-09T13:14:02.771453Z",
+  "kind": "ai-project-snapshot",
+  "milestones": [
+    {
+      "id": "m-0",
+      "title": "Foundation"
+    },
+    {
+      "id": "m-1",
+      "title": "Delivery"
+    }
+  ],
+  "nextAction": {
+    "policy": "ready-in-progress-first-then-dependent-count-then-id-v1",
+    "reason": "Continue ready work, preferring active work and tasks that unblock others",
+    "taskId": "TASK-3"
+  },
+  "project": {
+    "id": "ai-progress-demo",
+    "name": "AI Progress Demo"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "branch": null,
+    "commit": null,
+    "repository": null,
+    "revision": {
+      "kind": "content-sha256",
+      "manifest": "exports/manifest-477eac3c2c7fe1b708126e4202e78c7278390abbd6fff0b1ca347f26674871b5.json",
+      "value": "477eac3c2c7fe1b708126e4202e78c7278390abbd6fff0b1ca347f26674871b5"
+    },
+    "tool": "backlog.md",
+    "toolVersion": "1.55.3"
+  },
+  "tasks": [
+    {
+      "acceptanceCriteria": [
+        {
+          "checked": true,
+          "index": 1,
+          "text": "Contract defines identity, statuses, evidence and provenance"
+        }
+      ],
+      "dependencies": [],
+      "id": "TASK-1",
+      "milestoneId": "m-0",
+      "status": "Done",
+      "title": "Define snapshot contract",
+      "verification": {
+        "evidence": [],
+        "state": "unverified"
+      }
+    },
+    {
+      "acceptanceCriteria": [
+        {
+          "checked": true,
+          "index": 1,
+          "text": "Valid fixture passes and invalid fixtures are rejected"
+        }
+      ],
+      "dependencies": [
+        "TASK-1"
+      ],
+      "id": "TASK-2",
+      "milestoneId": "m-0",
+      "status": "Done",
+      "title": "Validate snapshot fixtures",
+      "verification": {
+        "evidence": [
+          {
+            "path": "evidence/hardening-tests.json",
+            "sha256": "fab272bf5c3f77c77534a782b1bb6529a775a5cf4a4c46516686ea232abe5f05"
+          }
+        ],
+        "scope": "snapshot adapter regression tests",
+        "state": "verified"
+      }
+    },
+    {
+      "acceptanceCriteria": [
+        {
+          "checked": false,
+          "index": 1,
+          "text": "Reject stale inputs and test concurrent update handling"
+        }
+      ],
+      "dependencies": [
+        "TASK-2"
+      ],
+      "id": "TASK-3",
+      "milestoneId": "m-1",
+      "status": "In Progress",
+      "title": "Harden snapshot adapter",
+      "verification": {
+        "evidence": [],
+        "state": "unverified"
+      }
+    },
+    {
+      "acceptanceCriteria": [
+        {
+          "checked": false,
+          "index": 1,
+          "text": "Hardened export passes end-to-end checks"
+        }
+      ],
+      "dependencies": [
+        "TASK-3"
+      ],
+      "id": "TASK-4",
+      "milestoneId": "m-1",
+      "status": "To Do",
+      "title": "Validate end-to-end export",
+      "verification": {
+        "evidence": [],
+        "state": "unverified"
+      }
+    },
+    {
+      "acceptanceCriteria": [
+        {
+          "checked": false,
+          "index": 1,
+          "text": "Document unsupported versions and offline stale-state behavior"
+        }
+      ],
+      "dependencies": [],
+      "id": "TASK-5",
+      "milestoneId": "m-1",
+      "status": "To Do",
+      "title": "Document offline reader handoff",
+      "verification": {
+        "evidence": [],
+        "state": "unverified"
+      }
+    }
+  ]
+}

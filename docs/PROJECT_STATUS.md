@@ -5,6 +5,17 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Read-only Backlog snapshot proof of concept
+
+The feature branch previews the bundled snapshot from publication commit
+`90826e09f62b61ec6f881dd6271fe17623a1e797` in Settings. The app has no existing
+GitHub authentication, so private fetching remains blocked. The preview never
+writes to project storage. The parser compiled against API 35 and passed the
+published fixture plus six rejection cases on the host using the installed
+Android JSON reader source. Compose compilation and Android instrumentation
+remain unverified because the local Gradle toolchain is unavailable.
+**NOT Ready for Release**.
+
 ## Saved-state completion attempt — 2026-11-07 (infrastructure blocked)
 
 Starting HEAD: `08dccaaef8fd58d3439ae11f34d28a67506e49fe`, clean on the expected branch
