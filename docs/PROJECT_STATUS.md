@@ -5,6 +5,25 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub integration Phase 2B — repository discovery
+
+Settings offers an authenticated repository browser. It pages through GitHub App
+installations and their accessible repositories, deduplicates by repository ID,
+and filters loaded entries by search and visibility. It displays repository
+name, description, default branch, visibility, and archive status. The screen
+uses English and Arabic resources and the existing Compose theme.
+
+The app registration shows read-only Metadata, Contents, Issues, and Pull
+requests permissions. Discovery uses the intersection of the signed-in user's
+access and the app installation. It handles rate limits with a manual retry
+after the cooldown and clears the session on HTTP 401. The user token stays in
+memory.
+
+Verified with 109 host tests and 12 targeted Android tests on API 35, including
+synthetic authenticated pages, private visibility, rate limits, and Settings UI.
+Both debug APKs assembled. Live discovery with the owner's GitHub authorization
+remains pending. The emulator's project file remained absent.
+
 ## GitHub integration Phase 2A — final audit, 2026-11-10
 
 Audited on `feature/github-snapshot-preview` against

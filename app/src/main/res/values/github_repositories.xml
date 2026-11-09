@@ -1,0 +1,25 @@
+<resources>
+    <string name="github_repos_browse">Browse GitHub repositories</string>
+    <string name="github_repos_title">GitHub repositories</string>
+    <string name="github_repos_close">Close</string>
+    <string name="github_repos_search">Search loaded repositories</string>
+    <string name="github_repos_all">All</string>
+    <string name="github_repos_public">Public</string>
+    <string name="github_repos_private">Private</string>
+    <string name="github_repos_archived">Archived</string>
+    <string name="github_repos_branch">Default branch %1$s</string>
+    <string name="github_repos_loading">Loading repositories…</string>
+    <string name="github_repos_empty">No repositories are available to this GitHub App installation.</string>
+    <string name="github_repos_no_matches">No loaded repositories match your filters.</string>
+    <string name="github_repos_more">Load more</string>
+    <string name="github_repos_retry">Retry</string>
+    <string name="github_repos_limited">GitHub is limiting requests. Try again later.</string>
+    <string name="github_repos_limited_wait">GitHub is limiting requests. Retry in %1$d seconds.</string>
+    <string name="github_repos_forbidden">GitHub denied access. Check the app installation and repository access.</string>
+    <string name="github_repos_not_found">The GitHub resource is unavailable.</string>
+    <string name="github_repos_network">Could not reach GitHub. Check your connection.</string>
+    <string name="github_repos_timeout">GitHub did not respond in time.</string>
+    <string name="github_repos_invalid">GitHub returned an unreadable response.</string>
+    <string name="github_repos_http">GitHub could not complete the request.</string>
+    <string name="github_repos_expired">Your GitHub session has expired. Connect again.</string>
+</resources>

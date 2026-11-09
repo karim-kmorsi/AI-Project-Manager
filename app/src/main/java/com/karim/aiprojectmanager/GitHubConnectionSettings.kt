@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -77,11 +78,13 @@ private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
     val code = signIn.userCode
     val session = signIn.session
     var browserError by remember(code) { mutableStateOf(false) }
+    var showRepositories by remember(session) { mutableStateOf(false) }
 
     ParagraphText(
         when {
             session != null -> "تم التحقق من حساب GitHub.\n${session.login}"
             !signIn.isConfigured -> "لم يُضبط معرّف تطبيق GitHub في هذه النسخة."
+            signIn.sessionExpired -> stringResource(R.string.github_repos_expired)
             else -> signIn.status
         },
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
@@ -104,7 +107,12 @@ private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
     }
     when {
         signIn.running -> TextButton(onClick = signIn::cancel) { Text("إلغاء الربط") }
-        session != null -> TextButton(onClick = signIn::disconnect) { Text("قطع الاتصال") }
+        session != null -> {
+            TextButton(onClick = { showRepositories = true }) {
+                Text(stringResource(R.string.github_repos_browse))
+            }
+            TextButton(onClick = signIn::disconnect) { Text("قطع الاتصال") }
+        }
         else -> TextButton(
             enabled = signIn.isConfigured,
             onClick = {
@@ -113,6 +121,13 @@ private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
                 }
             }
         ) { Text("ربط حساب GitHub") }
+    }
+    if (session != null && showRepositories) {
+        GitHubRepositoriesDialog(
+            source = session.repositoryApi,
+            onExpired = { signIn.expire(session) },
+            onClose = { showRepositories = false }
+        )
     }
 }
 

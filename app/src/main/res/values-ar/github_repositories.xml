@@ -1,0 +1,25 @@
+<resources>
+    <string name="github_repos_browse">تصفّح مستودعات GitHub</string>
+    <string name="github_repos_title">مستودعات GitHub</string>
+    <string name="github_repos_close">إغلاق</string>
+    <string name="github_repos_search">ابحث في المستودعات المحمّلة</string>
+    <string name="github_repos_all">الكل</string>
+    <string name="github_repos_public">عام</string>
+    <string name="github_repos_private">خاص</string>
+    <string name="github_repos_archived">مؤرشف</string>
+    <string name="github_repos_branch">الفرع الافتراضي %1$s</string>
+    <string name="github_repos_loading">جارٍ تحميل المستودعات…</string>
+    <string name="github_repos_empty">لا تتوفر مستودعات لهذا التثبيت من تطبيق GitHub.</string>
+    <string name="github_repos_no_matches">لا توجد مستودعات محمّلة تطابق عوامل التصفية.</string>
+    <string name="github_repos_more">تحميل المزيد</string>
+    <string name="github_repos_retry">إعادة المحاولة</string>
+    <string name="github_repos_limited">يحدّ GitHub من الطلبات. حاول لاحقًا.</string>
+    <string name="github_repos_limited_wait">يحدّ GitHub من الطلبات. أعد المحاولة بعد %1$d ثانية.</string>
+    <string name="github_repos_forbidden">رفض GitHub الوصول. تحقّق من تثبيت التطبيق وصلاحيات المستودع.</string>
+    <string name="github_repos_not_found">مورد GitHub غير متاح.</string>
+    <string name="github_repos_network">تعذّر الاتصال بـ GitHub. تحقّق من اتصالك.</string>
+    <string name="github_repos_timeout">لم يستجب GitHub في الوقت المحدد.</string>
+    <string name="github_repos_invalid">أعاد GitHub استجابة تعذّرت قراءتها.</string>
+    <string name="github_repos_http">تعذّر على GitHub إكمال الطلب.</string>
+    <string name="github_repos_expired">انتهت جلسة GitHub. اربط حسابك من جديد.</string>
+</resources>

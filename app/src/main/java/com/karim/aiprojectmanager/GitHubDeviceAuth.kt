@@ -32,7 +32,9 @@ internal fun interface GitHubAuthTransport {
     ): Map<String, Any>
 }
 
-internal class GitHubSession(val login: String, private val accessToken: String)
+internal class GitHubSession(val login: String, private val accessToken: String) {
+    val repositoryApi by lazy { GitHubRepositoryApi(accessToken) }
+}
 
 internal class GitHubDeviceAuth(
     private val clientId: String,

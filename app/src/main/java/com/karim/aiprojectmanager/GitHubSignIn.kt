@@ -19,6 +19,8 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
     val isConfigured: Boolean get() = auth.isConfigured
     var session by mutableStateOf<GitHubSession?>(null)
         private set
+    var sessionExpired by mutableStateOf(false)
+        private set
     var userCode by mutableStateOf<String?>(null)
         private set
     var running by mutableStateOf(false)
@@ -29,6 +31,7 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
 
     fun connect(scope: CoroutineScope, awaitForeground: suspend () -> Unit) {
         if (running || session != null || !isConfigured) return
+        sessionExpired = false
         running = true
         status = "جارٍ طلب رمز GitHub…"
         job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -54,6 +57,12 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
     fun cancel() {
         userCode = null
         job?.cancel()
+    }
+
+    fun expire(expected: GitHubSession) {
+        if (session !== expected) return
+        session = null
+        sessionExpired = true
     }
 
     fun disconnect() {
