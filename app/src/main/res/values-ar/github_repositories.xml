@@ -14,7 +14,7 @@
     <string name="github_repos_more">تحميل المزيد</string>
     <string name="github_repos_retry">إعادة المحاولة</string>
     <string name="github_repos_limited">يحدّ GitHub من الطلبات. حاول لاحقًا.</string>
-    <string name="github_repos_limited_wait">يحدّ GitHub من الطلبات. أعد المحاولة بعد %1$d ثانية.</string>
+    <string name="github_repos_limited_wait">يحدّ GitHub من الطلبات. أعد المحاولة بعد %1$d ث.</string>
     <string name="github_repos_forbidden">رفض GitHub الوصول. تحقّق من تثبيت التطبيق وصلاحيات المستودع.</string>
     <string name="github_repos_not_found">مورد GitHub غير متاح.</string>
     <string name="github_repos_network">تعذّر الاتصال بـ GitHub. تحقّق من اتصالك.</string>
@@ -37,4 +37,22 @@
     <string name="github_repos_file">ملف: %1$s</string>
     <string name="github_repos_partial">يُعرض جزء من المحتوى فقط.</string>
     <string name="github_repos_empty_repo">أفاد GitHub بأن المستودع فارغ.</string>
+    <string name="github_repos_import_preview">معاينة استيراد المشروع</string>
+    <string name="github_repos_import_read_only">هذه معاينة فقط. لم تتغيّر مشاريعك.</string>
+    <string name="github_repos_import_unavailable">المشاريع المحلية غير متاحة للتحقق من التكرار.</string>
+    <string name="github_repos_import_invalid">تعذّر تحويل هذا المستودع إلى مشروع.</string>
+    <string name="github_repos_import_id">معرّف المشروع المقترح %1$s</string>
+    <string name="github_repos_import_empty_fields">يبدأ المخطط وخريطة الطريق والمهام فارغة.</string>
+    <string name="github_repos_import_none">لم يُعثر على مشاريع مكررة محتملة.</string>
+    <string name="github_repos_import_duplicate">مشروع موجود محتمل: %1$s</string>
+    <string name="github_repos_sync_compare">مقارنة مع GitHub</string>
+    <string name="github_repos_sync_loading">جارٍ جلب لقطة المستودع الحالية…</string>
+    <string name="github_repos_sync_unchanged">لا توجد تغييرات منذ فتح هذه المعاينة.</string>
+    <string name="github_repos_sync_remote">تغيّرت اللقطة البعيدة فقط.</string>
+    <string name="github_repos_sync_local">تغيّر المشروع المحلي فقط.</string>
+    <string name="github_repos_sync_conflict">تعارض محتمل. راجع المشروع المحلي واللقطة البعيدة.</string>
+    <string name="github_repos_sync_unlinked">لا يوجد مشروع محلي مرتبط بمعرّف هذا المستودع.</string>
+    <string name="github_repos_sync_metadata">تغيّرت بيانات المستودع الوصفية.</string>
+    <string name="github_repos_sync_branch">تغيّر الفرع الافتراضي.</string>
+    <string name="github_repos_sync_head">تغيّر آخر إيداع.</string>
 </resources>

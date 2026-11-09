@@ -267,7 +267,11 @@ fun ProjectManagerApp(
         ) { Text("+") }
     }) { padding ->
         if (settingsVisible) {
-            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, githubSignIn, appearanceSettings)
+            SettingsScreen(
+                Modifier.padding(padding), onExport, onRestorePreview, githubSignIn,
+                localProjects = projects.takeUnless { loadError },
+                appearanceSettings = appearanceSettings
+            )
         } else if (loadError) {
             Column(Modifier.padding(padding).padding(16.dp)) {
                 ParagraphText("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")

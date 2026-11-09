@@ -66,6 +66,24 @@ class GitHubRepositoryPreviewApiTest {
         assertEquals(1, requests)
     }
 
+    @Test fun refreshesMetadataAndResolvesTheCurrentDefaultBranchForComparison() = runBlocking {
+        val paths = mutableListOf<String>()
+        val responses = ArrayDeque(listOf(
+            FakeGitHubReadConnection("""{"id":1,"full_name":"owner/repo","description":"Updated",
+                "default_branch":"new-main","private":true,"archived":false}"""),
+            FakeGitHubReadConnection(BRANCH.replace("release/next", "new-main"))
+        ))
+        val api = GitHubRepositoryApi("fixture") { url ->
+            paths += url.file
+            responses.removeFirst()
+        }
+        val snapshot = api.snapshot(REPOSITORY)
+        assertEquals("Updated", snapshot.repository.description)
+        assertEquals("new-main", snapshot.repository.defaultBranch)
+        assertEquals(COMMIT, snapshot.head)
+        assertEquals(listOf("/repos/owner/repo", "/repos/owner/repo/branches/new-main"), paths)
+    }
+
     private companion object {
         val REPOSITORY = GitHubRepository(1, "owner/repo", null, "release/next", true, false)
         val COMMIT = "a".repeat(40)

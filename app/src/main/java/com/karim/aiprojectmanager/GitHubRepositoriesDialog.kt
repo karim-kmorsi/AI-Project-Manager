@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,7 +57,8 @@ internal fun GitHubRepositoriesDialog(
     source: GitHubRepositorySource,
     onExpired: () -> Unit,
     onClose: () -> Unit,
-    previewSource: GitHubRepositoryPreviewSource? = null
+    previewSource: GitHubRepositoryPreviewSource? = null,
+    localProjects: List<ProjectItem>? = null
 ) {
     var repositories by remember { mutableStateOf(emptyList<GitHubRepository>()) }
     var cursor by remember { mutableStateOf<GitHubRepositoryCursor?>(GitHubRepositoryCursor()) }
@@ -63,10 +66,11 @@ internal fun GitHubRepositoriesDialog(
     var filter by remember { mutableStateOf(GitHubRepositoryFilter.ALL) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<GitHubReadError?>(null) }
-    var retryAt by remember { mutableStateOf(0L) }
-    var retrySeconds by remember { mutableStateOf(0L) }
+    var retryAt by remember { mutableLongStateOf(0L) }
+    var retrySeconds by remember { mutableLongStateOf(0L) }
     var request by remember { mutableIntStateOf(0) }
     var selected by remember { mutableStateOf<GitHubRepository?>(null) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(request) {
         val current = cursor ?: return@LaunchedEffect
@@ -99,7 +103,7 @@ internal fun GitHubRepositoriesDialog(
     val visible = remember(repositories, query, filter) { filterGitHubRepositories(repositories, query, filter) }
     val selectedRepository = selected
     if (selectedRepository != null && previewSource != null) {
-        GitHubRepositoryPreviewDialog(selectedRepository, previewSource, onExpired) { selected = null }
+        GitHubRepositoryPreviewDialog(selectedRepository, previewSource, localProjects, onExpired) { selected = null }
         return
     }
     Dialog(onDismissRequest = onClose) {
@@ -109,7 +113,7 @@ internal fun GitHubRepositoriesDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ParagraphText(stringResource(R.string.github_repos_title), style = MaterialTheme.typography.titleLarge)
-                LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(Modifier.weight(1f, fill = false), state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         OutlinedTextField(
                             value = query, onValueChange = { query = it },

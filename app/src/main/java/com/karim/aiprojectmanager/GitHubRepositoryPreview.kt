@@ -14,6 +14,7 @@ internal data class GitHubTreeEntry(val path: String, val directory: Boolean)
 internal data class GitHubTreePreview(val entries: List<GitHubTreeEntry>, val truncated: Boolean)
 
 internal interface GitHubRepositoryPreviewSource {
+    suspend fun snapshot(repository: GitHubRepository): GitHubRemoteSnapshot
     suspend fun branch(repository: GitHubRepository): GitHubBranchPreview
     suspend fun readme(repository: GitHubRepository, commitSha: String): GitHubReadmePreview
     suspend fun tree(repository: GitHubRepository, treeSha: String): GitHubTreePreview

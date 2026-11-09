@@ -14,7 +14,7 @@
     <string name="github_repos_more">Load more</string>
     <string name="github_repos_retry">Retry</string>
     <string name="github_repos_limited">GitHub is limiting requests. Try again later.</string>
-    <string name="github_repos_limited_wait">GitHub is limiting requests. Retry in %1$d seconds.</string>
+    <string name="github_repos_limited_wait">GitHub is limiting requests. Retry in %1$d s.</string>
     <string name="github_repos_forbidden">GitHub denied access. Check the app installation and repository access.</string>
     <string name="github_repos_not_found">The GitHub resource is unavailable.</string>
     <string name="github_repos_network">Could not reach GitHub. Check your connection.</string>
@@ -37,4 +37,22 @@
     <string name="github_repos_file">File: %1$s</string>
     <string name="github_repos_partial">Only part of the content is shown.</string>
     <string name="github_repos_empty_repo">GitHub reports this repository is empty.</string>
+    <string name="github_repos_import_preview">Preview project import</string>
+    <string name="github_repos_import_read_only">Preview only. Your projects are unchanged.</string>
+    <string name="github_repos_import_unavailable">Local projects are unavailable for duplicate checking.</string>
+    <string name="github_repos_import_invalid">This repository cannot be mapped to a project.</string>
+    <string name="github_repos_import_id">Proposed project ID %1$s</string>
+    <string name="github_repos_import_empty_fields">Blueprint, roadmap, and tasks start empty.</string>
+    <string name="github_repos_import_none">No potential duplicates found.</string>
+    <string name="github_repos_import_duplicate">Possible existing project: %1$s</string>
+    <string name="github_repos_sync_compare">Compare with GitHub</string>
+    <string name="github_repos_sync_loading">Fetching the current repository snapshot…</string>
+    <string name="github_repos_sync_unchanged">No changes since this preview opened.</string>
+    <string name="github_repos_sync_remote">Only the remote snapshot changed.</string>
+    <string name="github_repos_sync_local">Only the local project changed.</string>
+    <string name="github_repos_sync_conflict">Possible conflict. Review the local project and the remote snapshot.</string>
+    <string name="github_repos_sync_unlinked">No local project is linked to this repository ID.</string>
+    <string name="github_repos_sync_metadata">Repository metadata changed.</string>
+    <string name="github_repos_sync_branch">The default branch changed.</string>
+    <string name="github_repos_sync_head">The latest commit changed.</string>
 </resources>

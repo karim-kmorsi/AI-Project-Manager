@@ -23,6 +23,11 @@ internal data class GitHubRepository(
     val archived: Boolean
 )
 
+private val repositoryNamePattern = Regex("[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,100}")
+
+internal fun isGitHubRepositoryName(name: String): Boolean =
+    repositoryNamePattern.matches(name) && name.substringAfter('/') !in listOf(".", "..")
+
 internal data class GitHubRepositoryCursor(
     val installationsPage: Int? = 1,
     val installationIds: List<Long> = emptyList(),
@@ -108,8 +113,14 @@ internal class GitHubRepositoryApi(
         GitHubTreePreview(entries, response.getBoolean("truncated") || tree.length() > entries.size)
     }
 
+    override suspend fun snapshot(repository: GitHubRepository): GitHubRemoteSnapshot = readJson {
+        val current = get(repository.path()).json().repository()
+        if (current.id != repository.id) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        GitHubRemoteSnapshot(current, branch(current).commitSha)
+    }
+
     private fun GitHubRepository.path(): String {
-        if (!REPOSITORY_NAME.matches(fullName) || fullName.substringAfter('/') in listOf(".", "..")) {
+        if (!isGitHubRepositoryName(fullName)) {
             throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
         }
         return "/repos/$fullName"
@@ -148,7 +159,7 @@ internal class GitHubRepositoryApi(
                     connection.setRequestProperty("X-GitHub-Api-Version", "2026-03-10")
                     val deadline = SystemClock.elapsedRealtime() + 15_000L
                     val status = connection.responseCode
-                    if (status != 200) throw failure(connection, status)
+                    if (status != 200) throw failure(connection, status, deadline)
                     val response = connection.inputStream.use { stream ->
                         val bytes = ByteArray(limit + 1)
                         var size = 0
@@ -183,13 +194,13 @@ internal class GitHubRepositoryApi(
         }
     }
 
-    private fun failure(connection: HttpsURLConnection, status: Int): GitHubReadFailure {
+    private fun failure(connection: HttpsURLConnection, status: Int, deadline: Long): GitHubReadFailure {
         val retryAfter = connection.getHeaderField("Retry-After")?.toLongOrNull()?.coerceAtLeast(0)
         val exhausted = connection.getHeaderField("X-RateLimit-Remaining") == "0"
         val reset = if (exhausted) connection.getHeaderField("X-RateLimit-Reset")?.toLongOrNull()
             ?.minus(System.currentTimeMillis() / 1_000L)?.coerceAtLeast(0) else null
-        if (status == 429 || status == 403 && (retryAfter != null || exhausted || isSecondaryLimit(connection))) {
-            val seconds = (retryAfter ?: reset ?: 60L).coerceIn(1L, 86_400L)
+        if (status == 429 || status == 403 && (retryAfter != null || exhausted || isSecondaryLimit(connection, deadline))) {
+            val seconds = (retryAfter ?: reset ?: 60L).coerceIn(1L, Long.MAX_VALUE / 2_000L)
             rateLimitedUntil.accumulateAndGet(SystemClock.elapsedRealtime() + seconds * 1_000L, ::maxOf)
             return GitHubReadFailure(GitHubReadError.RATE_LIMIT, seconds)
         }
@@ -202,11 +213,16 @@ internal class GitHubRepositoryApi(
         })
     }
 
-    private fun isSecondaryLimit(connection: HttpsURLConnection): Boolean {
+    private fun isSecondaryLimit(connection: HttpsURLConnection, deadline: Long): Boolean {
         val errorBody = connection.errorStream?.use { stream ->
             val bytes = ByteArray(4_096)
-            val count = stream.read(bytes)
-            if (count > 0) bytes.decodeToString(endIndex = count) else ""
+            var count = 0
+            while (count < bytes.size && SystemClock.elapsedRealtime() < deadline) {
+                val read = stream.read(bytes, count, bytes.size - count)
+                if (read < 0) break
+                count += read
+            }
+            bytes.decodeToString(endIndex = count)
         } ?: return false
         return try {
             JSONObject(errorBody).optString("message").contains("secondary rate limit", ignoreCase = true)
@@ -217,7 +233,7 @@ internal class GitHubRepositoryApi(
 
     private fun JSONObject.repository(): GitHubRepository {
         val name = getString("full_name")
-        if (!REPOSITORY_NAME.matches(name)) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        if (!isGitHubRepositoryName(name)) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
         return GitHubRepository(
             positiveId(), name, optString("description").takeUnless { isNull("description") || it.isBlank() },
             getString("default_branch"), getBoolean("private"), getBoolean("archived")
@@ -235,7 +251,6 @@ internal class GitHubRepositoryApi(
         const val MAX_BYTES = 1024 * 1024
         val NEXT_LINK = Regex("""(?:^|,)\s*<[^>]+>\s*;\s*rel\s*=\s*"next"(?:\s*[,;]|\s*$)""")
         val SHA = Regex("(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})")
-        val REPOSITORY_NAME = Regex("[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,100}")
     }
 }
 

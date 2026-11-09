@@ -76,6 +76,15 @@ class GitHubRepositoryApiTest {
         }).reason)
     }
 
+    @Test fun recognizesSecondaryRateLimitWithoutHeaders() {
+        val api = GitHubRepositoryApi("test-token") {
+            FakeGitHubReadConnection("", status = 403, errorBody = """{"message":"You have exceeded a secondary rate limit."}""")
+        }
+        val result = failure(api)
+        assertEquals(GitHubReadError.RATE_LIMIT, result.reason)
+        assertEquals(60L, result.retryAfterSeconds)
+    }
+
     private fun failure(api: GitHubRepositoryApi) = assertThrows(GitHubReadFailure::class.java) {
         runBlocking { loadGitHubRepositoryPage(api, GitHubRepositoryCursor()) }
     }
@@ -90,7 +99,8 @@ class GitHubRepositoryApiTest {
 internal class FakeGitHubReadConnection(
     private val body: String,
     private val headers: Map<String, String> = emptyMap(),
-    private val status: Int = 200
+    private val status: Int = 200,
+    private val errorBody: String? = null
 ) : HttpsURLConnection(URL("https://api.github.com")) {
     var disconnected = false
         private set
@@ -103,4 +113,5 @@ internal class FakeGitHubReadConnection(
     override fun getResponseCode() = status
     override fun getHeaderField(name: String) = headers[name]
     override fun getInputStream() = ByteArrayInputStream(body.encodeToByteArray())
+    override fun getErrorStream() = errorBody?.byteInputStream()
 }

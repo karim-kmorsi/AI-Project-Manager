@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-internal fun GitHubConnectionSettings(signIn: GitHubSignIn) {
+internal fun GitHubConnectionSettings(signIn: GitHubSignIn, localProjects: List<ProjectItem>?) {
     val scope = rememberCoroutineScope()
     DisposableEffect(signIn) { onDispose { signIn.cancel() } }
     val api = remember { GitHubPublicApi() }
@@ -46,7 +46,7 @@ internal fun GitHubConnectionSettings(signIn: GitHubSignIn) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ParagraphText("GitHub", style = MaterialTheme.typography.titleMedium)
-            GitHubSignInControls(signIn, scope)
+            GitHubSignInControls(signIn, scope, localProjects)
             ParagraphText("يختبر الزر أدناه واجهة GitHub العامة. لا تتوفر مزامنة المستودعات.")
             ParagraphText(
                 if (testing) "جارٍ اختبار الاتصال…" else status,
@@ -72,7 +72,11 @@ internal fun GitHubConnectionSettings(signIn: GitHubSignIn) {
 }
 
 @Composable
-private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
+private fun GitHubSignInControls(
+    signIn: GitHubSignIn,
+    scope: CoroutineScope,
+    localProjects: List<ProjectItem>?
+) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val code = signIn.userCode
@@ -127,7 +131,8 @@ private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
             source = session.repositoryApi,
             onExpired = { signIn.expire(session) },
             onClose = { showRepositories = false },
-            previewSource = session.repositoryApi
+            previewSource = session.repositoryApi,
+            localProjects = localProjects
         )
     }
 }

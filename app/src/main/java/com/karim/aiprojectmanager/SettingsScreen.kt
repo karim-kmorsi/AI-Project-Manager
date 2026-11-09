@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 internal fun SettingsScreen(
     modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit,
     githubSignIn: GitHubSignIn,
+    localProjects: List<ProjectItem>? = null,
     appearanceSettings: @Composable () -> Unit = {}
 ) {
     var showSnapshot by rememberSaveable { mutableStateOf(false) }
@@ -43,7 +44,7 @@ internal fun SettingsScreen(
         TextButton(onClick = onExport) { Text("تصدير JSON") }
         TextButton(onClick = onPreview) { Text("معاينة نسخة") }
         TextButton(onClick = { showSnapshot = true }) { Text("معاينة لقطة Backlog") }
-        GitHubConnectionSettings(githubSignIn)
+        GitHubConnectionSettings(githubSignIn, localProjects)
     }
     if (showSnapshot) BacklogSnapshotPreview(onClose = { showSnapshot = false })
 }

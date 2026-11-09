@@ -16,22 +16,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun GitHubRepositoryPreviewDialog(
     repository: GitHubRepository,
     source: GitHubRepositoryPreviewSource,
+    localProjects: List<ProjectItem>?,
     onExpired: () -> Unit,
     onBack: () -> Unit
 ) {
     var preview by remember(repository) { mutableStateOf<GitHubRepositoryPreview?>(null) }
     var error by remember(repository) { mutableStateOf<GitHubReadFailure?>(null) }
     var request by remember(repository) { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
+    val localBaseline = remember(repository) { localProjects?.toList() }
+    var showImport by remember(repository) { mutableStateOf(false) }
+    var comparing by remember(repository) { mutableStateOf(false) }
+    var comparison by remember(repository) { mutableStateOf<GitHubSyncComparison?>(null) }
+    var comparisonError by remember(repository) { mutableStateOf<GitHubReadError?>(null) }
     LaunchedEffect(repository, request) {
         try {
             preview = loadGitHubRepositoryPreview(source, repository)
@@ -47,7 +56,40 @@ internal fun GitHubRepositoryPreviewDialog(
             ) {
                 ParagraphText(stringResource(R.string.github_repos_preview), style = MaterialTheme.typography.titleLarge)
                 LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    item { GitHubRepositorySummary(repository) }
+                    item {
+                        GitHubRepositorySummary(repository)
+                        TextButton(onClick = { showImport = !showImport }) {
+                            Text(stringResource(R.string.github_repos_import_preview))
+                        }
+                        if (showImport) GitHubImportPreviewContent(repository, localProjects)
+                        val branch = (preview?.branch as? GitHubPreviewSection.Available)?.value
+                        if (branch != null && localBaseline != null && localProjects != null) {
+                            TextButton(enabled = !comparing, onClick = {
+                                if (!comparing) {
+                                    comparing = true
+                                    comparison = null
+                                    comparisonError = null
+                                    scope.launch {
+                                        try {
+                                            val current = source.snapshot(repository)
+                                            comparison = compareGitHubSnapshots(
+                                                GitHubRemoteSnapshot(repository, branch.commitSha),
+                                                current, localBaseline, localProjects.toList()
+                                            )
+                                        } catch (failure: GitHubReadFailure) {
+                                            if (failure.reason == GitHubReadError.EXPIRED) onExpired()
+                                            else comparisonError = failure.reason
+                                        } finally {
+                                            comparing = false
+                                        }
+                                    }
+                                }
+                            }) { Text(stringResource(R.string.github_repos_sync_compare)) }
+                        }
+                        if (comparing) ParagraphText(stringResource(R.string.github_repos_sync_loading))
+                        comparisonError?.let { ParagraphText(stringResource(it.messageResource())) }
+                        comparison?.let { GitHubSyncComparisonContent(it) }
+                    }
                     item {
                         val result = preview
                         val failure = error
@@ -113,5 +155,46 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
             }
             is GitHubPreviewSection.Unavailable -> ParagraphText(stringResource(tree.reason.messageResource()))
         }
+    }
+}
+
+@Composable
+private fun GitHubImportPreviewContent(repository: GitHubRepository, projects: List<ProjectItem>?) {
+    if (projects == null) {
+        ParagraphText(stringResource(R.string.github_repos_import_unavailable))
+        return
+    }
+    val proposal = previewGitHubImport(repository, projects)
+    if (proposal == null) {
+        ParagraphText(stringResource(R.string.github_repos_import_invalid))
+        return
+    }
+    ParagraphText(stringResource(R.string.github_repos_import_read_only))
+    ParagraphText(proposal.project.name)
+    ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
+    ParagraphText(proposal.project.description)
+    ParagraphText(stringResource(R.string.github_repos_import_empty_fields))
+    if (proposal.candidates.isEmpty()) ParagraphText(stringResource(R.string.github_repos_import_none))
+    proposal.candidates.take(10).forEach { candidate ->
+        ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
+    }
+    if (proposal.candidates.size > 10) ParagraphText(stringResource(R.string.github_repos_partial))
+}
+
+@Composable
+private fun GitHubSyncComparisonContent(comparison: GitHubSyncComparison) {
+    ParagraphText(stringResource(when (comparison.disposition) {
+        GitHubSyncDisposition.UNCHANGED -> R.string.github_repos_sync_unchanged
+        GitHubSyncDisposition.REMOTE_ONLY -> R.string.github_repos_sync_remote
+        GitHubSyncDisposition.LOCAL_ONLY -> R.string.github_repos_sync_local
+        GitHubSyncDisposition.CONFLICT -> R.string.github_repos_sync_conflict
+        GitHubSyncDisposition.UNLINKED -> R.string.github_repos_sync_unlinked
+    }))
+    comparison.changes.forEach { change ->
+        ParagraphText(stringResource(when (change) {
+            GitHubRemoteChange.METADATA -> R.string.github_repos_sync_metadata
+            GitHubRemoteChange.DEFAULT_BRANCH -> R.string.github_repos_sync_branch
+            GitHubRemoteChange.HEAD -> R.string.github_repos_sync_head
+        }))
     }
 }

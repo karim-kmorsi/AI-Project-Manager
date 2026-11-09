@@ -5,6 +5,35 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub integration Phases 2D and 2E — read-only preparation
+
+Import preview proposes a project ID based on GitHub's repository ID, the
+repository name, and a description with the canonical URL. It flags existing
+IDs, matching names, and matching URL lines as possible duplicates. Blueprint,
+roadmap, and task fields start empty in the proposal. The preview has no project
+write path. Owner review of mapping and preservation rules is required before
+enabling an import.
+
+Manual comparison refreshes repository metadata and the current default-branch
+commit. It compares that remote snapshot and the local project against the
+baseline held while the preview is open. It reports metadata, branch, and commit
+changes, possible conflicts, and projects without a confirmed ID link. A name
+or URL match alone does not establish a link. The baseline stays in memory.
+Background sync, persistent bindings, and conflict application remain deferred.
+
+Final local verification passed 22 focused GitHub host tests, all 113 host tests,
+and 27 targeted API 35 instrumentation tests. The Android cases covered paging,
+rate limits, preview limits, Arabic resources and RTL layout, and synthetic
+import and comparison with unchanged project bytes. Both APKs assembled and
+Debug Lint reported 0 errors and 20 warnings. The emulator's project file
+remained absent. Live authenticated discovery and previews require a fresh
+owner-approved session.
+
+The Android workflow now triggers on pushes to this feature branch. The first
+run built both APKs and reported two failures in existing task UI tests during
+the broader connected suite. Local GitHub checks passed. See the GitHub Actions
+run for the status of each pushed revision.
+
 ## GitHub integration Phase 2C — repository preview
 
 From discovery, open a read-only repository preview with the default branch,
