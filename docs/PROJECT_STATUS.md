@@ -5,6 +5,19 @@ Branch: `codex/baseline-reconciliation-v0-2`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub integration phase 1
+
+Settings now runs an unauthenticated HTTPS metadata request for the public
+`octocat/Hello-World` repository on demand. It reports request outcomes and
+discloses that private repository access is unavailable. No credentials are
+requested or stored.
+
+Debug and Android test APK assembly and Debug Lint passed. Six targeted tests
+passed on the API 37 emulator. The manual API check returned
+`octocat/Hello-World · master`, and the bundled Backlog preview opened.
+The saved projects file had the same SHA-256 before installation and after
+testing. **NOT Ready for Release**.
+
 ## Read-only Backlog snapshot proof of concept
 
 The feature branch previews the bundled snapshot from publication commit

@@ -18,7 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** Information and existing callbacks only: opening this destination never saves projects. */
+/** Settings and read-only tools. Opening this destination never saves projects. */
 @Composable
 internal fun SettingsScreen(
     modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit,
@@ -42,6 +42,7 @@ internal fun SettingsScreen(
         TextButton(onClick = onExport) { Text("تصدير JSON") }
         TextButton(onClick = onPreview) { Text("معاينة نسخة") }
         TextButton(onClick = { showSnapshot = true }) { Text("معاينة لقطة Backlog") }
+        GitHubConnectionSettings()
     }
     if (showSnapshot) BacklogSnapshotPreview(onClose = { showSnapshot = false })
 }
