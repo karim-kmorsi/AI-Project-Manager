@@ -22,4 +22,19 @@
     <string name="github_repos_invalid">GitHub returned an unreadable response.</string>
     <string name="github_repos_http">GitHub could not complete the request.</string>
     <string name="github_repos_expired">Your GitHub session has expired. Connect again.</string>
+    <string name="github_repos_preview">Preview repository</string>
+    <string name="github_repos_back">Back to repositories</string>
+    <string name="github_repos_preview_loading">Loading repository preview…</string>
+    <string name="github_repos_branch_name">Branch %1$s</string>
+    <string name="github_repos_protected">Protected branch</string>
+    <string name="github_repos_latest_commit">Latest commit</string>
+    <string name="github_repos_committed_at">Committed %1$s</string>
+    <string name="github_repos_readme">README preview</string>
+    <string name="github_repos_readme_absent">GitHub returned no README for this commit.</string>
+    <string name="github_repos_tree">Root files and folders</string>
+    <string name="github_repos_tree_empty">The root tree is empty.</string>
+    <string name="github_repos_folder">Folder: %1$s</string>
+    <string name="github_repos_file">File: %1$s</string>
+    <string name="github_repos_partial">Only part of the content is shown.</string>
+    <string name="github_repos_empty_repo">GitHub reports this repository is empty.</string>
 </resources>

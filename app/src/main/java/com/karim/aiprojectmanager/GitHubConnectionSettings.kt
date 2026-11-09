@@ -126,7 +126,8 @@ private fun GitHubSignInControls(signIn: GitHubSignIn, scope: CoroutineScope) {
         GitHubRepositoriesDialog(
             source = session.repositoryApi,
             onExpired = { signIn.expire(session) },
-            onClose = { showRepositories = false }
+            onClose = { showRepositories = false },
+            previewSource = session.repositoryApi
         )
     }
 }

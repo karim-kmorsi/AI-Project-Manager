@@ -22,4 +22,19 @@
     <string name="github_repos_invalid">أعاد GitHub استجابة تعذّرت قراءتها.</string>
     <string name="github_repos_http">تعذّر على GitHub إكمال الطلب.</string>
     <string name="github_repos_expired">انتهت جلسة GitHub. اربط حسابك من جديد.</string>
+    <string name="github_repos_preview">معاينة المستودع</string>
+    <string name="github_repos_back">العودة إلى المستودعات</string>
+    <string name="github_repos_preview_loading">جارٍ تحميل معاينة المستودع…</string>
+    <string name="github_repos_branch_name">الفرع %1$s</string>
+    <string name="github_repos_protected">فرع محمي</string>
+    <string name="github_repos_latest_commit">آخر إيداع</string>
+    <string name="github_repos_committed_at">تاريخ الإيداع %1$s</string>
+    <string name="github_repos_readme">معاينة README</string>
+    <string name="github_repos_readme_absent">لم يُرجع GitHub ملف README لهذا الإيداع.</string>
+    <string name="github_repos_tree">الملفات والمجلدات في الجذر</string>
+    <string name="github_repos_tree_empty">شجرة الجذر فارغة.</string>
+    <string name="github_repos_folder">مجلد: %1$s</string>
+    <string name="github_repos_file">ملف: %1$s</string>
+    <string name="github_repos_partial">يُعرض جزء من المحتوى فقط.</string>
+    <string name="github_repos_empty_repo">أفاد GitHub بأن المستودع فارغ.</string>
 </resources>

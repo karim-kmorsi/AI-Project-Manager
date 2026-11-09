@@ -4,6 +4,7 @@ import android.os.SystemClock
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.URL
+import java.net.URLEncoder
 import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.HttpsURLConnection
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ internal data class GitHubRepositoryPage(
 )
 
 internal enum class GitHubReadError {
-    EXPIRED, FORBIDDEN, NOT_FOUND, RATE_LIMIT, NETWORK, TIMEOUT, INVALID_RESPONSE, HTTP
+    EXPIRED, FORBIDDEN, NOT_FOUND, EMPTY, RATE_LIMIT, NETWORK, TIMEOUT, INVALID_RESPONSE, HTTP
 }
 
 internal class GitHubReadFailure(
@@ -49,7 +50,7 @@ internal fun interface GitHubRepositorySource {
 internal class GitHubRepositoryApi(
     private val token: String,
     private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }
-) : GitHubRepositorySource {
+) : GitHubRepositorySource, GitHubRepositoryPreviewSource {
     private val rateLimitedUntil = AtomicLong()
 
     override suspend fun repositories(cursor: GitHubRepositoryCursor): GitHubRepositoryPage {
@@ -74,7 +75,61 @@ internal class GitHubRepositoryApi(
         return GitHubRepositoryPage(items, next.takeIf { it.installationIds.isNotEmpty() || it.installationsPage != null })
     }
 
-    private suspend fun get(path: String): Response {
+    override suspend fun branch(repository: GitHubRepository): GitHubBranchPreview = readJson {
+        val ref = URLEncoder.encode(repository.defaultBranch, "UTF-8").replace("+", "%20")
+        val branch = get("${repository.path()}/branches/$ref").json()
+        val commit = branch.getJSONObject("commit")
+        val metadata = commit.getJSONObject("commit")
+        GitHubBranchPreview(
+            name = branch.getString("name"),
+            protected = branch.getBoolean("protected"),
+            commitSha = commit.getString("sha").checkedSha(),
+            treeSha = metadata.getJSONObject("tree").getString("sha").checkedSha(),
+            message = metadata.getString("message").lineSequence().first().take(250),
+            committedAt = metadata.optJSONObject("committer")?.optString("date")?.takeIf { it.isNotBlank() }
+        )
+    }
+
+    override suspend fun readme(repository: GitHubRepository, commitSha: String): GitHubReadmePreview {
+        val response = get(
+            "${repository.path()}/readme?ref=${commitSha.checkedSha()}",
+            accept = "application/vnd.github.raw+json", limit = 64 * 1024, allowTruncation = true
+        )
+        return GitHubReadmePreview(response.body, response.truncated)
+    }
+
+    override suspend fun tree(repository: GitHubRepository, treeSha: String): GitHubTreePreview = readJson {
+        val response = get("${repository.path()}/git/trees/${treeSha.checkedSha()}").json()
+        val tree = response.getJSONArray("tree")
+        val entries = List(minOf(tree.length(), 30)) { index ->
+            val entry = tree.getJSONObject(index)
+            GitHubTreeEntry(entry.getString("path"), entry.getString("type") == "tree")
+        }
+        GitHubTreePreview(entries, response.getBoolean("truncated") || tree.length() > entries.size)
+    }
+
+    private fun GitHubRepository.path(): String {
+        if (!REPOSITORY_NAME.matches(fullName) || fullName.substringAfter('/') in listOf(".", "..")) {
+            throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        }
+        return "/repos/$fullName"
+    }
+
+    private fun String.checkedSha(): String = takeIf(SHA::matches)
+        ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+
+    private suspend fun <T> readJson(read: suspend () -> T): T = try {
+        read()
+    } catch (_: JSONException) {
+        throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+    }
+
+    private suspend fun get(
+        path: String,
+        accept: String = "application/vnd.github+json",
+        limit: Int = MAX_BYTES,
+        allowTruncation: Boolean = false
+    ): Response {
         val caller = currentCoroutineContext()
         return runInterruptible(Dispatchers.IO) {
             try {
@@ -87,15 +142,15 @@ internal class GitHubRepositoryApi(
                     connection.instanceFollowRedirects = false
                     connection.useCaches = false
                     connection.requestMethod = "GET"
-                    connection.setRequestProperty("Accept", "application/vnd.github+json")
+                    connection.setRequestProperty("Accept", accept)
                     connection.setRequestProperty("Authorization", "Bearer $token")
                     connection.setRequestProperty("User-Agent", "AI-Project-Manager")
                     connection.setRequestProperty("X-GitHub-Api-Version", "2026-03-10")
                     val deadline = SystemClock.elapsedRealtime() + 15_000L
                     val status = connection.responseCode
                     if (status != 200) throw failure(connection, status)
-                    val body = connection.inputStream.use { stream ->
-                        val bytes = ByteArray(MAX_BYTES + 1)
+                    val response = connection.inputStream.use { stream ->
+                        val bytes = ByteArray(limit + 1)
                         var size = 0
                         while (size < bytes.size) {
                             caller.ensureActive()
@@ -104,12 +159,17 @@ internal class GitHubRepositoryApi(
                             if (count < 0) break
                             size += count
                         }
-                        if (size > MAX_BYTES) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
-                        bytes.decodeToString(endIndex = size)
+                        val truncated = size > limit
+                        if (truncated && !allowTruncation) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+                        Response(
+                            bytes.decodeToString(endIndex = minOf(size, limit)),
+                            NEXT_LINK.containsMatchIn(connection.getHeaderField("Link").orEmpty()),
+                            truncated
+                        )
                     }
                     caller.ensureActive()
                     if (SystemClock.elapsedRealtime() >= deadline) throw SocketTimeoutException()
-                    Response(body, NEXT_LINK.containsMatchIn(connection.getHeaderField("Link").orEmpty()))
+                    response
                 } finally {
                     connection.disconnect()
                 }
@@ -137,6 +197,7 @@ internal class GitHubRepositoryApi(
             401 -> GitHubReadError.EXPIRED
             403 -> GitHubReadError.FORBIDDEN
             404 -> GitHubReadError.NOT_FOUND
+            409 -> GitHubReadError.EMPTY
             else -> GitHubReadError.HTTP
         })
     }
@@ -166,13 +227,14 @@ internal class GitHubRepositoryApi(
     private fun JSONObject.positiveId(): Long = getLong("id").takeIf { it > 0 }
         ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
 
-    private class Response(val body: String, val hasNext: Boolean) {
+    private class Response(val body: String, val hasNext: Boolean, val truncated: Boolean) {
         fun json() = JSONObject(body)
     }
 
     private companion object {
         const val MAX_BYTES = 1024 * 1024
         val NEXT_LINK = Regex("""(?:^|,)\s*<[^>]+>\s*;\s*rel\s*=\s*"next"(?:\s*[,;]|\s*$)""")
+        val SHA = Regex("(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})")
         val REPOSITORY_NAME = Regex("[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,100}")
     }
 }

@@ -54,7 +54,8 @@ internal fun filterGitHubRepositories(
 internal fun GitHubRepositoriesDialog(
     source: GitHubRepositorySource,
     onExpired: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    previewSource: GitHubRepositoryPreviewSource? = null
 ) {
     var repositories by remember { mutableStateOf(emptyList<GitHubRepository>()) }
     var cursor by remember { mutableStateOf<GitHubRepositoryCursor?>(GitHubRepositoryCursor()) }
@@ -65,6 +66,7 @@ internal fun GitHubRepositoriesDialog(
     var retryAt by remember { mutableStateOf(0L) }
     var retrySeconds by remember { mutableStateOf(0L) }
     var request by remember { mutableIntStateOf(0) }
+    var selected by remember { mutableStateOf<GitHubRepository?>(null) }
 
     LaunchedEffect(request) {
         val current = cursor ?: return@LaunchedEffect
@@ -95,6 +97,11 @@ internal fun GitHubRepositoriesDialog(
     }
 
     val visible = remember(repositories, query, filter) { filterGitHubRepositories(repositories, query, filter) }
+    val selectedRepository = selected
+    if (selectedRepository != null && previewSource != null) {
+        GitHubRepositoryPreviewDialog(selectedRepository, previewSource, onExpired) { selected = null }
+        return
+    }
     Dialog(onDismissRequest = onClose) {
         Surface(shape = MaterialTheme.shapes.extraLarge) {
             Column(
@@ -119,6 +126,9 @@ internal fun GitHubRepositoriesDialog(
                     }
                     items(visible, key = { it.id }) { repository ->
                         GitHubRepositorySummary(repository)
+                        if (previewSource != null) {
+                            TextButton(onClick = { selected = repository }) { Text(stringResource(R.string.github_repos_preview)) }
+                        }
                     }
                     item {
                         val currentError = error
@@ -168,6 +178,7 @@ internal fun GitHubReadError.messageResource(): Int = when (this) {
     GitHubReadError.EXPIRED -> R.string.github_repos_expired
     GitHubReadError.FORBIDDEN -> R.string.github_repos_forbidden
     GitHubReadError.NOT_FOUND -> R.string.github_repos_not_found
+    GitHubReadError.EMPTY -> R.string.github_repos_empty_repo
     GitHubReadError.RATE_LIMIT -> R.string.github_repos_limited
     GitHubReadError.NETWORK -> R.string.github_repos_network
     GitHubReadError.TIMEOUT -> R.string.github_repos_timeout

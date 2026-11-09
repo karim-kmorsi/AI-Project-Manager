@@ -5,6 +5,19 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub integration Phase 2C — repository preview
+
+From discovery, open a read-only repository preview with the default branch,
+protection status, latest commit metadata, plain-text README, and up to 30 root
+entries. The README request is pinned to the displayed commit and the tree to
+its tree SHA. The app bounds the README download to 64 KiB and marks partial
+content. Missing files, access errors, and empty repositories have explicit
+states. The app neither clones repositories nor writes to GitHub.
+
+Both debug APKs assembled. Four targeted API 35 tests passed across preview API
+behavior and discovery UI. The tests used synthetic responses. The emulator's
+project file remained absent.
+
 ## GitHub integration Phase 2B — repository discovery
 
 Settings offers an authenticated repository browser. It pages through GitHub App
