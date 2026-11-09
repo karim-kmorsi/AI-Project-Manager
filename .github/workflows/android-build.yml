@@ -1,7 +1,7 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux]
+    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview]
   pull_request:
     branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
   workflow_dispatch:
