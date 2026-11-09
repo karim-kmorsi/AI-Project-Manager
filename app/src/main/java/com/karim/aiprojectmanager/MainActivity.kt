@@ -226,6 +226,7 @@ fun ProjectManagerApp(
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    val githubSignIn = remember { GitHubSignIn() }
     var projectSearchQuery by rememberSaveable { mutableStateOf("") }
     val projectListState = rememberLazyListState()
     val taskScreenStates = rememberSaveableStateHolder()
@@ -266,7 +267,7 @@ fun ProjectManagerApp(
         ) { Text("+") }
     }) { padding ->
         if (settingsVisible) {
-            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, appearanceSettings)
+            SettingsScreen(Modifier.padding(padding), onExport, onRestorePreview, githubSignIn, appearanceSettings)
         } else if (loadError) {
             Column(Modifier.padding(padding).padding(16.dp)) {
                 ParagraphText("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")

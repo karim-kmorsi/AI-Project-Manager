@@ -1,9 +1,67 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-07 (Asia/Kathmandu).
-Branch: `codex/baseline-reconciliation-v0-2`.
+Updated: 2026-11-10 (Asia/Kathmandu).
+Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
+
+## GitHub integration Phase 2A — final audit, 2026-11-10
+
+Audited on `feature/github-snapshot-preview` against
+`ba392b0d2a400f475f17a62ddf7e3451e89e1b68`. Settings starts GitHub App device
+authorization, opens GitHub in the browser, and verifies the account with
+authenticated `GET /user` before showing the login. The existing unauthenticated
+public API check remains available.
+
+Supply the GitHub App Client ID through the Gradle property `githubAppClientId`,
+for example through `ORG_GRADLE_PROJECT_githubAppClientId`. A build without the
+property disables sign-in. The Client ID is a public identifier and the build
+places it in the APK. Tokens are held in memory, and refresh tokens are discarded.
+Leaving Settings cancels an active attempt. Recreating the activity or restarting
+the process clears its local session. Disconnect clears the local session.
+GitHub authorization is managed separately in GitHub account settings.
+
+### DNS diagnosis and mitigation
+
+The API 35 emulator received HTTP 200 for the device challenge and four pending
+token polls. A subsequent poll failed to resolve `github.com` before sending the
+POST while Chrome was in the foreground. The first repair allowed two retries
+for pre-send DNS failures, doubling the polling interval each time. A second
+browser handoff exhausted that retry budget. The emulator shell resolved GitHub
+after the app returned. The cause of the resolver failure remains unconfirmed.
+
+Polling and account verification now wait for the activity to resume. Polling
+respects GitHub's interval and slow-down responses, the original device-code
+deadline, and cancellation. The two bounded retries apply to pre-send DNS
+failures during token polling. Stage-specific errors omit credentials and raw
+exception details. The final APK excludes temporary diagnostic logging.
+
+### Verification and acceptance
+
+The prior live run on `AI_PM_Play_API35` verified browser approval, successful
+authenticated `GET /user`, the `karim-kmorsi` account display, and disconnect.
+Reconnection obtained a new challenge and was cancelled before a second browser
+approval. The final audit used synthetic Android tests and relied on that prior
+run for live GitHub evidence.
+
+The audit reran the focused GitHub host suite (18 passed) and complete host suite
+(109 passed, including those 18). Debug and Android test APK packaging and
+assembly succeeded with JDK 17, Gradle 8.13, and the verified Client ID. Debug
+Lint reported 0 errors and 20 warnings. All 16 targeted tests passed on
+`AI_PM_Play_API35` (API 35), covering GitHub sign-in UI, HTTPS transport, the public
+API check, and Settings integration. In-place installation and tests left
+`projects.json` absent on this emulator.
+
+Phase 2A is ready for owner acceptance on the emulator. A second end-to-end
+authorization and physical-device validation remain outstanding.
+**NOT Ready for Release**.
+
+### Phase 2B prerequisites
+
+Owner acceptance of Phase 2A and separate approval of the Phase 2B scope come
+first. Confirm the GitHub operations and minimum permissions required, decide
+how to handle token expiry and reconnection, and agree on verification and data
+preservation requirements before implementation.
 
 ## GitHub integration phase 1
 
