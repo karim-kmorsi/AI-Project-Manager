@@ -5,6 +5,26 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub authentication build configuration
+
+Hosted run 42745902995 published an APK with an empty GitHub App Client ID.
+The installed REDMAGIC APK matched that artifact. The Connect button was
+disabled by the existing configuration check.
+
+The workflow now expects the public Actions repository variable
+`APP_CLIENT_ID` and maps it to Gradle for assembly and instrumentation.
+The CI guard rejects missing configuration. Unconfigured local builds remain
+supported. The repository variable is set and verified. GitHub reserves the
+`GITHUB_` variable prefix.
+
+The required build rejected an empty ID. The unconfigured local build and
+the configured debug and test APK builds succeeded. The configured APK
+contains the previously verified public ID. All 18 focused host tests passed.
+Lint reported 0 errors and 20 warnings. The Connect UI regression compiled.
+The previous phone package is absent. The phone acceptance check uses only
+the verified APK from a successful hosted run. Live authorization requires
+separate owner approval.
+
 ## Tasks empty-state correction
 
 Tasks now distinguishes a project with no tasks from a search or filter with

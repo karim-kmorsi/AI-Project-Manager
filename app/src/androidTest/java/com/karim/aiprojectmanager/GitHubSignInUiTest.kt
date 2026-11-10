@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -63,6 +64,14 @@ class GitHubSignInUiTest {
         click("قطع الاتصال")
         compose.onNodeWithText("octocat", substring = true).assertDoesNotExist()
         compose.onNodeWithText("ربط حساب GitHub").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun installedBuildConfigurationControlsConnectAvailability() {
+        compose.setContent { AppTheme(false) { SettingsScreen(onExport = {}, onPreview = {}, githubSignIn = GitHubSignIn()) } }
+
+        val connect = compose.onNodeWithText("ربط حساب GitHub").performScrollTo()
+        if (BuildConfig.GITHUB_APP_CLIENT_ID.isEmpty()) connect.assertIsNotEnabled()
+        else connect.assertIsEnabled()
     }
 
     @Test fun anUnconfiguredBuildCannotStartAuthorization() {

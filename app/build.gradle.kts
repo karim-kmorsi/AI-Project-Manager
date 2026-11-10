@@ -4,6 +4,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 val githubAppClientId = providers.gradleProperty("githubAppClientId").orElse("").get()
+val requireGitHubAppClientId = providers.gradleProperty("requireGitHubAppClientId")
+    .map { it.toBooleanStrict() }
+    .orElse(false)
+    .get()
+require(!requireGitHubAppClientId || githubAppClientId.isNotEmpty()) {
+    "GitHub authentication builds require githubAppClientId. Configure APP_CLIENT_ID in GitHub Actions."
+}
 require(githubAppClientId.isEmpty() || githubAppClientId.matches(Regex("[A-Za-z0-9]{1,100}"))) {
     "Invalid githubAppClientId Gradle property"
 }

@@ -13,6 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      ORG_GRADLE_PROJECT_githubAppClientId: ${{ vars.APP_CLIENT_ID }}
+      ORG_GRADLE_PROJECT_requireGitHubAppClientId: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
