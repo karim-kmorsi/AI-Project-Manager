@@ -5,6 +5,24 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Focused Settings polish — 2026-11-10
+
+The dashboard Settings action has a labeled gear. Settings groups Connections,
+Appearance, Data and backup, and Advanced. GitHub sign-in stays under
+Connections. The public API probe is under Advanced in Diagnostics. Routine
+tips and populated-project next steps were removed. Backup, manual verification,
+read-only, and recovery messages remain.
+
+The debug and instrumentation APKs built. All 101 host tests passed, including
+23 GitHub tests. Debug lint found 0 errors and 20 warnings. A disposable API 35
+emulator passed 37 targeted tests at the standard viewport and 9 at 320×640
+mdpi with Arabic locale and 1.8× font scale. A compact UI check in Arabic and
+English confirmed the Settings control mirrored correctly, measured at least
+48 dp in both dimensions, and opened Settings and returned with Back. The
+Settings tests checked fixture project bytes, and the installed app's project
+file stayed absent. GitHub sign-in tests used synthetic responses. Hosted
+verification is tracked in GitHub Actions.
+
 ## Hosted CI repair and GitHub acceptance — 2026-11-10
 
 [Hosted run 42677974723](https://github.com/karim-kmorsi/AI-Project-Manager/actions/runs/42677974723)

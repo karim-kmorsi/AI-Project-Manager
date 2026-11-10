@@ -39,15 +39,25 @@ import kotlinx.coroutines.withContext
 internal fun GitHubConnectionSettings(signIn: GitHubSignIn, localProjects: List<ProjectItem>?) {
     val scope = rememberCoroutineScope()
     DisposableEffect(signIn) { onDispose { signIn.cancel() } }
+    ElevatedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ParagraphText("GitHub", style = MaterialTheme.typography.titleMedium)
+            GitHubSignInControls(signIn, scope, localProjects)
+        }
+    }
+}
+
+@Composable
+internal fun GitHubPublicConnectivityProbe() {
+    val scope = rememberCoroutineScope()
     val api = remember { GitHubPublicApi() }
     var testing by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf(connectionMessage(null)) }
 
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ParagraphText("GitHub", style = MaterialTheme.typography.titleMedium)
-            GitHubSignInControls(signIn, scope, localProjects)
-            ParagraphText("يختبر الزر أدناه واجهة GitHub العامة. لا تتوفر مزامنة المستودعات.")
+            ParagraphText(stringResource(R.string.settings_diagnostics), style = MaterialTheme.typography.titleMedium)
+            ParagraphText(stringResource(R.string.settings_public_probe_description))
             ParagraphText(
                 if (testing) "جارٍ اختبار الاتصال…" else status,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }

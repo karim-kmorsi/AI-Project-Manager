@@ -75,9 +75,9 @@ class ThemeUiTest {
     }
 
     private fun openSettings() {
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("الإعدادات"))
-        compose.onNodeWithText("الإعدادات").performClick()
-        compose.onNodeWithText("Follow System").assertIsSelected()
+        val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
+        compose.onNode(hasClickAction() and hasText(settings)).performClick()
+        compose.onNodeWithText("Follow System").performScrollTo().assertIsSelected()
     }
     private fun select(label: String, fixture: Fixture) {
         compose.onNodeWithText(label).performScrollTo().performClick()
@@ -115,7 +115,7 @@ class ThemeUiTest {
     @Test fun failedSelectionKeepsConfirmedRadioAndAppearanceUntilRetry() = withFixture { f ->
         openSettings()
         compose.runOnIdle { f.store.reject = true }
-        compose.onNodeWithText("Dark").performClick()
+        compose.onNodeWithText("Dark").performScrollTo().performClick()
         compose.waitUntil(5_000) { f.controller.state.value.error == ThemePreferenceError.SAVE }
         compose.onNodeWithText("Follow System").assertIsSelected()
         assertBackground(f, false)
@@ -170,7 +170,8 @@ class ThemeUiTest {
         compose.runOnIdle { f.systemDark.value = true }
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("محتوى المستند").assertTextContains("Pending")
-        compose.onNodeWithText("الإعدادات").assertDoesNotExist()
+        val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
+        compose.onNode(hasClickAction() and hasText(settings)).assertDoesNotExist()
         compose.onNodeWithText("رجوع").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()

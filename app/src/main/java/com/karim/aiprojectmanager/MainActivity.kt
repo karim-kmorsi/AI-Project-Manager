@@ -17,6 +17,8 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -251,7 +253,7 @@ fun ProjectManagerApp(
     BackHandler(enabled = settingsVisible) { showSettings = false }
 
     Scaffold(topBar = {
-        AccessibleAppBar(title = if (settingsVisible) "الإعدادات" else if (active == null) "إدارة المشاريع" else active.name,
+        AccessibleAppBar(title = if (settingsVisible) stringResource(R.string.settings_title) else if (active == null) "إدارة المشاريع" else active.name,
             actions = { if (active == null && !settingsVisible) {
                 TextButton(onClick = onExport) { Text("تصدير JSON") }
                 TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
@@ -287,10 +289,14 @@ fun ProjectManagerApp(
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         ParagraphText("مشاريعي", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-                        TextButton(onClick = { showSettings = true }) { Text("الإعدادات") }
+                        TextButton(onClick = { showSettings = true }) {
+                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null,
+                                modifier = Modifier.size(24.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.settings_title))
+                        }
                     }
                 }
-                item { ParagraphText("كل مشروع مستقل ببلوبرنت وخريطة طريق ومهام خاصة به.") }
                 if (projects.isEmpty()) item { ParagraphText("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
                 if (projects.isNotEmpty()) {
                     item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
@@ -334,7 +340,9 @@ fun ProjectManagerApp(
                                 }
                             }
                             ParagraphText("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
-                            ParagraphText("الخطوة التالية: " + nextStepGuidance(active), style = MaterialTheme.typography.bodySmall)
+                            if (active.blueprint.isBlank() && active.roadmap.isBlank() && active.tasks.isEmpty()) {
+                                ParagraphText("ابدأ بكتابة Blueprint للمشروع.", style = MaterialTheme.typography.bodySmall)
+                            }
                             ParagraphText("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
                         }
                     }
@@ -547,7 +555,6 @@ private fun EditableDocument(
         },
         chrome = {
             ParagraphText(hint, fontWeight = FontWeight.Medium)
-            ParagraphText(contextualTip(document), style = MaterialTheme.typography.bodySmall)
             ParagraphText(
                 when {
                     recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
@@ -667,7 +674,7 @@ private fun TaskScreen(
         }
     }
     Column(Modifier.padding(16.dp)) {
-        ParagraphText(contextualTip("tasks"), style = MaterialTheme.typography.bodySmall)
+        ParagraphText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
             textStyle = contentTextStyle(), label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())

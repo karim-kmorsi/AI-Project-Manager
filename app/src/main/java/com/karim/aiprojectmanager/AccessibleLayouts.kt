@@ -73,7 +73,6 @@ internal fun ProjectCreationDialog(
         title = { ParagraphText("إنشاء مشروع") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ParagraphText(contextualTip("new_project"), style = MaterialTheme.typography.bodySmall)
                 if (writeError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
                 OutlinedTextField(name, onNameChange, textStyle = contentTextStyle(), label = { Text("اسم المشروع") })
                 OutlinedTextField(details, onDetailsChange, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })

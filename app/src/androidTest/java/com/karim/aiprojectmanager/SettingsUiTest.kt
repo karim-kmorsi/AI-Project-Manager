@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -53,10 +54,13 @@ class SettingsUiTest {
         }
     }
 
+    private fun text(id: Int) = compose.activity.getString(id)
+
+    private fun settingsAction() = compose.onNode(hasClickAction() and hasText(text(R.string.settings_title)))
+
     private fun openSettings() {
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("الإعدادات"))
-        compose.onNodeWithText("الإعدادات").performClick()
-        compose.onNodeWithText("التخزين والنسخ الاحتياطي").assertExists()
+        settingsAction().assertIsDisplayed().performClick()
+        compose.onNodeWithText(text(R.string.settings_connections)).assertIsDisplayed()
     }
 
     @Test fun toolbarBackPreservesSearchAndProjectBytes() = withProjects { file, _ ->
@@ -74,7 +78,7 @@ class SettingsUiTest {
         compose.onNodeWithText("بحث في المشاريع").performTextReplacement("Alpha")
         openSettings()
         restoration.emulateSavedInstanceStateRestore()
-        compose.onNodeWithText("التخزين والنسخ الاحتياطي").assertExists()
+        compose.onNodeWithText(text(R.string.settings_data_backup)).assertExists()
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithText("بحث في المشاريع").assertTextContains("Alpha")
         compose.onNodeWithText("Beta").assertDoesNotExist()
@@ -84,14 +88,10 @@ class SettingsUiTest {
     @Test fun disclosureAndExistingCallbacksAreTruthfulAndDoNotSaveProjects() = withProjects { file, _ ->
         val before = file.readBytes()
         openSettings()
-        listOf(
-            "تُحفظ المشاريع والمخطط وخريطة الطريق والمهام في مساحة التطبيق المحلية الخاصة على هذا الجهاز.",
-            "تصدير JSON يدويًا ينشئ نسخة خارجية في المكان الذي تختاره. لا تُنشأ نسخة خارجية تلقائيًا.",
-            "معاينة النسخة الاحتياطية تعرض محتواها فقط؛ لا تستورد البيانات ولا تدمجها أو تستبدل المشاريع الحالية.",
-            "إعدادات Android مهيأة لاستبعاد بيانات التطبيق من النسخ الاحتياطي السحابي التلقائي والنقل بين الأجهزة.",
-            "لم يُتحقق بالكامل من سلوك جميع الشركات المصنّعة وعمليات النقل بين الأجهزة؛ لا تعتمد على النقل التلقائي لحماية بياناتك.",
-            "قد يؤدي إلغاء تثبيت التطبيق أو فقدان بياناته الخاصة إلى فقدان مشاريعك إذا لم تحتفظ بنسخة JSON خارجية. لا توجد ضمانة لاستعادة كل البيانات."
-        ).forEach { compose.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
+        listOf(R.string.settings_backup_loss, R.string.settings_backup_preview_warning,
+            R.string.settings_backup_transfer_warning).forEach {
+            compose.onNodeWithText(text(it)).performScrollTo().assertIsDisplayed()
+        }
         compose.onNodeWithText("تصدير JSON").performScrollTo().performClick()
         compose.onNodeWithText("معاينة نسخة").performScrollTo().performClick()
         compose.runOnIdle {
@@ -99,6 +99,28 @@ class SettingsUiTest {
             assertEquals(1, previews)
             assertArrayEquals(before, file.readBytes())
         }
+    }
+
+    @Test fun connectionAndDiagnosticActionsAreSeparatedWithoutWrites() = withProjects { file, _ ->
+        val before = file.readBytes()
+        openSettings()
+        val heading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
+        compose.onNode(heading and hasText(text(R.string.settings_connections))).assertIsDisplayed()
+        compose.onNodeWithText("ربط حساب GitHub").assertIsDisplayed()
+        compose.onNode(heading and hasText(text(R.string.settings_advanced))).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.settings_diagnostics)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("اختبار اتصال GitHub العام").performScrollTo().assertIsDisplayed()
+        compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
+    }
+
+    @Test fun populatedOverviewOmitsNextStepAndTasksKeepManualVerificationCopy() = withProjects { file, _ ->
+        val before = file.readBytes()
+        compose.onNodeWithText("Alpha").performClick()
+        compose.onNodeWithText("الخطوة التالية:", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("التقدم لا يُعتبر مكتملًا دون دليل مستقل.").assertExists()
+        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        compose.onNodeWithText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.").assertIsDisplayed()
+        compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
     @Test fun settingsCannotBypassDirtyDocumentGuard() = withProjects { _, _ ->
@@ -109,7 +131,7 @@ class SettingsUiTest {
         compose.mainClock.autoAdvance = false
         compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending edit")
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("الإعدادات").assertDoesNotExist()
+        settingsAction().assertDoesNotExist()
         compose.onNodeWithText("رجوع").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
@@ -118,6 +140,6 @@ class SettingsUiTest {
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("الإعدادات").assertDoesNotExist()
+        settingsAction().assertDoesNotExist()
     }
 }

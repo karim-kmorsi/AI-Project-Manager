@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun AppearanceSettings(state: ThemeSettingsState, onSelect: (ThemeMode) -> Unit, onRetry: () -> Unit) {
-    ParagraphText("المظهر", style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionTitle(R.string.settings_appearance)
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp).selectableGroup()) {
             ThemeMode.entries.forEach { mode ->
