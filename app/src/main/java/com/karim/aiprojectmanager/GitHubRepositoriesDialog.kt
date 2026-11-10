@@ -69,15 +69,18 @@ internal fun GitHubRepositoriesDialog(
     var retryAt by remember { mutableLongStateOf(0L) }
     var retrySeconds by remember { mutableLongStateOf(0L) }
     var request by remember { mutableIntStateOf(0) }
+    var refreshing by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<GitHubRepository?>(null) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(request) {
-        val current = cursor ?: return@LaunchedEffect
+        val current = if (refreshing) GitHubRepositoryCursor() else cursor ?: return@LaunchedEffect
         try {
             val page = loadGitHubRepositoryPage(source, current)
-            repositories = (repositories + page.repositories).distinctBy { it.id }
+            repositories = (if (refreshing) page.repositories else repositories + page.repositories)
+                .distinctBy { it.id }
             cursor = page.next
+            refreshing = false
         } catch (failure: GitHubReadFailure) {
             if (failure.reason == GitHubReadError.EXPIRED) {
                 onExpired()
@@ -121,6 +124,14 @@ internal fun GitHubRepositoriesDialog(
                             textStyle = contentTextStyle(),
                             label = { Text(stringResource(R.string.github_repos_search)) }
                         )
+                        TextButton(enabled = !loading && retrySeconds == 0L, onClick = {
+                            if (!loading && retrySeconds == 0L) {
+                                refreshing = true
+                                error = null
+                                loading = true
+                                request++
+                            }
+                        }) { Text(stringResource(R.string.github_repos_refresh)) }
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             GitHubRepositoryFilter.entries.forEach { choice ->
                                 FilterChip(selected = filter == choice, onClick = { filter = choice },
@@ -146,7 +157,7 @@ internal fun GitHubRepositoriesDialog(
                             else -> null
                         }
                         if (status != null) ParagraphText(status, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                        if (cursor != null && !loading) {
+                        if ((cursor != null || refreshing) && !loading) {
                             TextButton(enabled = retrySeconds == 0L, onClick = {
                                 if (!loading && retrySeconds == 0L) {
                                     error = null

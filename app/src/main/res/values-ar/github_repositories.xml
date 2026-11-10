@@ -55,4 +55,5 @@
     <string name="github_repos_sync_metadata">تغيّرت بيانات المستودع الوصفية.</string>
     <string name="github_repos_sync_branch">تغيّر الفرع الافتراضي.</string>
     <string name="github_repos_sync_head">تغيّر آخر إيداع.</string>
+    <string name="github_repos_refresh">تحديث</string>
 </resources>

@@ -107,6 +107,27 @@ class GitHubRepositoriesUiTest {
         compose.onNodeWithText("owner/repo-1").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun refreshKeepsOldResultsOnFailureAndReplacesThemOnRetry() {
+        var requests = 0
+        val source = GitHubRepositorySource { cursor ->
+            assertEquals(GitHubRepositoryCursor(), cursor)
+            when (++requests) {
+                1 -> GitHubRepositoryPage(listOf(repo(1, false)), null)
+                2 -> throw GitHubReadFailure(GitHubReadError.NETWORK)
+                else -> GitHubRepositoryPage(listOf(repo(2, true)), null)
+            }
+        }
+        compose.setContent { AppTheme(true) { GitHubRepositoriesDialog(source, {}, {}) } }
+        compose.onNodeWithText("owner/repo-1").performScrollTo().assertIsDisplayed()
+        clickLabel(R.string.github_repos_refresh)
+        compose.onNodeWithText(label(R.string.github_repos_network)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("owner/repo-1").performScrollTo().assertIsDisplayed()
+        clickLabel(R.string.github_repos_retry)
+        compose.onNodeWithText("owner/repo-2").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("owner/repo-1").assertDoesNotExist()
+        compose.runOnIdle { assertEquals(3, requests) }
+    }
+
     private fun clickLabel(id: Int) {
         compose.onNode(hasText(label(id)) and hasClickAction()).performScrollTo().performClick()
     }

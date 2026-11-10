@@ -55,4 +55,5 @@
     <string name="github_repos_sync_metadata">Repository metadata changed.</string>
     <string name="github_repos_sync_branch">The default branch changed.</string>
     <string name="github_repos_sync_head">The latest commit changed.</string>
+    <string name="github_repos_refresh">Refresh</string>
 </resources>

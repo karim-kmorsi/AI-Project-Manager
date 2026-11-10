@@ -1,10 +1,12 @@
 package com.karim.aiprojectmanager
 
+import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class GitHubRepositoryPreviewApiTest {
@@ -82,6 +84,35 @@ class GitHubRepositoryPreviewApiTest {
         assertEquals("new-main", snapshot.repository.defaultBranch)
         assertEquals(COMMIT, snapshot.head)
         assertEquals(listOf("/repos/owner/repo", "/repos/owner/repo/branches/new-main"), paths)
+    }
+
+    @Test fun missingAndRevokedRepositoriesAbortComparisonBeforeBranchRead() {
+        for ((status, reason) in listOf(404 to GitHubReadError.NOT_FOUND, 403 to GitHubReadError.FORBIDDEN)) {
+            var requests = 0
+            val api = GitHubRepositoryApi("fixture") {
+                requests++
+                FakeGitHubReadConnection("", status = status)
+            }
+            val failure = assertThrows(GitHubReadFailure::class.java) {
+                runBlocking { api.snapshot(REPOSITORY) }
+            }
+            assertEquals(reason, failure.reason)
+            assertEquals(1, requests)
+        }
+    }
+
+    @Test fun interruptedBranchReadDoesNotReturnAPartialSnapshot() {
+        var requests = 0
+        val api = GitHubRepositoryApi("fixture") {
+            if (++requests == 1) FakeGitHubReadConnection(
+                """{"id":1,"full_name":"owner/repo","default_branch":"main","private":true,"archived":false}"""
+            ) else throw IOException("synthetic interruption")
+        }
+        val failure = assertThrows(GitHubReadFailure::class.java) {
+            runBlocking { api.snapshot(REPOSITORY) }
+        }
+        assertEquals(GitHubReadError.NETWORK, failure.reason)
+        assertEquals(2, requests)
     }
 
     private companion object {

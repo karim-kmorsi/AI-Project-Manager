@@ -56,6 +56,14 @@ class GitHubPreparationTest {
             compareGitHubSnapshots(baseline, baseline.copy(repository = repository.copy(id = 25)), emptyList(), emptyList()).disposition)
     }
 
+    @Test fun changedHeadMarksTheEarlierSnapshotStaleEvenWhenMetadataIsIdentical() {
+        val linked = listOf(ProjectItem("github:24", "Local", "Keep"))
+        val updated = compareGitHubSnapshots(baseline, baseline.copy(head = "new"), linked, linked)
+        assertEquals(setOf(GitHubRemoteChange.HEAD), updated.changes)
+        assertEquals(GitHubSyncDisposition.REMOTE_ONLY, updated.disposition)
+        assertEquals("old", baseline.head)
+    }
+
     private val repository = GitHubRepository(24, "owner/repo", "About", "main", true, false)
     private val baseline = GitHubRemoteSnapshot(repository, "old")
 }

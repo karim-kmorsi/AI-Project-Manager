@@ -5,6 +5,31 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Hosted CI repair and GitHub acceptance — 2026-11-10
+
+[Hosted run 42677974723](https://github.com/karim-kmorsi/AI-Project-Manager/actions/runs/42677974723)
+reported missing `VERIFIED` and `Layout project` nodes. Its logs showed a
+320×640 mdpi viewport. An isolated local API 35 emulator reproduced both
+failures at that viewport with animations disabled. The tests now scroll
+the lazy lists to the project and task controls before tapping, and check the
+stored status and the visible status after each action. They retain the
+progress, storage preservation, and layout assertions. Android Actions
+uploads test reports even when instrumentation fails.
+
+Repository discovery has a manual refresh. A successful refresh restarts
+pagination and replaces the previous page set. An interrupted refresh retains
+the existing rows and offers retry. GitHub's cooldown still applies. Synthetic
+snapshot tests cover a changed head, missing repositories, denied access, and
+an interrupted branch read. The [import and synchronization proposal](GITHUB_IMPORT_SYNC_SAFETY.md)
+records the decisions required before any write path.
+
+Local checks passed 23 focused GitHub host tests, 114 total host tests, and
+35 targeted Android tests on the 320×640 API 35 emulator, including both
+formerly failing cases. Both debug APKs built. Debug Lint reported 0 errors
+and 20 warnings. No project file was created. GitHub Actions is the source
+for hosted results. Live discovery and previews still require browser approval
+on the owner emulator.
+
 ## GitHub integration Phases 2D and 2E — read-only preparation
 
 Import preview proposes a project ID based on GitHub's repository ID, the
