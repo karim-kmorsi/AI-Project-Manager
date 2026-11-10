@@ -1,12 +1,16 @@
 package com.karim.aiprojectmanager
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -90,14 +94,18 @@ class ProjectWorkflowUiTest {
             "كود غير متحقق" to "IMPLEMENTED_UNVERIFIED",
             "تم التحقق" to "VERIFIED"
         )) {
-            compose.onNodeWithText(button).performClick()
-            compose.onNodeWithText(status).assertExists()
+            // A task card can extend past the viewport on the hosted emulator.
+            val taskList = compose.onNode(hasScrollToIndexAction())
+            taskList.performScrollToNode(hasText(button))
+            compose.onNodeWithText(button).performScrollTo().assertIsDisplayed().performClick()
             compose.runOnIdle {
                 assertEquals(
                     listOf(active.copy(tasks = listOf(TaskItem(taskId, "New task", status))), untouched),
                     ProjectStorage(file).load()
                 )
             }
+            taskList.performScrollToNode(hasText(status))
+            compose.onNodeWithText(status).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
             compose.onNodeWithText("تقدم مثبت: ${if (status == "VERIFIED") 1 else 0} من 1 مهمة").assertExists()
             compose.onNodeWithText("المهام").performScrollTo().performClick()

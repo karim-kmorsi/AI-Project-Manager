@@ -76,7 +76,7 @@ class TaskListControlsUiTest {
                 MaterialTheme { Box(Modifier.width(240.dp)) { ProjectManagerApp(storage) } }
             }
         }
-        compose.onNodeWithText("Layout project").performClick()
+        taskText("Layout project").assertIsDisplayed().performClick()
         compose.onNodeWithText("المهام").performScrollTo().performClick()
         taskText(title).assertIsDisplayed()
         val labelsAndStatuses = listOf("قيد التنفيذ" to "IN_PROGRESS",
