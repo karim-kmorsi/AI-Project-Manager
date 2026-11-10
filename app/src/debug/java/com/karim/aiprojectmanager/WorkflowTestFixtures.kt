@@ -95,6 +95,6 @@ class DeterministicDocumentProvider : ContentProvider() {
         val opens = AtomicInteger()
         @Volatile var delayedStarted = CountDownLatch(1)
         @Volatile var releaseDelayed = CountDownLatch(1)
-        fun uri(name: String): Uri = Uri.parse("content://com.karim.aiprojectmanager.debug.documents/$name")
+        fun uri(name: String): Uri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.debug.documents/$name")
     }
 }

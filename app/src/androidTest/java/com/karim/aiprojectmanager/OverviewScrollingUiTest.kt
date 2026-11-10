@@ -33,7 +33,7 @@ class OverviewScrollingUiTest {
         try {
             compose.setContent { ProjectManagerApp(storage) }
             compose.onNodeWithText(first.name).performClick()
-            val footer = "GitHub والفحص الآلي: غير متصلين في هذه النسخة."
+            val footer = "حساب GitHub غير متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
             compose.onNodeWithText(footer).assertIsNotDisplayed()
             compose.onNodeWithText(footer).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("نظرة عامة").assertIsDisplayed()

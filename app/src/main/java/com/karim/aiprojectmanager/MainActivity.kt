@@ -254,10 +254,45 @@ fun ProjectManagerApp(
 
     Scaffold(topBar = {
         AccessibleAppBar(title = if (settingsVisible) stringResource(R.string.settings_title) else if (active == null) "إدارة المشاريع" else active.name,
-            actions = { if (active == null && !settingsVisible) {
-                TextButton(onClick = onExport) { Text("تصدير JSON") }
-                TextButton(onClick = onRestorePreview) { Text("معاينة نسخة") }
-            } },
+            actions = {
+                if (active == null && !settingsVisible) {
+                    var menuExpanded by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .semantics { contentDescription = "المزيد" }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("تصدير JSON") },
+                                onClick = {
+                                    menuExpanded = false
+                                    onExport()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("معاينة نسخة") },
+                                onClick = {
+                                    menuExpanded = false
+                                    onRestorePreview()
+                                }
+                            )
+                        }
+                    }
+                }
+            },
             navigation = {
                 if (settingsVisible) TextButton(onClick = { showSettings = false }) { Text("رجوع") }
                 else if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
@@ -343,7 +378,12 @@ fun ProjectManagerApp(
                             if (active.blueprint.isBlank() && active.roadmap.isBlank() && active.tasks.isEmpty()) {
                                 ParagraphText("ابدأ بكتابة Blueprint للمشروع.", style = MaterialTheme.typography.bodySmall)
                             }
-                            ParagraphText("GitHub والفحص الآلي: غير متصلين في هذه النسخة.")
+                            ParagraphText(
+                                if (githubSignIn.session != null)
+                                    "حساب GitHub متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
+                                else
+                                    "حساب GitHub غير متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
+                            )
                         }
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
