@@ -1,0 +1,4 @@
+<resources>
+    <string name="tasks_empty">لا توجد مهام بعد.</string>
+    <string name="tasks_no_matches">لا توجد مهام تطابق خيارات البحث والتصفية.</string>
+</resources>

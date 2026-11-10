@@ -5,6 +5,17 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Tasks empty-state correction
+
+Tasks now distinguishes a project with no tasks from a search or filter with
+no matches. Both messages have English and Arabic resources. The existing
+Add action and project format are unchanged.
+
+Both debug APKs assembled. The 12 focused host tests passed. Four targeted
+Android tests passed in English and again in Arabic on a disposable API 35
+emulator. They covered both empty states, adding and saving the first task,
+and search/filter behavior. Debug lint reported 0 errors and 20 warnings.
+
 ## Focused Settings polish — 2026-11-10
 
 The dashboard Settings action has a labeled gear. Settings groups Connections,

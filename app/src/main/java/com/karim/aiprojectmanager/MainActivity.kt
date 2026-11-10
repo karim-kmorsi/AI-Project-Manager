@@ -716,7 +716,10 @@ private fun TaskScreen(
                 }
             }
             if (visibleTasks.isEmpty()) {
-                item { ParagraphText("لا توجد مهام تطابق خيارات البحث والتصفية.") }
+                item {
+                    val message = if (project.tasks.isEmpty()) R.string.tasks_empty else R.string.tasks_no_matches
+                    ParagraphText(stringResource(message))
+                }
             }
             items(visibleTasks, key = { it.id }) { task ->
                 ElevatedCard(Modifier.fillMaxWidth()) {

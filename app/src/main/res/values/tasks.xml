@@ -1,0 +1,4 @@
+<resources>
+    <string name="tasks_empty">No tasks yet.</string>
+    <string name="tasks_no_matches">No tasks match your search or filters.</string>
+</resources>

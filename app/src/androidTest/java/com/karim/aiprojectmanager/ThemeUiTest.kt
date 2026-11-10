@@ -219,7 +219,8 @@ class ThemeUiTest {
         compose.onNodeWithText("مهمة جديدة").assertTextContains("Pending new task")
         compose.onNodeWithText("بحث في المهام").assertTextContains("Keep")
         compose.onNodeWithText("حالة المهام: قيد التنفيذ").assertExists()
-        compose.onNodeWithText("لا توجد مهام تطابق خيارات البحث والتصفية.").assertExists()
+        val noMatches = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.tasks_no_matches)
+        compose.onNodeWithText(noMatches).assertExists()
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 }

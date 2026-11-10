@@ -39,6 +39,23 @@ class TaskListControlsUiTest {
         return compose.onNodeWithText(text).performScrollTo()
     }
 
+    private fun text(id: Int) = InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
+
+    @Test fun emptyProjectShowsNoTasksAndAllowsAddingFirstTask() = fixture { _, storage ->
+        storage.save(listOf(ProjectItem("p", "Empty project", "")))
+        compose.setContent { MaterialTheme { ProjectManagerApp(storage) } }
+        compose.onNodeWithText("Empty project").performClick()
+        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        taskText(text(R.string.tasks_empty)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.tasks_no_matches)).assertDoesNotExist()
+
+        compose.onNodeWithText("مهمة جديدة").performTextReplacement("First task")
+        compose.onNodeWithText("إضافة").performClick()
+        taskText("First task").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.tasks_empty)).assertDoesNotExist()
+        compose.runOnIdle { assertEquals("First task", storage.load().single().tasks.single().title) }
+    }
+
     @Test fun searchAndStatusCombineClearAndShowEmptyResultsWithoutWriting() = fixture { file, storage ->
         storage.save(listOf(ProjectItem("p", "Search project", "", tasks = listOf(
             TaskItem("a", "Alpha pending", "NOT_STARTED"),
@@ -57,7 +74,8 @@ class TaskListControlsUiTest {
         compose.onNodeWithText("Alpha pending").assertDoesNotExist()
         compose.onNodeWithText("Beta active").assertDoesNotExist()
         taskText("بحث في المهام").performTextReplacement("missing")
-        taskText("لا توجد مهام تطابق خيارات البحث والتصفية.").assertIsDisplayed()
+        taskText(text(R.string.tasks_no_matches)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.tasks_empty)).assertDoesNotExist()
         taskText("مسح البحث").performClick()
         taskText("Alpha active").assertIsDisplayed()
         taskText("Beta active").assertIsDisplayed()
