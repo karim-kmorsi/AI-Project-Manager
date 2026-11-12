@@ -530,57 +530,69 @@ private fun EditableDocument(
             }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { VNextIcon(R.drawable.vnext_save, tint = androidx.compose.ui.graphics.Color.White); Spacer(Modifier.width(8.dp)); Text("حفظ") }
         },
         chrome = {
-            VNextSectionTitle(hint, if (document == "blueprint") R.drawable.vnext_layers else R.drawable.vnext_route)
-            ParagraphText(
-                when {
-                    recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
-                    conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
-                    saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
-                    draft != value -> "تعديلات قيد الحفظ..."
-                    else -> "تم الحفظ"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (recoveryError) {
-                if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
-                TextButton(onClick = {
-                    try {
-                        draftStore.preserveUnreadable(projectId, document)
-                        recoveryError = false
-                        preservationFailed = false
-                        preservationCount++
-                    } catch (_: Exception) { preservationFailed = true }
-                }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
-            }
-            if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
-            if (conflictingDraft != null) {
-                ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = MaterialTheme.typography.bodySmall)
-                ParagraphText(conflictingDraft!!, style = MaterialTheme.typography.bodySmall, maxLines = 5)
-                TextButton(onClick = {
-                    // Explicit choice: recover the older text; a new draft records the current base.
-                    draft = conflictingDraft!!
-                    conflictingDraft = null
-                }) { Text("استخدام المسودة السابقة") }
-                TextButton(onClick = {
-                    // Explicit user choice; remove only this conflicting recovery draft.
-                    try {
-                        draftStore.discard(projectId, document)
+            VNextPanel {
+                VNextSectionTitle(hint, if (document == "blueprint") R.drawable.vnext_layers else R.drawable.vnext_route)
+                ParagraphText(
+                    when {
+                        recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
+                        conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
+                        saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
+                        draft != value -> "تعديلات قيد الحفظ..."
+                        else -> "تم الحفظ"
+                    },
+                    style = ProjectTextStyles.metadata,
+                    color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (recoveryError) {
+                    if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
+                    SecondaryActionButton(onClick = {
+                        try {
+                            draftStore.preserveUnreadable(projectId, document)
+                            recoveryError = false
+                            preservationFailed = false
+                            preservationCount++
+                        } catch (_: Exception) { preservationFailed = true }
+                    }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
+                }
+                if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
+                if (conflictingDraft != null) {
+                    ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = ProjectTextStyles.metadata)
+                    ParagraphText(conflictingDraft!!, style = ProjectTextStyles.supporting, maxLines = 5)
+                    SecondaryActionButton(onClick = {
+                        // Explicit choice: recover the older text; a new draft records the current base.
+                        draft = conflictingDraft!!
                         conflictingDraft = null
-                        recoveryError = false
-                    } catch (_: IOException) { recoveryError = true }
-                }) { Text("الاحتفاظ بنص المشروع الحالي") }
+                    }) { Text("استخدام المسودة السابقة") }
+                    TextButton(onClick = {
+                        // Explicit user choice; remove only this conflicting recovery draft.
+                        try {
+                            draftStore.discard(projectId, document)
+                            conflictingDraft = null
+                            recoveryError = false
+                        } catch (_: IOException) { recoveryError = true }
+                    }) { Text("الاحتفاظ بنص المشروع الحالي") }
+                }
             }
         }, editor = {
-            OutlinedTextField(
-                value = draft, onValueChange = { draft = it },
-                enabled = !recoveryError,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = contentTextStyle(), shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer), label = { Text("محتوى المستند") },
-                placeholder = { Text("اكتب أو الصق الخطة هنا...") }
-            )
+            VNextPreviewSurface {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = draft, onValueChange = { draft = it },
+                        enabled = !recoveryError,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = contentTextStyle(), shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer), label = { Text("محتوى المستند") },
+                        placeholder = { Text("اكتب أو الصق الخطة هنا...") }
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        ParagraphText("نص عادي / Markdown", style = ProjectTextStyles.metadata,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ParagraphText("${draft.lineSequence().count()} سطر · ${draft.trim().split(Regex("\\s+")).count { it.isNotBlank() }} كلمة",
+                            style = ProjectTextStyles.metadata, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
     )
 }
@@ -656,6 +668,11 @@ private fun TaskScreen(
         item { VNextPanel {
         VNextSectionTitle("المهام", R.drawable.vnext_check)
         ParagraphText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.", style = MaterialTheme.typography.bodySmall)
+        ParagraphText("إجمالي المهام: ${project.tasks.size}", style = ProjectTextStyles.metadata,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        VNextProgress(project)
+        ParagraphText(taskStatusSummary(project.tasks), style = ProjectTextStyles.metadata,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
             textStyle = contentTextStyle(), label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())

@@ -5,6 +5,21 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## UI/UX VNext continuation — 2026-11-12
+
+Continued from `e7f198f` on `feature/github-snapshot-preview`. Overview now presents saved
+description, manually recorded task progress, pending tasks, GitHub account connection state,
+and actual task/document presence. Blueprint/Roadmap editor recovery/status chrome and text
+editor use VNext panels with informational Markdown/line/word counts. Tasks adds its existing
+manual progress and status summary to the header. Settings export and read-only backup preview
+actions were restyled. Existing GitHub cards/dialogs and backup/recovery flows were retained.
+No project data model, storage, GitHub authentication, signing, or logo/launcher assets changed.
+
+Focused `:app:compileDebugKotlin` passed twice with JDK 17. No tests, screenshots, connected
+Android UI tests, or device operations were run per task scope. The approved visual references
+were inspected, but final screen-by-screen layout comparison remains deferred. No commit or push.
+See [continuation notes](UI_UX_VNEXT_CONTINUATION.md) for the next action. **NOT Ready for Release**.
+
 ## UI/UX VNext Package 01B — 2026-11-12
 
 Focused local Dashboard refinement atop the intentionally uncommitted Package 01 baseline. Reduced header/search/card spacing, shortened manual-verification labels and docked Create in a measured Scaffold bottom area so no list content is covered. Removed only the Dashboard's separate launcher-background layer; existing transparent foreground and all 14 launcher assets remain unchanged. No JSON/model/storage, editor, GitHub, signing or version changes.
