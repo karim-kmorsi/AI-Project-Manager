@@ -62,3 +62,53 @@ Starting point matched requested baseline `6e8c14b10414c49acc7651a34391dfc0c03fb
 Build `:app:testVnextUnitTest :app:assembleVnext` passed (103 tests, no failures/errors/skips). APK identity was verified as `com.karim.aiprojectmanager.vnext`. Manual REDMAGIC 10 Pro checks verified English↔Arabic switching, RTL/LTR, persistence through restart/update, and unchanged synthetic project file hash. Original package remains installed/untouched. Six approved reference images were inspected; the report records all five screen comparisons as PARTIAL MATCH because the references show richer unsupported project artwork, filtering, metadata, toolbar actions, and textured gradients.
 
 Detailed record: [Phase 1B report](UI_UX_VNEXT_PHASE1B_REPORT_2026-11-12.md). Screenshot evidence is under `docs/audit-evidence/ui-vnext-correction-2026-11-12/`. Remaining work: owner review and separately scoped visual refinement for currently supported actions, plus the existing GitHub authenticated, recovery, accessibility, and broader device validation gates. The report recommendation is NEEDS CORRECTION; UI/UX VNext remains **NOT Ready for Release**.
+
+## GitHub session Phase 2A — 2026-11-13
+
+Starting branch and HEAD verified as `feature/github-snapshot-preview` at
+`7c0388fb18d05ae5e986099ff9af2a1c20031235`. The existing `app/build.gradle.kts` local
+modification was preserved. Work remains uncommitted.
+
+### Completed
+
+- Added Keystore AES-256-GCM encrypted GitHub credential storage in VNext `noBackupFilesDir`,
+  unique IV per encryption, atomic writes, safe handling of corrupt data and missing/invalidated
+  keys, and transient storage failure retention.
+- Added session save, startup `/user` verification before showing connected identity, differentiated
+  unauthorized response from transient HTTP/network errors, and disconnect credential deletion.
+- Added localized restore/retry/disconnect status and actions. Backup/device-transfer exclusions
+  were already configured and remain in place.
+- Corrected Client ID guard behavior: empty ID allows Debug build; VNext fails clearly. Existing
+  local Gradle property and Actions variable are retained.
+- Fixed VNext test launch configuration and English-locale test labels.
+- Added `docs/GITHUB_SESSION_PHASE2A_REPORT_2026-11-13.md` and the safe device screenshot
+  `docs/audit-evidence/github-session-phase2a-2026-11-13/vnext-home-before-owner-auth.png` and
+  `vnext-settings-before-owner-auth.png`. VNext is left at Settings with Connect visible.
+
+### Validation and device state
+
+- `:app:testVnextUnitTest`: 112 passed, no failures/errors/skips.
+- `:app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest`: passed with the locally
+  configured Client ID. Empty-ID guard check: Debug passed; VNext failed with the expected message.
+- Focused REDMAGIC 10 Pro VNext instrumentation: 12 passed across encrypted session persistence,
+  HTTP classification and sign-in UI. Synthetic test credentials only.
+- Verified VNext APK ID `com.karim.aiprojectmanager.vnext`; installed/launched only that package.
+  Original `com.karim.aiprojectmanager` remained installed at its prior package path. No clear-data
+  or uninstall command was used. `git diff --check` passed.
+- No real GitHub login or authorization was attempted. Therefore actual account restoration across
+  app/process restart, authenticated repository access, and real disconnect persistence are NOT
+  TESTED. No credential is included in logs, screenshots, or reports.
+
+### Remaining work / exact next action
+
+Owner must complete GitHub device authorization in VNext Settings → GitHub on the REDMAGIC. Do
+not paste the code into chat. After owner confirmation, verify the connected account, app relaunch,
+process termination/relaunch, repository browsing, disconnect, and disconnected state after restart
+using only `com.karim.aiprojectmanager.vnext`. If owner authorization cannot be completed, record
+these steps as NOT TESTED and keep the result NEEDS CORRECTION / INCOMPLETE VERIFICATION.
+
+### Build status and blocker
+
+Debug, VNext and VNext Android test APK builds passed; VNext without Client ID fails intentionally.
+No compilation blocker. The only blocker to completing physical authentication verification is
+owner participation in GitHub's device authorization. The project remains **NOT Ready for Release**.

@@ -18,6 +18,7 @@ require(githubAppClientId.isEmpty() || githubAppClientId.matches(Regex("[A-Za-z0
 android {
     namespace = "com.karim.aiprojectmanager"
     compileSdk = 35
+    testBuildType = "vnext"
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         applicationId = "com.karim.aiprojectmanager"
@@ -37,6 +38,11 @@ android {
             matchingFallbacks += listOf("debug")
         }
     }
+    // VNext instrumentation targets its isolated package while reusing Debug-only test hosts.
+    sourceSets.getByName("vnext") {
+        java.srcDir("src/debug/java")
+        manifest.srcFile("src/debug/AndroidManifest.xml")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -47,6 +53,23 @@ android {
         buildConfig = true
     }
 }
+
+// Validate only tasks for the isolated build type; ordinary Debug/Release remain independent.
+val verifyVnextGitHubAppClientId = tasks.register("verifyVnextGitHubAppClientId") {
+    doLast {
+        if (githubAppClientId.isEmpty()) {
+            throw GradleException(
+                "VNext requires githubAppClientId. Configure the Gradle property or GitHub Actions APP_CLIENT_ID."
+            )
+        }
+    }
+}
+tasks.configureEach {
+    if (name.contains("Vnext") && name != "verifyVnextGitHubAppClientId") {
+        dependsOn(verifyVnextGitHubAppClientId)
+    }
+}
+
 dependencies {
     testImplementation("junit:junit:4.13.2")
     implementation(platform("androidx.compose:compose-bom:2025.04.01"))
@@ -56,6 +79,7 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.04.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.8.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.8.0")
+    add("vnextImplementation", "androidx.compose.ui:ui-test-manifest:1.8.0")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
 }

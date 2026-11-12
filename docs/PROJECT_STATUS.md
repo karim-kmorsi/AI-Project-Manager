@@ -1269,3 +1269,20 @@ show additional artwork/metadata/actions and richer backdrop styling; details an
 [the Phase 1B report](UI_UX_VNEXT_PHASE1B_REPORT_2026-11-12.md). Authenticated GitHub, recovery,
 process-death, and broader accessibility/device checks remain open. No commit or push. **NOT Ready
 for Release.**
+
+## GitHub session Phase 2A — 2026-11-13
+
+Implemented Android Keystore AES-GCM persistence for GitHub sessions in VNext private
+no-backup storage, startup token verification, safe retention on transient failures, and
+credential deletion on disconnect. VNext build configuration now enforces a Client ID for
+VNext tasks while leaving ordinary Debug builds unaffected. See
+[the Phase 2A report](GITHUB_SESSION_PHASE2A_REPORT_2026-11-13.md).
+
+Verification: all 112 VNext host unit tests passed; Debug, VNext, and VNext Android test APK
+assembly passed. Empty Client ID behavior was checked for Debug and VNext. Twelve focused
+instrumentation tests passed on REDMAGIC 10 Pro serial `FY2433810B9D` against only
+`com.karim.aiprojectmanager.vnext`, covering encrypted persistence, HTTP classification, and
+the sign-in UI. Both app package paths were verified afterward; the original package/data
+were untouched. No live GitHub authorization was performed. Physical restart persistence and
+authenticated repository access remain **NOT TESTED** until owner participation in the device
+authorization flow. Work is uncommitted; no push. **NOT Ready for Release.**

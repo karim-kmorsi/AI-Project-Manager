@@ -58,8 +58,13 @@ internal class GitHubAuthHttp(
                         output.use { it.write(body) }
                     }
 
-                    if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                        val error = if (endpoint == GitHubAuthEndpoint.USER) GitHubAuthError.VERIFICATION else GitHubAuthError.HTTP
+                    val responseCode = connection.responseCode
+                    if (responseCode != HttpURLConnection.HTTP_OK) {
+                        val error = when {
+                            endpoint == GitHubAuthEndpoint.USER && responseCode == HttpURLConnection.HTTP_UNAUTHORIZED ->
+                                GitHubAuthError.UNAUTHORIZED
+                            else -> GitHubAuthError.HTTP
+                        }
                         throw GitHubAuthFailure(error)
                     }
                     val bytes = ByteArray(MAX_RESPONSE_BYTES + 1)

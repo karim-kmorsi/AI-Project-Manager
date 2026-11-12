@@ -110,8 +110,10 @@ private fun GitHubSignInControls(
     ParagraphText(
         when {
             session != null -> stringResource(R.string.github_status_connected, session.login)
+            signIn.disconnecting -> stringResource(R.string.github_status_disconnecting)
+            signIn.restoring -> stringResource(R.string.github_status_restoring)
+            signIn.sessionExpired -> stringResource(signIn.status)
             !signIn.isConfigured -> stringResource(R.string.github_status_not_configured)
-            signIn.sessionExpired -> stringResource(R.string.github_repos_expired)
             else -> stringResource(signIn.status)
         },
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
@@ -141,25 +143,34 @@ private fun GitHubSignInControls(
     }
     when {
         signIn.running -> TextButton(onClick = signIn::cancel) { Text(stringResource(R.string.github_cancel_connection)) }
+        signIn.disconnecting || signIn.restoring -> Unit
+        signIn.disconnectFailed -> TextButton(onClick = { signIn.disconnect(scope) }) {
+            Text(stringResource(R.string.github_retry_disconnect))
+        }
         session != null -> {
             TextButton(onClick = { showRepositories = true }) {
                 Text(stringResource(R.string.github_repos_browse))
             }
-            TextButton(onClick = signIn::disconnect) { Text(stringResource(R.string.github_disconnect)) }
+            TextButton(onClick = { signIn.disconnect(scope) }) { Text(stringResource(R.string.github_disconnect)) }
         }
-        else -> TextButton(
-            enabled = signIn.isConfigured,
-            onClick = {
-                signIn.connect(scope) {
-                    lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
-                }
+        else -> {
+            if (signIn.canRetryRestore) TextButton(onClick = { signIn.retryRestore(scope) }) {
+                Text(stringResource(R.string.github_retry_session))
             }
-        ) { Text(stringResource(R.string.github_connect)) }
+            TextButton(
+                enabled = signIn.isConfigured,
+                onClick = {
+                    signIn.connect(scope) {
+                        lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
+                    }
+                }
+            ) { Text(stringResource(R.string.github_connect)) }
+        }
     }
     if (session != null && showRepositories) {
         GitHubRepositoriesDialog(
             source = session.repositoryApi,
-            onExpired = { signIn.expire(session) },
+            onExpired = { signIn.expire(session, scope) },
             onClose = { showRepositories = false },
             previewSource = session.repositoryApi,
             localProjects = localProjects

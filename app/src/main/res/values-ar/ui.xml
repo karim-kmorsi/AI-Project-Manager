@@ -66,6 +66,16 @@
     <string name="github_status_connect_failed">تعذّر الاتصال بـ GitHub. حاول مرة أخرى.</string>
     <string name="github_status_connected">تم التحقق من حساب GitHub.\n%1$s</string>
     <string name="github_status_not_configured">لم يُضبط معرّف تطبيق GitHub في هذه النسخة.</string>
+    <string name="github_status_restoring">جارٍ التحقق من جلسة GitHub المحفوظة…</string>
+    <string name="github_status_restore_unverified">تعذّر التحقق من جلسة GitHub المحفوظة. احتُفظ ببيانات الاعتماد المشفرة؛ حاول مرة أخرى.</string>
+    <string name="github_status_restore_expired">لم تعد جلسة GitHub المحفوظة صالحة. أعد الاتصال.</string>
+    <string name="github_status_restore_storage">تعذّرت قراءة بيانات GitHub المحفوظة بأمان، وتم حذفها. أعد الاتصال.</string>
+    <string name="github_status_restore_keystore">مخزن Android Keystore غير متاح مؤقتًا. احتُفظ ببيانات الاعتماد؛ أعد محاولة التحقق.</string>
+    <string name="github_status_store_failed">تعذّر الوصول إلى مخزن بيانات اعتماد GitHub الآمن.</string>
+    <string name="github_status_disconnecting">جارٍ قطع الاتصال بـ GitHub…</string>
+    <string name="github_status_disconnect_failed">تعذّر تأكيد حذف بيانات الاعتماد. أعد محاولة قطع الاتصال قبل إعادة الربط.</string>
+    <string name="github_retry_session">إعادة محاولة التحقق من الجلسة</string>
+    <string name="github_retry_disconnect">إعادة محاولة قطع الاتصال</string>
     <string name="github_open_authorization">فتح صفحة تفويض GitHub</string>
     <string name="github_browser_error">تعذّر فتح المتصفح. افتح صفحة GitHub هذه يدويًا:\n%1$s</string>
     <string name="github_cancel_connection">إلغاء الاتصال</string>
@@ -94,6 +104,7 @@
     <string name="github_auth_timeout">انتهت مهلة طلب GitHub. حاول مجددًا.</string>
     <string name="github_auth_invalid">أعاد GitHub استجابة غير صالحة.</string>
     <string name="github_auth_http">أعاد GitHub خطأ في الطلب. حاول مجددًا.</string>
+    <string name="github_auth_unauthorized">رفض GitHub بيانات الاعتماد المحفوظة. أعد الاتصال.</string>
     <string name="github_auth_verification">تعذّر التحقق من الحساب من استجابة GitHub.</string>
     <string name="github_auth_unexpected">حدث خطأ غير متوقع. حاول مجددًا.</string>
     <string name="backlog_preview_title">معاينة لقطة Backlog</string>

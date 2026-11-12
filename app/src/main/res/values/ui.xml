@@ -66,6 +66,16 @@
     <string name="github_status_connect_failed">Could not connect to GitHub. Try again.</string>
     <string name="github_status_connected">GitHub account verified.\n%1$s</string>
     <string name="github_status_not_configured">GitHub App Client ID is not configured in this build.</string>
+    <string name="github_status_restoring">Verifying the saved GitHub session…</string>
+    <string name="github_status_restore_unverified">Could not verify the saved GitHub session. The encrypted credentials were kept; try again.</string>
+    <string name="github_status_restore_expired">The saved GitHub session is no longer valid. Connect again.</string>
+    <string name="github_status_restore_storage">Saved GitHub credentials could not be read securely and were cleared. Connect again.</string>
+    <string name="github_status_restore_keystore">Android Keystore is temporarily unavailable. The saved credentials were kept; retry verification.</string>
+    <string name="github_status_store_failed">Could not access secure GitHub credential storage.</string>
+    <string name="github_status_disconnecting">Disconnecting GitHub…</string>
+    <string name="github_status_disconnect_failed">Could not confirm credential removal. Retry disconnect before reconnecting.</string>
+    <string name="github_retry_session">Retry session verification</string>
+    <string name="github_retry_disconnect">Retry disconnect</string>
     <string name="github_open_authorization">Open GitHub authorization</string>
     <string name="github_browser_error">Could not open a browser. Open this GitHub page manually:\n%1$s</string>
     <string name="github_cancel_connection">Cancel connection</string>
@@ -94,6 +104,7 @@
     <string name="github_auth_timeout">The GitHub request timed out. Try again.</string>
     <string name="github_auth_invalid">GitHub returned an invalid response.</string>
     <string name="github_auth_http">GitHub returned a request error. Try again.</string>
+    <string name="github_auth_unauthorized">GitHub rejected the saved credentials. Connect again.</string>
     <string name="github_auth_verification">Could not verify the account from GitHub\'s response.</string>
     <string name="github_auth_unexpected">An unexpected error occurred. Try again.</string>
     <string name="backlog_preview_title">Backlog snapshot preview</string>

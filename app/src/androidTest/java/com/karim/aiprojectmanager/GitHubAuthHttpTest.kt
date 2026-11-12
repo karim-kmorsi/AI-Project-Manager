@@ -64,7 +64,9 @@ class GitHubAuthHttpTest {
 
     @Test fun sanitizesHttpAndIoFailures() {
         assertFailure(GitHubAuthError.HTTP, FakeConnection(status = 302))
-        assertFailure(GitHubAuthError.VERIFICATION, FakeConnection(status = 401), GitHubAuthEndpoint.USER)
+        assertFailure(GitHubAuthError.UNAUTHORIZED, FakeConnection(status = 401), GitHubAuthEndpoint.USER)
+        assertFailure(GitHubAuthError.HTTP, FakeConnection(status = 503), GitHubAuthEndpoint.USER)
+        assertFailure(GitHubAuthError.HTTP, FakeConnection(status = 403), GitHubAuthEndpoint.USER)
         assertFailure(GitHubAuthError.NETWORK, FakeConnection(failure = IOException("Fixture I/O error")))
         assertFailure(GitHubAuthError.TIMEOUT, FakeConnection(failure = SocketTimeoutException()))
     }

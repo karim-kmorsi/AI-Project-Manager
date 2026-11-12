@@ -247,7 +247,12 @@ fun ProjectManagerApp(
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
-    val githubSignIn = remember { GitHubSignIn() }
+    val applicationContext = LocalContext.current.applicationContext
+    val githubSignIn = remember {
+        GitHubSignIn(persistence = EncryptedGitHubSessionPersistence(applicationContext))
+    }
+    val githubScope = rememberCoroutineScope()
+    LaunchedEffect(githubSignIn) { githubSignIn.restore(githubScope) }
     var projectSearchQuery by rememberSaveable { mutableStateOf("") }
     val projectListState = rememberLazyListState()
     val taskScreenStates = rememberSaveableStateHolder()

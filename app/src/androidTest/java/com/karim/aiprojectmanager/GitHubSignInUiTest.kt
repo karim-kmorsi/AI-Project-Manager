@@ -36,10 +36,10 @@ class GitHubSignInUiTest {
             }
         }
 
-        click("ربط حساب GitHub")
-        compose.onNodeWithText("ربط حساب GitHub").assertDoesNotExist()
+        click(R.string.github_connect)
+        compose.onNodeWithText(text(R.string.github_connect)).assertDoesNotExist()
         compose.onNodeWithText("DEMO-CODE").performScrollTo().assertIsDisplayed()
-        click("فتح صفحة GitHub")
+        click(R.string.github_open_authorization)
         compose.runOnIdle {
             val intent = requireNotNull(browserIntent)
             assertEquals(Intent.ACTION_VIEW, intent.action)
@@ -47,9 +47,9 @@ class GitHubSignInUiTest {
             assertEquals(GITHUB_VERIFICATION_URL, intent.dataString)
             assertNull(intent.extras)
         }
-        click("إلغاء الربط")
+        click(R.string.github_cancel_connection)
         compose.onNodeWithText("DEMO-CODE").assertDoesNotExist()
-        compose.onNodeWithText("أُلغي ربط GitHub.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.github_status_cancelled)).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun showsOnlyTheVerifiedLoginAndCanDisconnect() {
@@ -57,19 +57,19 @@ class GitHubSignInUiTest {
         val signIn = testSignIn(allowPoll)
         compose.setContent { AppTheme(false) { SettingsScreen(onExport = {}, onPreview = {}, githubSignIn = signIn) } }
 
-        click("ربط حساب GitHub")
+        click(R.string.github_connect)
         compose.runOnIdle { allowPoll.complete(Unit) }
         compose.onNodeWithText("octocat", substring = true).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("DEMO-CODE").assertDoesNotExist()
-        click("قطع الاتصال")
+        click(R.string.github_disconnect)
         compose.onNodeWithText("octocat", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("ربط حساب GitHub").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.github_connect)).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun installedBuildConfigurationControlsConnectAvailability() {
         compose.setContent { AppTheme(false) { SettingsScreen(onExport = {}, onPreview = {}, githubSignIn = GitHubSignIn()) } }
 
-        val connect = compose.onNodeWithText("ربط حساب GitHub").performScrollTo()
+        val connect = compose.onNodeWithText(text(R.string.github_connect)).performScrollTo()
         if (BuildConfig.GITHUB_APP_CLIENT_ID.isEmpty()) connect.assertIsNotEnabled()
         else connect.assertIsEnabled()
     }
@@ -78,11 +78,13 @@ class GitHubSignInUiTest {
         val signIn = GitHubSignIn(GitHubDeviceAuth("", { _, _, _ -> error("Unexpected request") }, { 0L }))
         compose.setContent { AppTheme(false) { SettingsScreen(onExport = {}, onPreview = {}, githubSignIn = signIn) } }
 
-        compose.onNodeWithText("ربط حساب GitHub").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("لم يُضبط معرّف تطبيق GitHub في هذه النسخة.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.github_connect)).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.github_status_not_configured)).performScrollTo().assertIsDisplayed()
     }
 
-    private fun click(text: String) = compose.onNodeWithText(text).performScrollTo().performClick()
+    private fun text(resourceId: Int) = compose.activity.getString(resourceId)
+
+    private fun click(resourceId: Int) = compose.onNodeWithText(text(resourceId)).performScrollTo().performClick()
 
     private fun testSignIn(allowPoll: CompletableDeferred<Unit>) = GitHubSignIn(
         GitHubDeviceAuth("SyntheticClient", { endpoint, _, _ ->

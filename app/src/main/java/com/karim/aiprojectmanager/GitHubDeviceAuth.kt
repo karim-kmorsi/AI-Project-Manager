@@ -10,7 +10,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 internal const val GITHUB_VERIFICATION_URL = "https://github.com/login/device"
 
 internal enum class GitHubAuthError {
-    BUSY, EXPIRED, DENIED, CONFIGURATION, NETWORK, DNS, TIMEOUT, INVALID_RESPONSE, HTTP, VERIFICATION, UNEXPECTED
+    BUSY, EXPIRED, DENIED, CONFIGURATION, NETWORK, DNS, TIMEOUT, INVALID_RESPONSE,
+    HTTP, UNAUTHORIZED, VERIFICATION, UNEXPECTED
 }
 
 internal class GitHubAuthFailure(
@@ -34,6 +35,7 @@ internal fun interface GitHubAuthTransport {
 
 internal class GitHubSession(val login: String, private val accessToken: String) {
     val repositoryApi by lazy { GitHubRepositoryApi(accessToken) }
+    internal fun tokenForEncryptedPersistence(): String = accessToken
 }
 
 internal class GitHubDeviceAuth(
@@ -64,6 +66,17 @@ internal class GitHubDeviceAuth(
             }
         } finally {
             attempt.unlock()
+        }
+    }
+
+    /** Verifies a token restored from encrypted storage before returning an active session. */
+    suspend fun verifySavedToken(token: String): GitHubSession {
+        if (!Regex("ghu_[A-Za-z0-9]{1,252}").matches(token)) {
+            throw GitHubAuthFailure(GitHubAuthError.VERIFICATION, GitHubAuthEndpoint.USER)
+        }
+        return atEndpoint(GitHubAuthEndpoint.USER) {
+            currentCoroutineContext().ensureActive()
+            verify(token)
         }
     }
 
