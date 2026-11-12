@@ -1,0 +1,32 @@
+<resources>
+    <string name="project_tab_overview">نظرة عامة</string>
+    <string name="project_tab_blueprint">المخطط (Blueprint)</string>
+    <string name="project_tab_roadmap">خارطة الطريق (Roadmap)</string>
+    <string name="project_tab_tasks">المهام</string>
+    <string name="overview_description_title">وصف المشروع</string>
+    <string name="overview_description_empty">لم يُضف وصف لهذا المشروع بعد.</string>
+    <string name="overview_edit_project">تعديل المشروع</string>
+    <string name="overview_progress">التقدم</string>
+    <string name="overview_manually_completed">المهام المكتملة يدويًا</string>
+    <string name="overview_manual_note">تُسجّل الحالة يدويًا ولا تعني تحققًا مستقلًا.</string>
+    <string name="overview_pending">مهام تحتاج متابعة</string>
+    <string name="overview_github">اتصال GitHub</string>
+    <string name="overview_connected">الحساب متصل</string>
+    <string name="overview_disconnected">الحساب غير متصل</string>
+    <string name="overview_github_note">حالة اتصال الحساب فقط؛ لا يوجد ربط لهذا المشروع أو مزامنة تلقائية.</string>
+    <string name="overview_quick_info">معلومات سريعة</string>
+    <string name="overview_total_tasks">إجمالي المهام</string>
+    <string name="overview_blueprint">المخطط</string>
+    <string name="overview_roadmap">خارطة الطريق</string>
+    <string name="overview_empty">فارغ</string>
+    <string name="overview_present">موجود</string>
+    <string name="project_back">رجوع</string>
+    <string name="project_edit_title">تعديل المشروع</string>
+    <string name="project_edit_reload">إعادة تحميل القيم الحالية</string>
+    <string name="project_edit_name">اسم المشروع</string>
+    <string name="project_edit_description">وصف مختصر</string>
+    <string name="project_edit_save_error">تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.</string>
+    <string name="project_edit_stale_error">قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.</string>
+    <string name="project_save">حفظ</string>
+    <string name="project_cancel">إلغاء</string>
+</resources>

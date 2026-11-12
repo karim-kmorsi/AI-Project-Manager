@@ -1226,3 +1226,20 @@ Review the explicit backup opt-out policy and separately scope platform/OEM tran
 using disposable data. Separately scope other-launcher/mask and animation checks, and decide
 whether themed monochrome support is required. Preserve all remaining
 [release gates](RELEASE_GATE_V0_2.md).
+
+## Physical visual acceptance — 2026-11-12
+
+Owner-authorized acceptance on REDMAGIC 10 Pro serial `FY2433810B9D` used an isolated
+`com.karim.aiprojectmanager.vnext` build and synthetic project/task/export data. The original
+`com.karim.aiprojectmanager` package remained installed and untouched. Actual screens reviewed
+include Dashboard, Project Overview, Blueprint, Roadmap, Tasks, Settings, GitHub public probe,
+create/edit dialogs, export, read-only backup preview and Backlog preview in the listed locales.
+Recovery/error states and authenticated GitHub discovery were inaccessible or unsafe to force;
+see [physical acceptance report](UI_UX_VNEXT_PHYSICAL_ACCEPTANCE_2026-11-12.md) for evidence and
+prioritized findings.
+
+The review fixed shared dark-theme heading/empty-state contrast, row text width that had wrapped
+progress/editor counts vertically, and English/Arabic Overview, project edit, tab and task status
+strings. `:app:assembleVnext` succeeded after edits and `git diff --check` passed. No tests were run.
+The result is **FAIL — CORRECTIONS REQUIRED** pending reference alignment and inaccessible-flow
+review; this is not release acceptance. No commit or push.

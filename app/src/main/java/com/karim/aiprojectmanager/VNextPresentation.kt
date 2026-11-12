@@ -79,7 +79,8 @@ internal fun VNextSectionTitle(text: String, icon: Int) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         VNextIcon(icon)
-        ParagraphText(text, Modifier.weight(1f).semantics { heading() }, style = ProjectTextStyles.project)
+        ParagraphText(text, Modifier.weight(1f).semantics { heading() },
+            color = MaterialTheme.colorScheme.onSurface, style = ProjectTextStyles.project)
     }
 }
 
@@ -118,4 +119,13 @@ internal fun VNextStatusPill(text: String, warning: Boolean = false) {
             style = ProjectTextStyles.metadata, color = if (warning) MaterialTheme.colorScheme.onErrorContainer
             else MaterialTheme.colorScheme.onSecondaryContainer)
     }
+}
+
+@Composable
+internal fun localizedTaskStatus(status: String): String = when (status) {
+    "NOT_STARTED" -> androidx.compose.ui.res.stringResource(R.string.task_status_not_started)
+    "IN_PROGRESS" -> androidx.compose.ui.res.stringResource(R.string.task_status_in_progress)
+    "IMPLEMENTED_UNVERIFIED" -> androidx.compose.ui.res.stringResource(R.string.task_status_implemented_unverified)
+    "VERIFIED" -> androidx.compose.ui.res.stringResource(R.string.task_status_verified)
+    else -> androidx.compose.ui.res.stringResource(R.string.task_status_unknown, status)
 }

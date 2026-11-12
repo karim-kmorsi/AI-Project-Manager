@@ -29,8 +29,9 @@ internal fun ParagraphText(
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
     style: TextStyle = LocalTextStyle.current,
-    maxLines: Int = Int.MAX_VALUE
+    maxLines: Int = Int.MAX_VALUE,
+    fillWidth: Boolean = true
 ) {
-    Text(text, modifier = modifier.fillMaxWidth(), color = color, fontWeight = fontWeight,
+    Text(text, modifier = if (fillWidth) modifier.fillMaxWidth() else modifier, color = color, fontWeight = fontWeight,
         style = contentTextStyle(style), maxLines = maxLines)
 }

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -20,49 +21,53 @@ internal fun ProjectOverviewScreen(project: ProjectItem, connected: Boolean, onE
         verticalArrangement = Arrangement.spacedBy(ProjectSpacing.small)
     ) {
         VNextPanel(Modifier.testTag("overview_description_panel")) {
-            VNextSectionTitle("وصف المشروع", R.drawable.vnext_info)
+            VNextSectionTitle(stringResource(R.string.overview_description_title), R.drawable.vnext_info)
             ParagraphText(
-                project.description.ifBlank { "لم يُضف وصف لهذا المشروع بعد." },
+                project.description.ifBlank { stringResource(R.string.overview_description_empty) },
                 Modifier.testTag("overview_description"), style = ProjectTextStyles.supporting
             )
             SecondaryActionButton(onEdit) {
                 VNextIcon(R.drawable.vnext_edit)
                 Spacer(Modifier.width(8.dp))
-                Text("تعديل المشروع")
+                Text(stringResource(R.string.overview_edit_project))
             }
         }
 
         VNextPanel(Modifier.testTag("overview_progress_panel")) {
-            VNextSectionTitle("التقدم", R.drawable.vnext_check)
+            VNextSectionTitle(stringResource(R.string.overview_progress), R.drawable.vnext_check)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                ParagraphText("المهام المكتملة يدويًا", style = ProjectTextStyles.supporting)
+                ParagraphText(stringResource(R.string.overview_manually_completed),
+                    style = ProjectTextStyles.supporting, fillWidth = false)
                 ParagraphText(taskCountExpression(verified, project.tasks.size),
-                    style = ProjectTextStyles.project, fontWeight = FontWeight.Bold)
+                    style = ProjectTextStyles.project, fontWeight = FontWeight.Bold, fillWidth = false)
             }
             VNextProgress(project)
-            ParagraphText("تُسجّل الحالة يدويًا ولا تعني تحققًا مستقلًا.",
+            ParagraphText(stringResource(R.string.overview_manual_note),
                 style = ProjectTextStyles.metadata, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        val pending = pendingTaskDetails(project.tasks)
+        val pending = project.tasks.filter { it.status != "VERIFIED" }
         if (pending.isNotEmpty()) VNextPanel(Modifier.testTag("overview_pending_panel")) {
-            VNextSectionTitle("مهام تحتاج متابعة", R.drawable.vnext_route)
-            pending.forEach { ParagraphText(it, style = ProjectTextStyles.supporting) }
+            VNextSectionTitle(stringResource(R.string.overview_pending), R.drawable.vnext_route)
+            pending.forEach { ParagraphText("${it.title} — ${localizedTaskStatus(it.status)}", style = ProjectTextStyles.supporting) }
         }
 
         VNextPanel(Modifier.testTag("overview_github_panel")) {
-            VNextSectionTitle("اتصال GitHub", R.drawable.vnext_link)
-            VNextStatusPill(if (connected) "الحساب متصل" else "الحساب غير متصل", warning = !connected)
-            ParagraphText("حالة اتصال الحساب فقط؛ لا يوجد ربط لهذا المشروع أو مزامنة تلقائية.",
+            VNextSectionTitle(stringResource(R.string.overview_github), R.drawable.vnext_link)
+            VNextStatusPill(stringResource(if (connected) R.string.overview_connected else R.string.overview_disconnected),
+                warning = !connected)
+            ParagraphText(stringResource(R.string.overview_github_note),
                 style = ProjectTextStyles.supporting, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         VNextPanel(Modifier.testTag("overview_quick_info")) {
-            VNextSectionTitle("معلومات سريعة", R.drawable.vnext_info)
+            VNextSectionTitle(stringResource(R.string.overview_quick_info), R.drawable.vnext_info)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OverviewFact("إجمالي المهام", project.tasks.size.toString(), Modifier.weight(1f))
-                OverviewFact("المخطط", if (project.blueprint.isBlank()) "فارغ" else "موجود", Modifier.weight(1f))
-                OverviewFact("خارطة الطريق", if (project.roadmap.isBlank()) "فارغة" else "موجودة", Modifier.weight(1f))
+                OverviewFact(stringResource(R.string.overview_total_tasks), project.tasks.size.toString(), Modifier.weight(1f))
+                OverviewFact(stringResource(R.string.overview_blueprint),
+                    stringResource(if (project.blueprint.isBlank()) R.string.overview_empty else R.string.overview_present), Modifier.weight(1f))
+                OverviewFact(stringResource(R.string.overview_roadmap),
+                    stringResource(if (project.roadmap.isBlank()) R.string.overview_empty else R.string.overview_present), Modifier.weight(1f))
             }
         }
     }

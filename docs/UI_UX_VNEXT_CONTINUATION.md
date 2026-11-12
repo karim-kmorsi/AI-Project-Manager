@@ -22,3 +22,19 @@ Run a UI-only layout review of Overview, Blueprint, Roadmap, Tasks and Settings 
 
 ## Validation and limitations
 For this continuation, `:app:compileDebugKotlin` passed twice with JDK 17. No unit tests, Android UI tests, screenshots or connected-device work were run. Earlier Stage 2 results above remain historical and do not validate this continuation. No known compilation blocker. Logo and 14 launcher resources remain unchanged. UI/UX VNext is still incomplete and **NOT Ready for Release**.
+
+## Physical visual acceptance — 2026-11-12
+
+Owner explicitly authorized a physical-device acceptance run using only REDMAGIC 10 Pro serial `FY2433810B9D`, with an isolated application ID. Built and installed `com.karim.aiprojectmanager.vnext` beside the original `com.karim.aiprojectmanager`; both package paths were confirmed. Original package/data were left untouched. The isolated app contains synthetic review data only. No signing config, storage format, GitHub auth logic, main branch, or commit was changed.
+
+Screens opened and inspected on the device: Dashboard (English and Arabic), Create project dialog, Project Overview (English and Arabic), project edit dialog (English), Blueprint (Arabic), Roadmap (Arabic), Tasks (English and Arabic, including create/status/edit), Settings and Advanced Settings (Arabic), GitHub settings/public API probe, export picker/result, read-only backup preview, and Backlog preview. Navigation back and visible task/status/export/preview actions were exercised without destructive operations. Recovery/conflict/error state was not forced. Authenticated GitHub repository discovery and preview could not be opened: the local build has no GitHub App Client ID and the connect action is disabled. No live login was attempted.
+
+Safe UI corrections made during acceptance: explicit on-surface colors for shared section/project headings and the Tasks empty state; `ParagraphText` can opt out of row-wide fill to keep progress and editor counts horizontal; English/Arabic project tab, Overview, project edit, and Tasks labels/status summaries use resources. These fixes are in the modified files listed by `git status`; they are part of the review branch's uncommitted work. No tests were run. `:app:assembleVnext` passed after the final source changes; `git diff --check` passed. The 101 JVM tests and Android instrumentation suite were not rerun.
+
+Evidence and findings are recorded in [the physical acceptance report](UI_UX_VNEXT_PHYSICAL_ACCEPTANCE_2026-11-12.md). Actual device screenshots are under `docs/audit-evidence/ui-vnext-physical-2026-11-12/`. Overall result: **FAIL — CORRECTIONS REQUIRED** for approved-reference mismatch and incomplete GitHub/recovery visual evidence. Do not treat this as release approval.
+
+## Next exact action
+After owner review of the physical acceptance report, correct the prioritized reference mismatches and arrange a separately configured GitHub build plus safe recovery fixtures for the remaining visual checks. Then repeat only the affected physical screens and obtain owner acceptance. No implementation corrections were started beyond safe UI fixes identified during this explicitly authorized automatic-fix review.
+
+## Validation and limitations
+`:app:assembleVnext` passed after the final source changes, with the isolated `.vnext` package. No JVM or Android tests were run. Physical review used synthetic isolated data on the explicitly authorized device; the original installed package remained present. The six approved reference images were inspected. Authenticated GitHub discovery, conflict/error recovery, process-death recovery, and additional locale/font/device variants remain unverified. Original logo and launcher assets remain unchanged. UI/UX VNext is still incomplete and **NOT Ready for Release**.

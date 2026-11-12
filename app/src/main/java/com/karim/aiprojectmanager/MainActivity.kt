@@ -273,7 +273,7 @@ fun ProjectManagerApp(
                 TextButton(modifier = Modifier.testTag("vnext_back"), onClick = {
                     if (settingsVisible) showSettings = false
                     else if (editorDirty) warnOnExit = true else activeId = null
-                }) { Text("رجوع") }
+                }) { Text(stringResource(R.string.project_back)) }
             })
     }, bottomBar = {
         if (active == null && !loadError && !settingsVisible) DashboardCreateBar {
@@ -306,7 +306,8 @@ fun ProjectManagerApp(
                 if (!compactProject) VNextProjectHero(active)
                 ScrollableTabRow(selectedTabIndex = tab, containerColor = androidx.compose.ui.graphics.Color.Transparent,
                     edgePadding = 16.dp, indicator = {}, divider = {}) {
-                    listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { index, label ->
+                    listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
+                        R.string.project_tab_roadmap, R.string.project_tab_tasks).forEachIndexed { index, label ->
                         Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index },
                             modifier = Modifier.testTag("project_tab_$index").padding(horizontal = 2.dp, vertical = 4.dp)
                                 .background(if (index == tab) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))
@@ -315,7 +316,7 @@ fun ProjectManagerApp(
                             unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             icon = { VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers, R.drawable.vnext_route, R.drawable.vnext_check)[index],
                                 tint = if (index == tab) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant) },
-                            text = { Text(label) })
+                            text = { Text(stringResource(label)) })
                     }
                 }
                 when (tab) {
@@ -393,15 +394,15 @@ fun ProjectManagerApp(
                 else editingProjectId = null
             }
             VNextDialog(onDismissRequest = { dismissEditor() },
-                title = { ParagraphText("تعديل المشروع") },
+                title = { ParagraphText(stringResource(R.string.project_edit_title)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (saveError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
-                        if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
-                        TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
-                        OutlinedTextField(name, { name = it }, textStyle = contentTextStyle(), label = { Text("اسم المشروع") },
+                        if (saveError) ParagraphText(stringResource(R.string.project_edit_save_error), color = MaterialTheme.colorScheme.error)
+                        if (saveError) ParagraphText(stringResource(R.string.project_edit_stale_error))
+                        TextButton(onClick = { discardAction = "reload" }) { Text(stringResource(R.string.project_edit_reload)) }
+                        OutlinedTextField(name, { name = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.project_edit_name)) },
                             singleLine = true, isError = name.isBlank())
-                        OutlinedTextField(description, { description = it }, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })
+                        OutlinedTextField(description, { description = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.project_edit_description)) })
                     }
                 },
                 confirmButton = { TextButton(onClick = {
@@ -411,8 +412,8 @@ fun ProjectManagerApp(
                         if (edited != editingProject) update(edited)
                         editingProjectId = null
                     } catch (_: Exception) { saveError = true }
-                }, enabled = name.isNotBlank()) { Text("حفظ") } },
-                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text("إلغاء") } })
+                }, enabled = name.isNotBlank()) { Text(stringResource(R.string.project_save)) } },
+                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text(stringResource(R.string.project_cancel)) } })
             if (discardAction != null) ConfirmDiscardEdits(
                 reload = discardAction == "reload",
                 onCancel = { discardAction = null },
@@ -587,9 +588,10 @@ private fun EditableDocument(
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         ParagraphText("نص عادي / Markdown", style = ProjectTextStyles.metadata,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fillWidth = false)
                         ParagraphText("${draft.lineSequence().count()} سطر · ${draft.trim().split(Regex("\\s+")).count { it.isNotBlank() }} كلمة",
-                            style = ProjectTextStyles.metadata, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            style = ProjectTextStyles.metadata, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fillWidth = false)
                     }
                 }
             }
@@ -633,20 +635,20 @@ private fun TaskScreen(
                 if (title != editingTask.title) discardAction = "close" else editingTaskId = null
             }
             VNextDialog(onDismissRequest = { dismissEditor() },
-                title = { ParagraphText("تعديل عنوان المهمة") },
+                title = { ParagraphText(stringResource(R.string.task_edit_title)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (saveError) ParagraphText("تعذّر حفظ المهمة. لم تُعتمد التغييرات؛ حاول مجددًا.", color = MaterialTheme.colorScheme.error)
-                        if (saveError) ParagraphText("قد تكون البيانات المحفوظة أحدث أو تعذرت قراءتها. أعد تحميل القيم الحالية ثم راجع تعديلاتك.")
-                        TextButton(onClick = { discardAction = "reload" }) { Text("إعادة تحميل القيم الحالية") }
-                        OutlinedTextField(title, { title = it }, textStyle = contentTextStyle(), label = { Text("عنوان المهمة") },
+                        if (saveError) ParagraphText(stringResource(R.string.task_edit_save_error), color = MaterialTheme.colorScheme.error)
+                        if (saveError) ParagraphText(stringResource(R.string.task_edit_stale_error))
+                        TextButton(onClick = { discardAction = "reload" }) { Text(stringResource(R.string.task_edit_reload)) }
+                        OutlinedTextField(title, { title = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_edit_label)) },
                             isError = title.isBlank(), modifier = Modifier.fillMaxWidth())
                     }
                 },
                 confirmButton = { TextButton(onClick = {
                     if (onEditTitle(editingTask.id, title, editorBase)) editingTaskId = null else saveError = true
-                }, enabled = title.isNotBlank()) { Text("حفظ") } },
-                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text("إلغاء") } })
+                }, enabled = title.isNotBlank()) { Text(stringResource(R.string.task_edit_save)) } },
+                dismissButton = { TextButton(onClick = { dismissEditor() }) { Text(stringResource(R.string.task_edit_cancel)) } })
             if (discardAction != null) ConfirmDiscardEdits(
                 reload = discardAction == "reload",
                 onCancel = { discardAction = null },
@@ -666,42 +668,47 @@ private fun TaskScreen(
     LazyColumn(Modifier.fillMaxSize().imePadding().padding(horizontal = 16.dp), state = taskListState,
         contentPadding = PaddingValues(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { VNextPanel {
-        VNextSectionTitle("المهام", R.drawable.vnext_check)
-        ParagraphText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.", style = MaterialTheme.typography.bodySmall)
-        ParagraphText("إجمالي المهام: ${project.tasks.size}", style = ProjectTextStyles.metadata,
+        VNextSectionTitle(stringResource(R.string.task_screen_title), R.drawable.vnext_check)
+        ParagraphText(stringResource(R.string.task_screen_manual_warning), style = MaterialTheme.typography.bodySmall)
+        ParagraphText(stringResource(R.string.task_screen_total, project.tasks.size), style = ProjectTextStyles.metadata,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         VNextProgress(project)
-        ParagraphText(taskStatusSummary(project.tasks), style = ProjectTextStyles.metadata,
+        val statusCounts = project.tasks.groupingBy { it.status }.eachCount()
+        val otherStatusCount = project.tasks.size - listOf("NOT_STARTED", "IN_PROGRESS", "IMPLEMENTED_UNVERIFIED", "VERIFIED").sumOf { statusCounts[it] ?: 0 }
+        ParagraphText(stringResource(R.string.task_screen_status_summary,
+            statusCounts["NOT_STARTED"] ?: 0, statusCounts["IN_PROGRESS"] ?: 0,
+            statusCounts["IMPLEMENTED_UNVERIFIED"] ?: 0, statusCounts["VERIFIED"] ?: 0, otherStatusCount),
+            style = ProjectTextStyles.metadata,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
-            textStyle = contentTextStyle(), label = { Text("مهمة جديدة") }, modifier = Modifier.fillMaxWidth())
+            textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_new)) }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         FilledActionButton(onClick = {
             if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
                 newTask = ""
             }
-        }, enabled = newTask.isNotBlank()) { Text("إضافة") }
+        }, enabled = newTask.isNotBlank()) { Text(stringResource(R.string.task_screen_add)) }
         Spacer(Modifier.height(12.dp))
         } }
             item {
-                OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المهام") },
+                OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_search)) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
                     trailingIcon = {
-                        if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) { Text("مسح البحث") }
+                        if (searchQuery.isNotEmpty()) TextButton(onClick = { searchQuery = "" }) { Text(stringResource(R.string.task_screen_clear_search)) }
                     })
             }
             item {
                 val statusOptions = listOf(
-                    null to "كل الحالات",
-                    "NOT_STARTED" to "لم تبدأ",
-                    "IN_PROGRESS" to "قيد التنفيذ",
-                    "IMPLEMENTED_UNVERIFIED" to "كود غير متحقق",
-                    "VERIFIED" to "تم التحقق"
+                    null to stringResource(R.string.task_status_all),
+                    "NOT_STARTED" to stringResource(R.string.task_status_not_started),
+                    "IN_PROGRESS" to stringResource(R.string.task_status_in_progress),
+                    "IMPLEMENTED_UNVERIFIED" to stringResource(R.string.task_status_implemented_unverified),
+                    "VERIFIED" to stringResource(R.string.task_status_verified)
                 )
                 Box {
                     TextButton(onClick = { statusMenuExpanded = true }) {
-                        Text("حالة المهام: " + statusOptions.first { it.first == selectedStatus }.second)
+                        Text(stringResource(R.string.task_screen_status_filter, statusOptions.first { it.first == selectedStatus }.second))
                     }
                     DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
                         statusOptions.forEach { (status, label) ->
@@ -716,7 +723,8 @@ private fun TaskScreen(
             if (visibleTasks.isEmpty()) {
                 item {
                     val message = if (project.tasks.isEmpty()) R.string.tasks_empty else R.string.tasks_no_matches
-                    ParagraphText(stringResource(message))
+                    ParagraphText(stringResource(message), color = MaterialTheme.colorScheme.onSurface,
+                        style = ProjectTextStyles.supporting)
                 }
             }
             items(visibleTasks, key = { it.id }) { task ->
@@ -726,24 +734,24 @@ private fun TaskScreen(
                             VNextIcon(if (task.status == "VERIFIED") R.drawable.vnext_check else R.drawable.vnext_info)
                             ParagraphText(task.title, Modifier.weight(1f), fontWeight = FontWeight.Bold)
                         }
-                        VNextStatusPill(task.status)
-                        TextButton(onClick = { editingTaskId = task.id }) { Text("تعديل العنوان") }
+                        VNextStatusPill(localizedTaskStatus(task.status))
+                        TextButton(onClick = { editingTaskId = task.id }) { Text(stringResource(R.string.task_edit_button)) }
                         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {
                                     if (it.id == task.id) it.copy(status = "IN_PROGRESS") else it
                                 }))
-                            }) { Text("قيد التنفيذ") }
+                            }) { Text(stringResource(R.string.task_action_in_progress)) }
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {
                                     if (it.id == task.id) it.copy(status = "IMPLEMENTED_UNVERIFIED") else it
                                 }))
-                            }) { Text("كود غير متحقق") }
+                            }) { Text(stringResource(R.string.task_action_implemented_unverified)) }
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {
                                     if (it.id == task.id) it.copy(status = "VERIFIED") else it
                                 }))
-                            }) { Text("تم التحقق") }
+                            }) { Text(stringResource(R.string.task_action_verified)) }
                         }
                     }
                 }

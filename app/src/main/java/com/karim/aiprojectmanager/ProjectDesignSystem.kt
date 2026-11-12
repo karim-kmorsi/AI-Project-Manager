@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -41,7 +40,8 @@ internal object ProjectTextStyles {
 
 @Composable
 internal fun ProjectSectionHeading(text: String, modifier: Modifier = Modifier) {
-    ParagraphText(text, modifier.semantics { heading() }, style = ProjectTextStyles.section)
+    ParagraphText(text, modifier.semantics { heading() }, color = MaterialTheme.colorScheme.onSurface,
+        style = ProjectTextStyles.section)
 }
 
 @Composable
@@ -61,7 +61,7 @@ internal fun ProjectMessage(title: String, detail: String, modifier: Modifier = 
     Column(modifier.fillMaxWidth().padding(vertical = ProjectSpacing.large)
         .semantics { liveRegion = LiveRegionMode.Polite }, verticalArrangement = Arrangement.spacedBy(ProjectSpacing.small)) {
         ParagraphText(title, Modifier.semantics { heading() }, style = ProjectTextStyles.section,
-            color = if (error) MaterialTheme.colorScheme.error else Color.Unspecified)
+            color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
         ParagraphText(detail, style = ProjectTextStyles.supporting, color = MaterialTheme.colorScheme.onSurfaceVariant)
         action?.invoke()
     }

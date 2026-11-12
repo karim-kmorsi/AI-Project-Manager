@@ -27,6 +27,16 @@ android {
         versionName = "0.1.0"
         buildConfigField("String", "GITHUB_APP_CLIENT_ID", "\"$githubAppClientId\"")
     }
+    // Installs beside the owner's app with an independent private data directory.
+    // Normal debug/release identifiers and release signing configuration stay unchanged.
+    buildTypes {
+        create("vnext") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".vnext"
+            versionNameSuffix = "-vnext"
+            matchingFallbacks += listOf("debug")
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

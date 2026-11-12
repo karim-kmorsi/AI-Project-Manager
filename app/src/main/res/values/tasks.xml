@@ -1,4 +1,30 @@
 <resources>
     <string name="tasks_empty">No tasks yet.</string>
     <string name="tasks_no_matches">No tasks match your search or filters.</string>
+    <string name="task_screen_title">Tasks</string>
+    <string name="task_screen_manual_warning">VERIFIED is recorded manually and does not mean automatically verified.</string>
+    <string name="task_screen_total">Total tasks: %1$d</string>
+    <string name="task_screen_new">New task</string>
+    <string name="task_screen_add">Add</string>
+    <string name="task_screen_search">Search tasks</string>
+    <string name="task_screen_clear_search">Clear search</string>
+    <string name="task_screen_status_filter">Task status: %1$s</string>
+    <string name="task_status_all">All statuses</string>
+    <string name="task_status_not_started">Not started</string>
+    <string name="task_status_in_progress">In progress</string>
+    <string name="task_status_implemented_unverified">Implemented, unverified</string>
+    <string name="task_status_verified">Manually verified</string>
+    <string name="task_status_unknown">Unknown status: %1$s</string>
+    <string name="task_edit_title">Edit task title</string>
+    <string name="task_edit_label">Task title</string>
+    <string name="task_edit_reload">Reload current values</string>
+    <string name="task_edit_save_error">Could not save the task. Changes were not applied; please retry.</string>
+    <string name="task_edit_stale_error">Saved data may be newer or unavailable. Reload the current values, then review your edits.</string>
+    <string name="task_edit_save">Save</string>
+    <string name="task_edit_cancel">Cancel</string>
+    <string name="task_edit_button">Edit title</string>
+    <string name="task_action_in_progress">In progress</string>
+    <string name="task_action_implemented_unverified">Implemented, unverified</string>
+    <string name="task_action_verified">Mark verified</string>
+    <string name="task_screen_status_summary">Current task statuses: Not started %1$d | In progress %2$d | Implemented, unverified %3$d | Manually verified %4$d | Other %5$d</string>
 </resources>

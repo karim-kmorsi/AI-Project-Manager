@@ -1,0 +1,32 @@
+<resources>
+    <string name="project_tab_overview">Overview</string>
+    <string name="project_tab_blueprint">Blueprint</string>
+    <string name="project_tab_roadmap">Roadmap</string>
+    <string name="project_tab_tasks">Tasks</string>
+    <string name="overview_description_title">Project description</string>
+    <string name="overview_description_empty">No description has been added yet.</string>
+    <string name="overview_edit_project">Edit project</string>
+    <string name="overview_progress">Progress</string>
+    <string name="overview_manually_completed">Tasks marked complete manually</string>
+    <string name="overview_manual_note">Task status is entered manually and does not mean independent verification.</string>
+    <string name="overview_pending">Tasks needing attention</string>
+    <string name="overview_github">GitHub connection</string>
+    <string name="overview_connected">Account connected</string>
+    <string name="overview_disconnected">Account not connected</string>
+    <string name="overview_github_note">Account connection only; this project is not linked to a repository and does not sync automatically.</string>
+    <string name="overview_quick_info">Quick information</string>
+    <string name="overview_total_tasks">Total tasks</string>
+    <string name="overview_blueprint">Blueprint</string>
+    <string name="overview_roadmap">Roadmap</string>
+    <string name="overview_empty">Empty</string>
+    <string name="overview_present">Added</string>
+    <string name="project_back">Back</string>
+    <string name="project_edit_title">Edit project</string>
+    <string name="project_edit_reload">Reload current values</string>
+    <string name="project_edit_name">Project name</string>
+    <string name="project_edit_description">Short description</string>
+    <string name="project_edit_save_error">Could not save the project. Changes were not applied; please retry.</string>
+    <string name="project_edit_stale_error">Saved data may be newer or unavailable. Reload the current values, then review your edits.</string>
+    <string name="project_save">Save</string>
+    <string name="project_cancel">Cancel</string>
+</resources>
