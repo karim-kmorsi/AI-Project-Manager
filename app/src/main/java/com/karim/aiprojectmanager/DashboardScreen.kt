@@ -5,6 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.SolidColor
@@ -30,6 +34,10 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Arrangement.Absolute
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 @Composable
 internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPreview: () -> Unit) {
@@ -37,6 +45,7 @@ internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPre
     val exportLabel = stringResource(R.string.dashboard_export)
     val previewLabel = stringResource(R.string.dashboard_backup_preview)
     Surface(color = MaterialTheme.colorScheme.background) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Row(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = ProjectSpacing.screen, vertical = ProjectSpacing.xSmall)
             .semantics { isTraversalGroup = true }, verticalAlignment = Alignment.CenterVertically,
@@ -44,9 +53,13 @@ internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPre
             // Reuse the untouched transparent foreground. The separate launcher background
             // belongs to adaptive icons, not the Dashboard; no bitmap derivative is created.
             Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null,
-                modifier = Modifier.size(40.dp).testTag("dashboard_logo"), contentScale = ContentScale.Fit)
-            ParagraphText(stringResource(R.string.dashboard_app_name), Modifier.weight(1f).semantics { heading() },
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                modifier = Modifier.size(72.dp).testTag("dashboard_logo"), contentScale = ContentScale.Fit)
+            Text(buildAnnotatedString {
+                withStyle(SpanStyle(color = Color(0xFF00C7E8))) { append("AI ") }
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) { append("Project Manager") }
+            }, Modifier.weight(1f).semantics { heading() },
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
             IconButton(onClick = onSettings, modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))) {
                 Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title),
                     modifier = Modifier.size(24.dp))
@@ -64,6 +77,7 @@ internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPre
                 }
             }
         }
+        }
     }
 }
 
@@ -72,7 +86,7 @@ internal fun DashboardCreateBar(onClick: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.background) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
             .padding(horizontal = ProjectSpacing.screen, vertical = ProjectSpacing.small)
-            .testTag("dashboard_create_bar"), horizontalArrangement = Arrangement.End) {
+            .testTag("dashboard_create_bar"), horizontalArrangement = Absolute.Right) {
             DashboardCreateButton(onClick)
         }
     }

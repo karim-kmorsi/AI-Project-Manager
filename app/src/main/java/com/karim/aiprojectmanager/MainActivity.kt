@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -70,7 +71,7 @@ open class MainActivity : ComponentActivity() {
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) {
-                restorePreviewError = "ملف النسخة الاحتياطية غير صالح أو تعذرت قراءته. لم تتغير بياناتك."
+                restorePreviewError = getString(R.string.backup_read_error)
             }
         } else null
     }
@@ -87,10 +88,10 @@ open class MainActivity : ComponentActivity() {
                     withContext(Dispatchers.IO) {
                         JsonExport.exportToUri(contentResolver, uri, exportStore.read(token))
                     }
-                    notifyUser("تم تصدير النسخة الاحتياطية")
+                    notifyUser(getString(R.string.export_complete))
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { notifyUser("فشل التصدير؛ تحقق من الملف في مكان الحفظ") }
+            catch (_: Exception) { notifyUser(getString(R.string.export_failed)) }
             finally { if (token != null) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { exportStore.discard(token) } }
         }
     }
@@ -118,7 +119,7 @@ open class MainActivity : ComponentActivity() {
             restorePreviewState = null
             restorePreviewError = null
             try { restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
-            catch (_: Exception) { restorePreviewError = "تعذّر فتح منتقي الملفات. لم تتغير بياناتك." }
+            catch (_: Exception) { restorePreviewError = getString(R.string.backup_picker_error) }
         }, restorePreview = restorePreviewState, restoreError = restorePreviewError,
         onDismissPreview = { restorePreviewState = null; restorePreviewError = null }, onExport = {
             if (pendingExportToken == null && !exportPreparing) {
@@ -133,7 +134,7 @@ open class MainActivity : ComponentActivity() {
                     catch (_: Exception) {
                         pendingExportToken?.let { token -> withContext(Dispatchers.IO) { exportStore.discard(token) } }
                         pendingExportToken = null
-                        notifyUser("تعذّر تحضير النسخة الاحتياطية")
+                        notifyUser(getString(R.string.export_prepare_failed))
                     } finally { exportPreparing = false }
                 }
             }
@@ -270,10 +271,10 @@ fun ProjectManagerApp(
             brand = true,
             actions = {},
             navigation = {
-                TextButton(modifier = Modifier.testTag("vnext_back"), onClick = {
+                IconButton(modifier = Modifier.testTag("vnext_back"), onClick = {
                     if (settingsVisible) showSettings = false
                     else if (editorDirty) warnOnExit = true else activeId = null
-                }) { Text(stringResource(R.string.project_back)) }
+                }) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.project_back)) }
             })
     }, bottomBar = {
         if (active == null && !loadError && !settingsVisible) DashboardCreateBar {
@@ -304,29 +305,43 @@ fun ProjectManagerApp(
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (!compactProject) VNextProjectHero(active)
-                ScrollableTabRow(selectedTabIndex = tab, containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    edgePadding = 16.dp, indicator = {}, divider = {}) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
                     listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
                         R.string.project_tab_roadmap, R.string.project_tab_tasks).forEachIndexed { index, label ->
-                        Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index },
-                            modifier = Modifier.testTag("project_tab_$index").padding(horizontal = 2.dp, vertical = 4.dp)
-                                .background(if (index == tab) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))
-                                .border(1.dp, if (index == tab) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
-                            selectedContentColor = androidx.compose.ui.graphics.Color.White,
-                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            icon = { VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers, R.drawable.vnext_route, R.drawable.vnext_check)[index],
-                                tint = if (index == tab) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant) },
-                            text = { Text(stringResource(label)) })
+                        val selected = index == tab
+                        Surface(onClick = {
+                            if (!selected && editorDirty) warnOnExit = true else tab = index
+                        }, modifier = Modifier.testTag("project_tab_$index").heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            color = if (selected) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer,
+                            border = androidx.compose.foundation.BorderStroke(1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+                            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers,
+                                    R.drawable.vnext_route, R.drawable.vnext_check)[index],
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (selected) androidx.compose.ui.graphics.Color.White
+                                    else MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(label), style = MaterialTheme.typography.labelLarge,
+                                    color = if (selected) androidx.compose.ui.graphics.Color.White
+                                    else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                            }
+                        }
                     }
                 }
                 when (tab) {
                     0 -> key(active.id) {
                         ProjectOverviewScreen(active, githubSignIn.session != null) { editingProjectId = active.id }
                     }
-                    1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
+                    1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, stringResource(R.string.blueprint_editor_hint), { editorDirty = it }) {
                         update(active.copy(blueprint = it))
                     } }
-                    2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, "المراحل والمعالم وشروط النجاح", { editorDirty = it }) {
+                    2 -> key(active.id) { EditableDocument(active.id, "roadmap", active.roadmap, stringResource(R.string.roadmap_editor_hint), { editorDirty = it }) {
                         update(active.copy(roadmap = it))
                     } }
                     3 -> taskScreenStates.SaveableStateProvider(active.id) {
@@ -355,31 +370,31 @@ fun ProjectManagerApp(
     }
     if (restorePreview != null || restoreError != null) {
         VNextDialog(onDismissRequest = onDismissPreview,
-            title = { ParagraphText(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
+            title = { ParagraphText(stringResource(if (restoreError != null) R.string.backup_preview_error_title else R.string.backup_preview_title)) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (restoreError != null) ParagraphText(restoreError)
                     else if (restorePreview != null) {
-                        ParagraphText("عدد المشاريع: ${restorePreview.projects.size} | عدد المهام: ${restorePreview.totalTasks}")
+                        ParagraphText(stringResource(R.string.backup_preview_counts, restorePreview.projects.size, restorePreview.totalTasks))
                         restorePreview.projects.take(30).forEach { project ->
-                            ParagraphText("${project.name} — ${project.taskCount} مهمة")
+                            ParagraphText(stringResource(R.string.backup_preview_project_tasks, project.name, project.taskCount))
                         }
-                        if (restorePreview.projects.size > 30) ParagraphText("تُعرض أول 30 مشروعًا فقط")
-                        ParagraphText("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.", style = MaterialTheme.typography.bodySmall)
+                        if (restorePreview.projects.size > 30) ParagraphText(stringResource(R.string.backup_preview_limit))
+                        ParagraphText(stringResource(R.string.backup_preview_read_only), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-            }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
+            }, confirmButton = { TextButton(onClick = onDismissPreview) { Text(stringResource(R.string.generic_close)) } })
     }
     if (writeError && !showNew) {
-        VNextDialog(onDismissRequest = { writeError = false }, title = { ParagraphText(if (active == null) stringResource(R.string.dashboard_write_error_title) else "تعذّر الحفظ") },
-            text = { ParagraphText(if (active == null) stringResource(R.string.dashboard_write_error) else "تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
-            confirmButton = { TextButton(onClick = { writeError = false }) { Text(if (active == null) stringResource(R.string.dashboard_close) else "إغلاق") } })
+        VNextDialog(onDismissRequest = { writeError = false }, title = { ParagraphText(stringResource(if (active == null) R.string.dashboard_write_error_title else R.string.project_save_failed_title)) },
+            text = { ParagraphText(stringResource(if (active == null) R.string.dashboard_write_error else R.string.project_save_failed_message)) },
+            confirmButton = { TextButton(onClick = { writeError = false }) { Text(stringResource(if (active == null) R.string.dashboard_close else R.string.project_save_failed_action)) } })
     }
     if (warnOnExit) {
-        VNextDialog(onDismissRequest = { warnOnExit = false }, title = { ParagraphText("تعديلات غير محفوظة") },
-            text = { ParagraphText("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
-            confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
+        VNextDialog(onDismissRequest = { warnOnExit = false }, title = { ParagraphText(stringResource(R.string.unsaved_title)) },
+            text = { ParagraphText(stringResource(R.string.unsaved_navigation_message)) },
+            confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text(stringResource(R.string.unsaved_return_editor)) } })
     }
     val editingProject = active?.takeIf { it.id == editingProjectId }
     if (editingProject != null) {
@@ -528,24 +543,24 @@ private fun EditableDocument(
                     recoveryError = false
                     runCatching { draftStore.discard(projectId, document) }
                 } catch (_: Exception) { saveError = true }
-            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { VNextIcon(R.drawable.vnext_save, tint = androidx.compose.ui.graphics.Color.White); Spacer(Modifier.width(8.dp)); Text("حفظ") }
+            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { VNextIcon(R.drawable.vnext_save, tint = androidx.compose.ui.graphics.Color.White); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.editor_save)) }
         },
         chrome = {
             VNextPanel {
                 VNextSectionTitle(hint, if (document == "blueprint") R.drawable.vnext_layers else R.drawable.vnext_route)
                 ParagraphText(
                     when {
-                        recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
-                        conflictingDraft != null -> "تعارض: توجد مسودة سابقة مختلفة عن النص الحالي؛ راجعها قبل اعتمادها"
-                        saveError -> "فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن"
-                        draft != value -> "تعديلات قيد الحفظ..."
-                        else -> "تم الحفظ"
+                        recoveryError -> stringResource(R.string.editor_recovery_error)
+                        conflictingDraft != null -> stringResource(R.string.editor_conflict)
+                        saveError -> stringResource(R.string.editor_save_error)
+                        draft != value -> stringResource(R.string.editor_saving)
+                        else -> stringResource(R.string.editor_saved)
                     },
                     style = ProjectTextStyles.metadata,
                     color = if (saveError || recoveryError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (recoveryError) {
-                    if (preservationFailed) ParagraphText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.")
+                    if (preservationFailed) ParagraphText(stringResource(R.string.editor_preservation_failed))
                     SecondaryActionButton(onClick = {
                         try {
                             draftStore.preserveUnreadable(projectId, document)
@@ -553,17 +568,17 @@ private fun EditableDocument(
                             preservationFailed = false
                             preservationCount++
                         } catch (_: Exception) { preservationFailed = true }
-                    }) { Text("الاحتفاظ بالمسودة ومتابعة التحرير") }
+                    }) { Text(stringResource(R.string.editor_preserve_and_continue)) }
                 }
-                if (preservationCount > 0) ParagraphText("تم الاحتفاظ بالمسودة السابقة دون تغيير، ولم تتم استعادتها.")
+                if (preservationCount > 0) ParagraphText(stringResource(R.string.editor_preserved_note))
                 if (conflictingDraft != null) {
-                    ParagraphText("نص المسودة السابقة (للمراجعة فقط):", style = ProjectTextStyles.metadata)
+                    ParagraphText(stringResource(R.string.editor_previous_draft), style = ProjectTextStyles.metadata)
                     ParagraphText(conflictingDraft!!, style = ProjectTextStyles.supporting, maxLines = 5)
                     SecondaryActionButton(onClick = {
                         // Explicit choice: recover the older text; a new draft records the current base.
                         draft = conflictingDraft!!
                         conflictingDraft = null
-                    }) { Text("استخدام المسودة السابقة") }
+                    }) { Text(stringResource(R.string.editor_use_previous_draft)) }
                     TextButton(onClick = {
                         // Explicit user choice; remove only this conflicting recovery draft.
                         try {
@@ -571,7 +586,7 @@ private fun EditableDocument(
                             conflictingDraft = null
                             recoveryError = false
                         } catch (_: IOException) { recoveryError = true }
-                    }) { Text("الاحتفاظ بنص المشروع الحالي") }
+                    }) { Text(stringResource(R.string.editor_keep_current_text)) }
                 }
             }
         }, editor = {
@@ -583,13 +598,13 @@ private fun EditableDocument(
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = contentTextStyle(), shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer), label = { Text("محتوى المستند") },
-                        placeholder = { Text("اكتب أو الصق الخطة هنا...") }
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer), label = { Text(stringResource(R.string.editor_document_content)) },
+                        placeholder = { Text(stringResource(R.string.editor_document_placeholder)) }
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        ParagraphText("نص عادي / Markdown", style = ProjectTextStyles.metadata,
+                        ParagraphText(stringResource(R.string.editor_markdown), style = ProjectTextStyles.metadata,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, fillWidth = false)
-                        ParagraphText("${draft.lineSequence().count()} سطر · ${draft.trim().split(Regex("\\s+")).count { it.isNotBlank() }} كلمة",
+                        ParagraphText(stringResource(R.string.editor_stats, draft.lineSequence().count(), draft.trim().split(Regex("\\s+")).count { it.isNotBlank() }),
                             style = ProjectTextStyles.metadata, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fillWidth = false)
                     }
@@ -602,11 +617,10 @@ private fun EditableDocument(
 @Composable
 private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
     VNextDialog(onDismissRequest = onCancel,
-        title = { ParagraphText("تعديلات غير محفوظة") },
-        text = { ParagraphText(if (reload) "إعادة التحميل ستستبدل النص الذي أدخلته بالقيم المحفوظة حاليًا. هل تريد المتابعة؟"
-            else "هل تريد تجاهل التعديلات غير المحفوظة؟") },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(if (reload) "تأكيد إعادة التحميل" else "تجاهل التعديلات") } },
-        dismissButton = { TextButton(onClick = onCancel) { Text("متابعة التحرير") } })
+        title = { ParagraphText(stringResource(R.string.unsaved_title)) },
+        text = { ParagraphText(stringResource(if (reload) R.string.unsaved_reload_message else R.string.unsaved_discard_message)) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(if (reload) R.string.unsaved_reload_confirm else R.string.unsaved_discard_confirm)) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.unsaved_continue_editing)) } })
 }
 
 @OptIn(ExperimentalLayoutApi::class)

@@ -38,3 +38,19 @@ After owner review of the physical acceptance report, correct the prioritized re
 
 ## Validation and limitations
 `:app:assembleVnext` passed after the final source changes, with the isolated `.vnext` package. No JVM or Android tests were run. Physical review used synthetic isolated data on the explicitly authorized device; the original installed package remained present. The six approved reference images were inspected. Authenticated GitHub discovery, conflict/error recovery, process-death recovery, and additional locale/font/device variants remain unverified. Original logo and launcher assets remain unchanged. UI/UX VNext is still incomplete and **NOT Ready for Release**.
+
+## Correction phase 1 — 2026-11-12
+
+Owner-authorized visual, localization, and usability corrections were applied on the same branch at baseline `4894fc50c3d26f8e6082dbcdbad7751d68ac7a6f`. The working tree contains only this uncommitted work; no commit or push was made.
+
+Completed: enlarged and repositioned the original dashboard/project header logo treatment without changing logo artwork; switched project sections to compact, icon-and-label horizontal navigation with active blue state and RTL/LTR ordering; corrected dashboard/header alignment and editor save placement; localized visible UI strings in Arabic and English across project screens, settings, dialogs, recovery/backup/export messages and GitHub status/auth UI; added Copy Code with localized feedback to existing GitHub device authorization. User-created project and task text was preserved. Existing GitHub auth implementation and storage were unchanged.
+
+Physical validation used only REDMAGIC 10 Pro serial `FY2433810B9D`, with isolated package `com.karim.aiprojectmanager.vnext` and synthetic review content. Dashboard, Overview, Blueprint, Roadmap, Tasks, Settings, create/edit dialogs, and GitHub device authorization controls were opened and visually checked in English/Arabic where available. Auth code copy and authorization-page opening worked; no code was submitted and no account login occurred. Recovery/error states were not forced. The app-specific Arabic override was cleared afterward; the test app now inherits the system English locale. The original `com.karim.aiprojectmanager` package and its data remained untouched.
+
+Final Arabic checks confirm the Blueprint Save control remains at physical right and the Tasks warning is fully localized with no raw `VERIFIED` status. Final evidence is in `docs/audit-evidence/ui-vnext-correction-2026-11-12/` (see the phase 1 report for the screenshot index).
+
+Build: `:app:assembleVnext` succeeded with the required public GitHub App Client ID supplied ephemerally from the existing public Actions variable. The APK package ID was verified before installation. Focused `GitHubDeviceAuthTest` (15 tests), `GitHubConnectionSettingsTest` (3 tests), and combined `:app:testVnextUnitTest` passed. `git diff --check` and locale XML parsing passed. The previous 101-test suite and Android instrumentation suite were not rerun. No production readiness claim is made.
+
+### Remaining work / exact next action
+
+Owner review the correction report and screenshot evidence, then authorize any further visual corrections or final validation scope. Authenticated repository discovery remains unverified because no account authorization was performed; recovery/error/process-death states and broader device/font/accessibility variants also remain unverified. Keep UI/UX VNext **NOT Ready for Release** until the separate release gates are accepted.

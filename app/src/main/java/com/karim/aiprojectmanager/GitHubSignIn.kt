@@ -25,7 +25,7 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
         private set
     var running by mutableStateOf(false)
         private set
-    var status by mutableStateOf("لم يُربط حساب GitHub بعد.")
+    var status by mutableStateOf(R.string.github_status_not_connected)
         private set
     private var job: Job? = null
 
@@ -33,20 +33,20 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
         if (running || session != null || !isConfigured) return
         sessionExpired = false
         running = true
-        status = "جارٍ طلب رمز GitHub…"
+        status = R.string.github_status_requesting_code
         job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 session = auth.connect(awaitForeground) { code ->
                     userCode = code
-                    status = if (code != null) "أدخل الرمز في GitHub لإكمال الربط." else "جارٍ التحقق من الحساب…"
+                    status = if (code != null) R.string.github_status_enter_code else R.string.github_status_verifying
                 }
             } catch (cancelled: CancellationException) {
-                status = "أُلغي ربط GitHub."
+                status = R.string.github_status_cancelled
                 throw cancelled
             } catch (failure: GitHubAuthFailure) {
-                status = githubAuthFailureMessage(failure)
+                status = githubAuthFailureStringRes(failure)
             } catch (_: Exception) {
-                status = "تعذّر ربط GitHub. حاول مرة أخرى."
+                status = R.string.github_status_connect_failed
             } finally {
                 userCode = null
                 running = false
@@ -67,7 +67,25 @@ internal class GitHubSignIn(private val auth: GitHubDeviceAuth = deviceAuth) {
 
     fun disconnect() {
         session = null
-        status = "أُلغي الربط على هذا الجهاز."
+        status = R.string.github_status_cancelled
+    }
+}
+
+internal fun githubAuthFailureStringRes(failure: GitHubAuthFailure): Int = when (failure.reason) {
+    GitHubAuthError.BUSY -> R.string.github_auth_busy
+    GitHubAuthError.EXPIRED -> R.string.github_auth_expired
+    GitHubAuthError.DENIED -> R.string.github_auth_denied
+    GitHubAuthError.CONFIGURATION -> R.string.github_auth_configuration
+    GitHubAuthError.NETWORK -> R.string.github_auth_network
+    GitHubAuthError.DNS -> R.string.github_auth_dns
+    GitHubAuthError.TIMEOUT -> R.string.github_auth_timeout
+    GitHubAuthError.INVALID_RESPONSE -> R.string.github_auth_invalid
+    GitHubAuthError.HTTP -> R.string.github_auth_http
+    GitHubAuthError.VERIFICATION -> R.string.github_auth_verification
+    GitHubAuthError.UNEXPECTED -> when (failure.endpoint) {
+        GitHubAuthEndpoint.DEVICE_CODE -> R.string.github_auth_device_failure
+        GitHubAuthEndpoint.TOKEN -> R.string.github_auth_token_failure
+        GitHubAuthEndpoint.USER, null -> R.string.github_auth_unexpected
     }
 }
 

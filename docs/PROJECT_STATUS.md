@@ -1243,3 +1243,15 @@ progress/editor counts vertically, and English/Arabic Overview, project edit, ta
 strings. `:app:assembleVnext` succeeded after edits and `git diff --check` passed. No tests were run.
 The result is **FAIL — CORRECTIONS REQUIRED** pending reference alignment and inaccessible-flow
 review; this is not release acceptance. No commit or push.
+
+## VNext UI correction phase 1 — 2026-11-12
+
+The approved visual correction and localization work is recorded in
+[the phase 1 correction report](UI_UX_VNEXT_CORRECTION_PHASE1_2026-11-12.md). The isolated
+`com.karim.aiprojectmanager.vnext` build compiled successfully and passed focused GitHub auth and
+connection unit tests (18 total); no full 101-test rerun or Android instrumentation suite was run.
+Physical REDMAGIC 10 Pro checks used synthetic test data. The original
+`com.karim.aiprojectmanager` installation and data remain untouched. No commit or push was made.
+Arabic/English screen evidence is under `docs/audit-evidence/ui-vnext-correction-2026-11-12/`.
+Authenticated repository discovery, recovery/error/process-death states and broader device/accessibility
+coverage remain open. **NOT Ready for Release.**

@@ -1,7 +1,7 @@
 <resources>
     <string name="project_tab_overview">نظرة عامة</string>
-    <string name="project_tab_blueprint">المخطط (Blueprint)</string>
-    <string name="project_tab_roadmap">خارطة الطريق (Roadmap)</string>
+    <string name="project_tab_blueprint">المخطط</string>
+    <string name="project_tab_roadmap">خارطة الطريق</string>
     <string name="project_tab_tasks">المهام</string>
     <string name="overview_description_title">وصف المشروع</string>
     <string name="overview_description_empty">لم يُضف وصف لهذا المشروع بعد.</string>

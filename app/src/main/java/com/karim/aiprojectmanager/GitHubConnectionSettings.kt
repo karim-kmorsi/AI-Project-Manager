@@ -5,10 +5,12 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -23,10 +25,14 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,14 +57,19 @@ internal fun GitHubPublicConnectivityProbe() {
     val scope = rememberCoroutineScope()
     val api = remember { GitHubPublicApi() }
     var testing by remember { mutableStateOf(false) }
-    var status by remember { mutableStateOf(connectionMessage(null)) }
+    var status by remember { mutableStateOf<GitHubResult?>(null) }
+    var unexpectedError by remember { mutableStateOf(false) }
 
     VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ParagraphText(stringResource(R.string.settings_diagnostics), style = MaterialTheme.typography.titleMedium)
             ParagraphText(stringResource(R.string.settings_public_probe_description))
             ParagraphText(
-                if (testing) "جارٍ اختبار الاتصال…" else status,
+                when {
+                    testing -> stringResource(R.string.github_probe_testing)
+                    unexpectedError -> stringResource(R.string.github_probe_unexpected)
+                    else -> status?.let { localizedProbeResult(it) } ?: stringResource(R.string.github_probe_initial)
+                },
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
             TextButton(
@@ -67,15 +78,17 @@ internal fun GitHubPublicConnectivityProbe() {
                     testing = true
                     scope.launch {
                         try {
-                            status = checkGitHubConnection {
-                                withContext(Dispatchers.IO) { api.repository("octocat", "Hello-World") }
-                            }
+                            try {
+                                status = withContext(Dispatchers.IO) { api.repository("octocat", "Hello-World") }
+                                unexpectedError = false
+                            } catch (cancelled: CancellationException) { throw cancelled }
+                            catch (_: Exception) { unexpectedError = true }
                         } finally {
                             testing = false
                         }
                     }
                 }
-            ) { Text("اختبار اتصال GitHub العام") }
+            ) { Text(stringResource(R.string.github_probe_button)) }
         }
     }
 }
@@ -87,6 +100,7 @@ private fun GitHubSignInControls(
     localProjects: List<ProjectItem>?
 ) {
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val code = signIn.userCode
     val session = signIn.session
@@ -95,15 +109,22 @@ private fun GitHubSignInControls(
 
     ParagraphText(
         when {
-            session != null -> "تم التحقق من حساب GitHub.\n${session.login}"
-            !signIn.isConfigured -> "لم يُضبط معرّف تطبيق GitHub في هذه النسخة."
+            session != null -> stringResource(R.string.github_status_connected, session.login)
+            !signIn.isConfigured -> stringResource(R.string.github_status_not_configured)
             signIn.sessionExpired -> stringResource(R.string.github_repos_expired)
-            else -> signIn.status
+            else -> stringResource(signIn.status)
         },
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
     )
     if (code != null) {
-        Text(code, style = MaterialTheme.typography.titleMedium.copy(textDirection = TextDirection.Ltr))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(code, style = MaterialTheme.typography.titleMedium.copy(textDirection = TextDirection.Ltr))
+            OutlinedButton(onClick = {
+                clipboard.setText(AnnotatedString(code))
+                android.widget.Toast.makeText(context, context.getString(R.string.github_code_copied), android.widget.Toast.LENGTH_SHORT).show()
+            }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.github_copy_code)) }
+        }
         TextButton(onClick = {
             val intent = Intent(Intent.ACTION_VIEW, GITHUB_VERIFICATION_URL.toUri())
                 .addCategory(Intent.CATEGORY_BROWSABLE)
@@ -115,16 +136,16 @@ private fun GitHubSignInControls(
             } catch (_: SecurityException) {
                 true
             }
-        }) { Text("فتح صفحة GitHub") }
-        if (browserError) ParagraphText("تعذّر فتح المتصفح. افتح صفحة GitHub التالية يدويًا.\n$GITHUB_VERIFICATION_URL")
+        }) { Text(stringResource(R.string.github_open_authorization)) }
+        if (browserError) ParagraphText(stringResource(R.string.github_browser_error, GITHUB_VERIFICATION_URL))
     }
     when {
-        signIn.running -> TextButton(onClick = signIn::cancel) { Text("إلغاء الربط") }
+        signIn.running -> TextButton(onClick = signIn::cancel) { Text(stringResource(R.string.github_cancel_connection)) }
         session != null -> {
             TextButton(onClick = { showRepositories = true }) {
                 Text(stringResource(R.string.github_repos_browse))
             }
-            TextButton(onClick = signIn::disconnect) { Text("قطع الاتصال") }
+            TextButton(onClick = signIn::disconnect) { Text(stringResource(R.string.github_disconnect)) }
         }
         else -> TextButton(
             enabled = signIn.isConfigured,
@@ -133,7 +154,7 @@ private fun GitHubSignInControls(
                     lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
                 }
             }
-        ) { Text("ربط حساب GitHub") }
+        ) { Text(stringResource(R.string.github_connect)) }
     }
     if (session != null && showRepositories) {
         GitHubRepositoriesDialog(
@@ -144,6 +165,16 @@ private fun GitHubSignInControls(
             localProjects = localProjects
         )
     }
+}
+
+@Composable
+private fun localizedProbeResult(result: GitHubResult): String = when (result) {
+    is GitHubResult.Success -> stringResource(R.string.github_probe_success,
+        result.repository.fullName, result.repository.defaultBranch)
+    is GitHubResult.HttpError -> stringResource(R.string.github_probe_http, result.statusCode)
+    GitHubResult.NetworkError -> stringResource(R.string.github_probe_network)
+    GitHubResult.Timeout -> stringResource(R.string.github_probe_timeout)
+    GitHubResult.InvalidResponse -> stringResource(R.string.github_probe_invalid)
 }
 
 internal suspend fun checkGitHubConnection(request: suspend () -> GitHubResult): String = try {

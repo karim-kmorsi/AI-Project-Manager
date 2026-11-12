@@ -2,7 +2,7 @@
     <string name="tasks_empty">لا توجد مهام بعد.</string>
     <string name="tasks_no_matches">لا توجد مهام تطابق خيارات البحث والتصفية.</string>
     <string name="task_screen_title">المهام</string>
-    <string name="task_screen_manual_warning">الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.</string>
+    <string name="task_screen_manual_warning">تُسجّل حالة التحقق يدويًا ولا تعني تحققًا مستقلًا أو تلقائيًا.</string>
     <string name="task_screen_total">إجمالي المهام: %1$d</string>
     <string name="task_screen_new">مهمة جديدة</string>
     <string name="task_screen_add">إضافة</string>

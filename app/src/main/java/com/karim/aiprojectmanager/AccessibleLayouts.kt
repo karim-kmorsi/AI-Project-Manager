@@ -13,12 +13,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogProperties
 
 /** Same toolbar content; only move actions when measured text would crowd the title. */
@@ -31,6 +38,7 @@ internal fun AccessibleAppBar(
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     brand: Boolean = false
 ) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
     Surface(modifier = Modifier.semantics { isTraversalGroup = true; traversalIndex = -1f },
         color = MaterialTheme.colorScheme.surface) {
         Layout(
@@ -38,8 +46,14 @@ internal fun AccessibleAppBar(
             content = {
                 Box { navigation() }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (brand) Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.size(36.dp))
-                    ParagraphText(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                    if (brand) Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.size(56.dp))
+                    if (brand && title == stringResource(R.string.dashboard_app_name)) {
+                        Text(buildAnnotatedString {
+                            withStyle(SpanStyle(color = Color(0xFF00C7E8))) { append("AI ") }
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) { append("Project Manager") }
+                        }, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    } else ParagraphText(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold)
                 }
                 FlowRow(horizontalArrangement = Arrangement.End, verticalArrangement = Arrangement.spacedBy(4.dp)) { actions() }
@@ -64,6 +78,7 @@ internal fun AccessibleAppBar(
                 action.placeRelative(width - action.width, if (ownRow) rowHeight + gap else (rowHeight - action.height) / 2)
             }
         }
+    }
     }
 }
 
@@ -148,7 +163,7 @@ internal fun ScrollableDocumentBody(
             12.dp.roundToPx(), 16.dp.roundToPx(), minimumLine)
         val body = children[1].measure(Constraints.fixed(allocation.bodyWidth, allocation.bodyHeight))
         layout(width, height) {
-            save.placeRelative(width - save.width, allocation.verticalPadding)
+            save.place(width - save.width, allocation.verticalPadding)
             body.placeRelative(0, if (allocation.sideAction) 0 else allocation.verticalPadding + save.height)
         }
     }

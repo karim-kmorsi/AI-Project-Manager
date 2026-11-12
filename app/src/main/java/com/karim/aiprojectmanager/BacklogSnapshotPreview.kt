@@ -37,7 +37,7 @@ internal fun BacklogSnapshotPreview(onClose: () -> Unit) {
     }
     VNextDialog(
         onDismissRequest = onClose,
-        title = { Text("معاينة لقطة Backlog") },
+        title = { Text(androidx.compose.ui.res.stringResource(R.string.backlog_preview_title)) },
         text = {
             Column(
                 Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
@@ -45,26 +45,27 @@ internal fun BacklogSnapshotPreview(onClose: () -> Unit) {
             ) {
                 val snapshot = result?.getOrNull()
                 when {
-                    result == null -> ParagraphText("جارٍ قراءة اللقطة…")
-                    snapshot == null -> ParagraphText("تعذّرت قراءة اللقطة أو أن تنسيقها غير مدعوم.")
+                    result == null -> ParagraphText(androidx.compose.ui.res.stringResource(R.string.backlog_preview_loading))
+                    snapshot == null -> ParagraphText(androidx.compose.ui.res.stringResource(R.string.backlog_preview_error))
                     else -> {
-                        ParagraphText("لقطة تجريبية مضمّنة للقراءة فقط. تُعرض حالة التحقق كما سجّلها المصدر.")
+                        ParagraphText(androidx.compose.ui.res.stringResource(R.string.backlog_preview_read_only))
                         ParagraphText(snapshot.name, style = MaterialTheme.typography.titleMedium)
                         ParagraphText(snapshot.id)
                         for ((id, title) in snapshot.milestones) ParagraphText("$id · $title")
                         val action = snapshot.nextAction
-                        ParagraphText("الإجراء التالي: " + (action?.let { "${it.taskId} · ${it.reason}" } ?: "لا يوجد"))
+                        ParagraphText(androidx.compose.ui.res.stringResource(R.string.backlog_next_action,
+                            action?.let { "${it.taskId} · ${it.reason}" } ?: androidx.compose.ui.res.stringResource(R.string.backlog_none)))
                         for (task in snapshot.tasks) {
                             ParagraphText("${task.id} · ${task.title}", style = MaterialTheme.typography.titleSmall)
                             ParagraphText("${task.status} · ${task.verification} · ${task.milestoneId}")
                             if (task.dependencies.isNotEmpty()) {
-                                ParagraphText("التبعيات: " + task.dependencies.joinToString())
+                                ParagraphText(androidx.compose.ui.res.stringResource(R.string.backlog_dependencies, task.dependencies.joinToString()))
                             }
                         }
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onClose) { Text("إغلاق") } }
+        confirmButton = { TextButton(onClick = onClose) { Text(androidx.compose.ui.res.stringResource(R.string.generic_close)) } }
     )
 }
