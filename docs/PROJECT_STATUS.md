@@ -1255,3 +1255,17 @@ Physical REDMAGIC 10 Pro checks used synthetic test data. The original
 Arabic/English screen evidence is under `docs/audit-evidence/ui-vnext-correction-2026-11-12/`.
 Authenticated repository discovery, recovery/error/process-death states and broader device/accessibility
 coverage remain open. **NOT Ready for Release.**
+
+## VNext Phase 1B — final visual alignment and manual language — 2026-11-12
+
+Implemented an app-local Arabic/English selector under Settings → Appearance, English default,
+persistent preference, and immediate RTL/LTR application without changing system locale. Tightened
+the Tasks creation layout on normal-width screens while preserving narrow/enlarged-text behavior.
+The isolated VNext unit suite passed all 103 tests, VNext APK assembled and package ID was verified.
+Manual REDMAGIC 10 Pro checks confirmed bidirectional language changes, restart/update persistence,
+and unchanged synthetic project data. The original app package was untouched. Visual comparison
+against the six approved references rates all five main screens PARTIAL MATCH because the references
+show additional artwork/metadata/actions and richer backdrop styling; details and evidence are in
+[the Phase 1B report](UI_UX_VNEXT_PHASE1B_REPORT_2026-11-12.md). Authenticated GitHub, recovery,
+process-death, and broader accessibility/device checks remain open. No commit or push. **NOT Ready
+for Release.**

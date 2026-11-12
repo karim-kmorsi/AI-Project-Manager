@@ -54,6 +54,10 @@
     <string name="appearance_load_error">Could not load the appearance preference. Using Follow System temporarily; retry.</string>
     <string name="appearance_save_error">Could not save appearance %1$s. The previous appearance remains; retry.</string>
     <string name="appearance_retry">Retry appearance</string>
+    <string name="appearance_language">Language</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_english">English</string>
+    <string name="language_save_error">Could not save the language preference.</string>
     <string name="github_status_not_connected">GitHub account is not connected.</string>
     <string name="github_status_requesting_code">Requesting a GitHub code…</string>
     <string name="github_status_enter_code">Enter the code on GitHub to finish connecting.</string>

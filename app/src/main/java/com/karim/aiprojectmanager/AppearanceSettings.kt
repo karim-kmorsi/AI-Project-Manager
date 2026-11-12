@@ -14,7 +14,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 
 @Composable
-internal fun AppearanceSettings(state: ThemeSettingsState, onSelect: (ThemeMode) -> Unit, onRetry: () -> Unit) {
+internal fun AppearanceSettings(
+    state: ThemeSettingsState,
+    onSelect: (ThemeMode) -> Unit,
+    onRetry: () -> Unit,
+    language: AppLanguage = AppLanguage.ENGLISH,
+    onLanguageSelect: (AppLanguage) -> Unit = {}
+) {
     SettingsSectionTitle(R.string.settings_appearance)
     VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp).selectableGroup()) {
@@ -29,6 +35,25 @@ internal fun AppearanceSettings(state: ThemeSettingsState, onSelect: (ThemeMode)
                         ThemeMode.SYSTEM -> R.string.appearance_follow_system
                         ThemeMode.LIGHT -> R.string.appearance_light
                         ThemeMode.DARK -> R.string.appearance_dark
+                    }))
+                }
+            }
+            Text(
+                stringResource(R.string.appearance_language),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+            AppLanguage.entries.forEach { option ->
+                Row(Modifier.fillMaxWidth().selectable(
+                    selected = language == option,
+                    role = Role.RadioButton,
+                    onClick = { onLanguageSelect(option) }
+                ).heightIn(min = 48.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    RadioButton(selected = language == option, onClick = null)
+                    Text(stringResource(when (option) {
+                        AppLanguage.ARABIC -> R.string.language_arabic
+                        AppLanguage.ENGLISH -> R.string.language_english
                     }))
                 }
             }

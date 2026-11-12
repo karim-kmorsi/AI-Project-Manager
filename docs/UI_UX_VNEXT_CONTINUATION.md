@@ -54,3 +54,11 @@ Build: `:app:assembleVnext` succeeded with the required public GitHub App Client
 ### Remaining work / exact next action
 
 Owner review the correction report and screenshot evidence, then authorize any further visual corrections or final validation scope. Authenticated repository discovery remains unverified because no account authorization was performed; recovery/error/process-death states and broader device/font/accessibility variants also remain unverified. Keep UI/UX VNext **NOT Ready for Release** until the separate release gates are accepted.
+
+## Phase 1B — 2026-11-12
+
+Starting point matched requested baseline `6e8c14b10414c49acc7651a34391dfc0c03fb025` on `feature/github-snapshot-preview`; worktree was clean. Added a two-option Arabic/English selector under Settings → Appearance, a persisted app-local preference with English default and immediate recreated locale context, and a compact normal-width Tasks input/Add row with narrow/enlarged-text fallback. Device language and project data format remain unchanged.
+
+Build `:app:testVnextUnitTest :app:assembleVnext` passed (103 tests, no failures/errors/skips). APK identity was verified as `com.karim.aiprojectmanager.vnext`. Manual REDMAGIC 10 Pro checks verified English↔Arabic switching, RTL/LTR, persistence through restart/update, and unchanged synthetic project file hash. Original package remains installed/untouched. Six approved reference images were inspected; the report records all five screen comparisons as PARTIAL MATCH because the references show richer unsupported project artwork, filtering, metadata, toolbar actions, and textured gradients.
+
+Detailed record: [Phase 1B report](UI_UX_VNEXT_PHASE1B_REPORT_2026-11-12.md). Screenshot evidence is under `docs/audit-evidence/ui-vnext-correction-2026-11-12/`. Remaining work: owner review and separately scoped visual refinement for currently supported actions, plus the existing GitHub authenticated, recovery, accessibility, and broader device validation gates. The report recommendation is NEEDS CORRECTION; UI/UX VNext remains **NOT Ready for Release**.

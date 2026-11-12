@@ -54,6 +54,10 @@
     <string name="appearance_load_error">تعذّر تحميل تفضيل المظهر. يُستخدم إعداد النظام مؤقتًا؛ أعد المحاولة.</string>
     <string name="appearance_save_error">تعذّر حفظ المظهر %1$s. بقي المظهر السابق؛ أعد المحاولة.</string>
     <string name="appearance_retry">إعادة محاولة حفظ المظهر</string>
+    <string name="appearance_language">اللغة</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_english">English</string>
+    <string name="language_save_error">تعذّر حفظ تفضيل اللغة.</string>
     <string name="github_status_not_connected">حساب GitHub غير متصل.</string>
     <string name="github_status_requesting_code">جارٍ طلب رمز من GitHub…</string>
     <string name="github_status_enter_code">أدخل الرمز في GitHub لإكمال الاتصال.</string>

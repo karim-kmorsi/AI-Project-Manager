@@ -78,6 +78,9 @@ open class MainActivity : ComponentActivity() {
     protected open fun notifyUser(message: String) {
         android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
     }
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(newBase.withAppLanguage(AppLanguagePreferences(newBase).current()))
+    }
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val token = pendingExportToken
         pendingExportToken = null
@@ -112,7 +115,15 @@ open class MainActivity : ComponentActivity() {
                 ProjectManagerApp(storage, appearanceSettings = {
                     AppearanceSettings(appearance,
                         onSelect = { mode -> lifecycleScope.launch { themePreferences.select(mode) } },
-                        onRetry = { lifecycleScope.launch { themePreferences.retry() } })
+                        onRetry = { lifecycleScope.launch { themePreferences.retry() } },
+                        language = AppLanguagePreferences(this@MainActivity).current(),
+                        onLanguageSelect = { language ->
+                            val preferences = AppLanguagePreferences(this@MainActivity)
+                            if (preferences.current() != language) {
+                                if (preferences.select(language)) recreate()
+                                else notifyUser(getString(R.string.language_save_error))
+                            }
+                        })
                 }, onRestorePreview = {
             // An older provider read must not publish into a newer picker/preview request.
             restorePreviewJob?.cancel()
@@ -695,14 +706,33 @@ private fun TaskScreen(
             style = ProjectTextStyles.metadata,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(newTask, { newTask = it },
-            textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_new)) }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        FilledActionButton(onClick = {
+        val addTask: () -> Unit = {
             if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
                 newTask = ""
             }
-        }, enabled = newTask.isNotBlank()) { Text(stringResource(R.string.task_screen_add)) }
+        }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compactForm = maxWidth >= 340.dp && LocalDensity.current.fontScale < 1.3f
+            if (compactForm) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(newTask, { newTask = it },
+                        textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_new)) },
+                        modifier = Modifier.weight(1f))
+                    FilledActionButton(onClick = addTask, enabled = newTask.isNotBlank()) {
+                        Text(stringResource(R.string.task_screen_add))
+                    }
+                }
+            } else {
+                OutlinedTextField(newTask, { newTask = it },
+                    textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_new)) },
+                    modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                FilledActionButton(onClick = addTask, enabled = newTask.isNotBlank()) {
+                    Text(stringResource(R.string.task_screen_add))
+                }
+            }
+        }
         Spacer(Modifier.height(12.dp))
         } }
             item {
