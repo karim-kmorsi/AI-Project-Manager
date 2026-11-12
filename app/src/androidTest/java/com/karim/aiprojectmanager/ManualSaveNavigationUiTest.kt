@@ -89,7 +89,7 @@ class ManualSaveNavigationUiTest {
         }
         compose.mainClock.autoAdvance = true
         compose.onNodeWithText("رجوع").performClick()
-        compose.onNodeWithText("مشاريعي").assertExists()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_my_projects)).assertExists()
         compose.onNodeWithText(project.name).performClick()
         compose.onNodeWithText(tab).performScrollTo().performClick()
         compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Manual edit")
@@ -137,6 +137,6 @@ class ManualSaveNavigationUiTest {
         }
         compose.mainClock.autoAdvance = true
         compose.onNodeWithText("رجوع").performClick()
-        compose.onNodeWithText("مشاريعي").assertExists()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_my_projects)).assertExists()
     }
 }

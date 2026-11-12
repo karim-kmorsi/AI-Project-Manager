@@ -72,8 +72,12 @@ class DocumentResultUiTest {
         DeterministicDocumentProvider.directory = null
         fixtureRoot.deleteRecursively()
     }
-    private fun launch(button: String, action: String) {
-        compose.onNodeWithText(button).performClick()
+    private fun dashboardAction(id: Int) {
+        compose.onNodeWithContentDescription(instrumentation.targetContext.getString(R.string.dashboard_more)).performClick()
+        compose.onNodeWithText(instrumentation.targetContext.getString(id)).performClick()
+    }
+    private fun launch(action: String) {
+        dashboardAction(if (action == Intent.ACTION_CREATE_DOCUMENT) R.string.dashboard_export else R.string.dashboard_backup_preview)
         compose.waitUntil(5_000) { DeterministicPickerActivity.current?.ready == true }
         assertEquals(action, launches.last())
     }
@@ -97,8 +101,8 @@ class DocumentResultUiTest {
     private fun assertLiveUnchanged() { assertArrayEquals(original, source.readBytes()) }
     private fun assertSnapshotsCleared() { assertTrue(snapshotDirectory.listFiles().orEmpty().isEmpty()) }
     private fun backup(name: String) = """[{"id":"backup","name":"$name","tasks":[{"id":"t","title":"Keep","status":"VERIFIED"}]}]"""
-    private fun preview() = launch("معاينة نسخة", Intent.ACTION_OPEN_DOCUMENT)
-    private fun export() = launch("تصدير JSON", Intent.ACTION_CREATE_DOCUMENT)
+    private fun preview() = launch(Intent.ACTION_OPEN_DOCUMENT)
+    private fun export() = launch(Intent.ACTION_CREATE_DOCUMENT)
 
     @Test fun cancelledExportClearsSnapshotWithoutOpeningProviderAndNextExportWorks() {
         export()
@@ -153,7 +157,7 @@ class DocumentResultUiTest {
     }
     @Test fun unavailableExportPickerClearsPreparedSnapshotAndAllowsRetry() {
         unavailablePicker = Intent.ACTION_CREATE_DOCUMENT
-        compose.onNodeWithText("تصدير JSON").performClick()
+        dashboardAction(R.string.dashboard_export)
         awaitJobs()
         assertEquals(listOf(Intent.ACTION_CREATE_DOCUMENT), launches.toList())
         assertEquals(listOf("تعذّر تحضير النسخة الاحتياطية"), host.notifications.toList())
@@ -166,7 +170,7 @@ class DocumentResultUiTest {
     }
     @Test fun unavailablePreviewPickerReportsErrorWithoutReadingOrChangingData() {
         unavailablePicker = Intent.ACTION_OPEN_DOCUMENT
-        compose.onNodeWithText("معاينة نسخة").performClick()
+        dashboardAction(R.string.dashboard_backup_preview)
         compose.onNodeWithText("تعذرت المعاينة").assertExists()
         compose.onNodeWithText("تعذّر فتح منتقي الملفات. لم تتغير بياناتك.").assertExists()
         assertEquals(listOf(Intent.ACTION_OPEN_DOCUMENT), launches.toList())

@@ -16,7 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -252,56 +259,26 @@ fun ProjectManagerApp(
 
     BackHandler(enabled = settingsVisible) { showSettings = false }
 
-    Scaffold(topBar = {
-        AccessibleAppBar(title = if (settingsVisible) stringResource(R.string.settings_title) else if (active == null) "إدارة المشاريع" else active.name,
-            actions = {
-                if (active == null && !settingsVisible) {
-                    var menuExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        IconButton(
-                            onClick = { menuExpanded = true },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .semantics { contentDescription = "المزيد" }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_more_vert),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("تصدير JSON") },
-                                onClick = {
-                                    menuExpanded = false
-                                    onExport()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("معاينة نسخة") },
-                                onClick = {
-                                    menuExpanded = false
-                                    onRestorePreview()
-                                }
-                            )
-                        }
-                    }
-                }
-            },
+    val density = LocalDensity.current
+    val compactProject = density.fontScale > 1.3f || LocalConfiguration.current.screenHeightDp < 480 ||
+        WindowInsets.ime.getBottom(density) > 0
+    Scaffold(modifier = Modifier.background(vnextBackdrop()), containerColor = androidx.compose.ui.graphics.Color.Transparent, topBar = {
+        if (active == null && !settingsVisible) {
+            DashboardHeader(onSettings = { showSettings = true }, onExport = onExport, onPreview = onRestorePreview)
+        } else AccessibleAppBar(
+            title = if (settingsVisible) stringResource(R.string.settings_title) else if (compactProject) active!!.name else stringResource(R.string.dashboard_app_name),
+            brand = true,
+            actions = {},
             navigation = {
-                if (settingsVisible) TextButton(onClick = { showSettings = false }) { Text("رجوع") }
-                else if (active != null) TextButton(onClick = { if (editorDirty) warnOnExit = true else activeId = null }) { Text("رجوع") }
+                TextButton(modifier = Modifier.testTag("vnext_back"), onClick = {
+                    if (settingsVisible) showSettings = false
+                    else if (editorDirty) warnOnExit = true else activeId = null
+                }) { Text("رجوع") }
             })
-    }, floatingActionButton = {
-        if (active == null && !loadError && !settingsVisible) FloatingActionButton(
-            onClick = { writeError = false; showNew = true },
-            modifier = Modifier.semantics { contentDescription = "إنشاء مشروع" }
-        ) { Text("+") }
+    }, bottomBar = {
+        if (active == null && !loadError && !settingsVisible) DashboardCreateBar {
+            writeError = false; showNew = true
+        }
     }) { padding ->
         if (settingsVisible) {
             SettingsScreen(
@@ -310,81 +287,40 @@ fun ProjectManagerApp(
                 appearanceSettings = appearanceSettings
             )
         } else if (loadError) {
-            Column(Modifier.padding(padding).padding(16.dp)) {
-                ParagraphText("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.")
-                TextButton(onClick = {
-                    try { val loaded = storage.load(); projects.clear(); projects.addAll(loaded); loadError = false }
-                    catch (_: Exception) { loadError = true }
-                }) { Text("إعادة المحاولة") }
-            }
+            DashboardReadError(Modifier.padding(padding), onRetry = {
+                try { val loaded = storage.load(); projects.clear(); projects.addAll(loaded); loadError = false }
+                catch (_: Exception) { loadError = true }
+            })
         } else if (active == null) {
-            val visibleProjects = filterProjectsByQuery(projects, projectSearchQuery)
-            LazyColumn(Modifier.padding(padding).padding(16.dp), state = projectListState,
-                verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        ParagraphText("مشاريعي", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
-                        TextButton(onClick = { showSettings = true }) {
-                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null,
-                                modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.settings_title))
-                        }
-                    }
-                }
-                if (projects.isEmpty()) item { ParagraphText("لا توجد مشاريع بعد. اضغط + لإضافة مشروع.") }
-                if (projects.isNotEmpty()) {
-                    item { OutlinedTextField(projectSearchQuery, { projectSearchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المشاريع") }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
-                    if (visibleProjects.isEmpty()) item { ParagraphText("لا توجد مشاريع تطابق البحث.") }
-                }
-                items(visibleProjects, key = { it.id }) { item ->
-                    ElevatedCard(onClick = { activeId = item.id }, modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp)) {
-                            ParagraphText(item.name, fontWeight = FontWeight.Bold)
-                            ParagraphText(item.description)
-                            ParagraphText("المهام المتحققة: " + taskCountExpression(item.tasks.count { it.status == "VERIFIED" }, item.tasks.size))
-                        }
-                    }
-                }
-            }
+            DashboardProjectList(
+                projects = projects,
+                query = projectSearchQuery,
+                onQueryChange = { projectSearchQuery = it },
+                listState = projectListState,
+                modifier = Modifier.padding(padding),
+                onSelect = { activeId = it }
+            )
         } else {
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
-                ScrollableTabRow(selectedTabIndex = tab) {
+                if (!compactProject) VNextProjectHero(active)
+                ScrollableTabRow(selectedTabIndex = tab, containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    edgePadding = 16.dp, indicator = {}, divider = {}) {
                     listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { index, label ->
-                        Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index }, text = { Text(label) })
+                        Tab(selected = index == tab, onClick = { if (index != tab && editorDirty) warnOnExit = true else tab = index },
+                            modifier = Modifier.testTag("project_tab_$index").padding(horizontal = 2.dp, vertical = 4.dp)
+                                .background(if (index == tab) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))
+                                .border(1.dp, if (index == tab) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                            selectedContentColor = androidx.compose.ui.graphics.Color.White,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            icon = { VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers, R.drawable.vnext_route, R.drawable.vnext_check)[index],
+                                tint = if (index == tab) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant) },
+                            text = { Text(label) })
                     }
                 }
                 when (tab) {
                     0 -> key(active.id) {
-                        val overviewScrollState = rememberScrollState()
-                        Column(
-                            Modifier.weight(1f).fillMaxWidth().verticalScroll(overviewScrollState).padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            TextButton(onClick = { editingProjectId = active.id }) { Text("تعديل المشروع") }
-                            ParagraphText(active.description)
-                            val verified = active.tasks.count { it.status == "VERIFIED" }
-                            ParagraphText("تقدم مثبت: $verified من ${active.tasks.size} مهمة")
-                            ParagraphText(taskStatusSummary(active.tasks), style = MaterialTheme.typography.bodySmall)
-                            val pendingTasks = pendingTaskDetails(active.tasks)
-                            if (pendingTasks.isNotEmpty()) {
-                                ParagraphText("مهام تحتاج متابعة:", style = MaterialTheme.typography.bodySmall)
-                                pendingTasks.forEach { detail ->
-                                    ParagraphText(detail, style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-                            ParagraphText("التقدم لا يُعتبر مكتملًا دون دليل مستقل.", style = MaterialTheme.typography.bodySmall)
-                            if (active.blueprint.isBlank() && active.roadmap.isBlank() && active.tasks.isEmpty()) {
-                                ParagraphText("ابدأ بكتابة Blueprint للمشروع.", style = MaterialTheme.typography.bodySmall)
-                            }
-                            ParagraphText(
-                                if (githubSignIn.session != null)
-                                    "حساب GitHub متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
-                                else
-                                    "حساب GitHub غير متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
-                            )
-                        }
+                        ProjectOverviewScreen(active, githubSignIn.session != null) { editingProjectId = active.id }
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, "المخطط الهندسي للمشروع", { editorDirty = it }) {
                         update(active.copy(blueprint = it))
@@ -417,7 +353,7 @@ fun ProjectManagerApp(
         }
     }
     if (restorePreview != null || restoreError != null) {
-        AlertDialog(onDismissRequest = onDismissPreview,
+        VNextDialog(onDismissRequest = onDismissPreview,
             title = { ParagraphText(if (restoreError != null) "تعذرت المعاينة" else "معاينة نسخة احتياطية") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()),
@@ -435,12 +371,12 @@ fun ProjectManagerApp(
             }, confirmButton = { TextButton(onClick = onDismissPreview) { Text("إغلاق") } })
     }
     if (writeError && !showNew) {
-        AlertDialog(onDismissRequest = { writeError = false }, title = { ParagraphText("تعذّر الحفظ") },
-            text = { ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
-            confirmButton = { TextButton(onClick = { writeError = false }) { Text("إغلاق") } })
+        VNextDialog(onDismissRequest = { writeError = false }, title = { ParagraphText(if (active == null) stringResource(R.string.dashboard_write_error_title) else "تعذّر الحفظ") },
+            text = { ParagraphText(if (active == null) stringResource(R.string.dashboard_write_error) else "تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.") },
+            confirmButton = { TextButton(onClick = { writeError = false }) { Text(if (active == null) stringResource(R.string.dashboard_close) else "إغلاق") } })
     }
     if (warnOnExit) {
-        AlertDialog(onDismissRequest = { warnOnExit = false }, title = { ParagraphText("تعديلات غير محفوظة") },
+        VNextDialog(onDismissRequest = { warnOnExit = false }, title = { ParagraphText("تعديلات غير محفوظة") },
             text = { ParagraphText("لم يُؤكد حفظ التعديلات. ابق في المحرر واضغط حفظ ثم حاول الانتقال مجددًا.") },
             confirmButton = { TextButton(onClick = { warnOnExit = false }) { Text("العودة إلى المحرر") } })
     }
@@ -456,7 +392,7 @@ fun ProjectManagerApp(
                 if (name != editingProject.name || description != editingProject.description) discardAction = "close"
                 else editingProjectId = null
             }
-            AlertDialog(onDismissRequest = { dismissEditor() },
+            VNextDialog(onDismissRequest = { dismissEditor() },
                 title = { ParagraphText("تعديل المشروع") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -591,10 +527,10 @@ private fun EditableDocument(
                     recoveryError = false
                     runCatching { draftStore.discard(projectId, document) }
                 } catch (_: Exception) { saveError = true }
-            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { Text("حفظ") }
+            }, enabled = !recoveryError && conflictingDraft == null && (draft != value || saveError)) { VNextIcon(R.drawable.vnext_save, tint = androidx.compose.ui.graphics.Color.White); Spacer(Modifier.width(8.dp)); Text("حفظ") }
         },
         chrome = {
-            ParagraphText(hint, fontWeight = FontWeight.Medium)
+            VNextSectionTitle(hint, if (document == "blueprint") R.drawable.vnext_layers else R.drawable.vnext_route)
             ParagraphText(
                 when {
                     recoveryError -> "تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة."
@@ -640,7 +576,9 @@ private fun EditableDocument(
                 value = draft, onValueChange = { draft = it },
                 enabled = !recoveryError,
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = contentTextStyle(), label = { Text("محتوى المستند") },
+                textStyle = contentTextStyle(), shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer), label = { Text("محتوى المستند") },
                 placeholder = { Text("اكتب أو الصق الخطة هنا...") }
             )
         }
@@ -649,7 +587,7 @@ private fun EditableDocument(
 
 @Composable
 private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(onDismissRequest = onCancel,
+    VNextDialog(onDismissRequest = onCancel,
         title = { ParagraphText("تعديلات غير محفوظة") },
         text = { ParagraphText(if (reload) "إعادة التحميل ستستبدل النص الذي أدخلته بالقيم المحفوظة حاليًا. هل تريد المتابعة؟"
             else "هل تريد تجاهل التعديلات غير المحفوظة؟") },
@@ -682,7 +620,7 @@ private fun TaskScreen(
             fun dismissEditor() {
                 if (title != editingTask.title) discardAction = "close" else editingTaskId = null
             }
-            AlertDialog(onDismissRequest = { dismissEditor() },
+            VNextDialog(onDismissRequest = { dismissEditor() },
                 title = { ParagraphText("تعديل عنوان المهمة") },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -713,7 +651,10 @@ private fun TaskScreen(
                 })
         }
     }
-    Column(Modifier.padding(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize().imePadding().padding(horizontal = 16.dp), state = taskListState,
+        contentPadding = PaddingValues(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item { VNextPanel {
+        VNextSectionTitle("المهام", R.drawable.vnext_check)
         ParagraphText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(newTask, { newTask = it },
@@ -725,7 +666,7 @@ private fun TaskScreen(
             }
         }, enabled = newTask.isNotBlank()) { Text("إضافة") }
         Spacer(Modifier.height(12.dp))
-        LazyColumn(state = taskListState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        } }
             item {
                 OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text("بحث في المهام") },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
@@ -762,10 +703,13 @@ private fun TaskScreen(
                 }
             }
             items(visibleTasks, key = { it.id }) { task ->
-                ElevatedCard(Modifier.fillMaxWidth()) {
+                VNextCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
-                        ParagraphText(task.title, fontWeight = FontWeight.Bold)
-                        ParagraphText(task.status, style = MaterialTheme.typography.bodySmall)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            VNextIcon(if (task.status == "VERIFIED") R.drawable.vnext_check else R.drawable.vnext_info)
+                            ParagraphText(task.title, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                        }
+                        VNextStatusPill(task.status)
                         TextButton(onClick = { editingTaskId = task.id }) { Text("تعديل العنوان") }
                         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {
@@ -787,6 +731,5 @@ private fun TaskScreen(
                     }
                 }
             }
-        }
     }
 }

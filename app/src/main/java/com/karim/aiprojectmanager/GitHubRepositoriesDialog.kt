@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -110,7 +111,7 @@ internal fun GitHubRepositoriesDialog(
         return
     }
     Dialog(onDismissRequest = onClose) {
-        Surface(shape = MaterialTheme.shapes.extraLarge) {
+        VNextPreviewSurface() {
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 620.dp).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -156,6 +157,7 @@ internal fun GitHubRepositoriesDialog(
                             visible.isEmpty() -> stringResource(R.string.github_repos_no_matches)
                             else -> null
                         }
+                        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                         if (status != null) ParagraphText(status, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                         if ((cursor != null || refreshing) && !loading) {
                             TextButton(enabled = retrySeconds == 0L, onClick = {
@@ -178,7 +180,7 @@ internal fun GitHubRepositoriesDialog(
 
 @Composable
 internal fun GitHubRepositorySummary(repository: GitHubRepository) {
-    Column(Modifier.fillMaxWidth()) {
+    VNextCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
         ParagraphText(repository.fullName, style = MaterialTheme.typography.titleMedium)
         ParagraphText(stringResource(if (repository.isPrivate) R.string.github_repos_private else R.string.github_repos_public))
         if (repository.archived) ParagraphText(stringResource(R.string.github_repos_archived))
@@ -186,6 +188,7 @@ internal fun GitHubRepositorySummary(repository: GitHubRepository) {
             ParagraphText(stringResource(R.string.github_repos_branch, repository.defaultBranch))
         }
         repository.description?.let { ParagraphText(it, maxLines = 3) }
+    }
     }
 }
 

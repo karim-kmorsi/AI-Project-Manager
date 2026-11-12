@@ -49,7 +49,7 @@ internal fun GitHubRepositoryPreviewDialog(
         }
     }
     Dialog(onDismissRequest = onBack) {
-        Surface(shape = MaterialTheme.shapes.extraLarge) {
+        VNextPreviewSurface() {
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 620.dp).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -115,7 +115,7 @@ internal fun GitHubRepositoryPreviewDialog(
 
 @Composable
 private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
-    when (val branch = preview.branch) {
+    VNextPanel { when (val branch = preview.branch) {
         is GitHubPreviewSection.Available -> {
             val info = branch.value
             ParagraphText(stringResource(R.string.github_repos_branch_name, info.name))
@@ -127,7 +127,8 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
         }
         is GitHubPreviewSection.Unavailable -> ParagraphText(stringResource(branch.reason.messageResource()))
     }
-    preview.readme?.let { readme ->
+    }
+    preview.readme?.let { readme -> VNextPanel {
         ParagraphText(stringResource(R.string.github_repos_readme), style = MaterialTheme.typography.titleMedium)
         when (readme) {
             is GitHubPreviewSection.Available -> {
@@ -143,7 +144,8 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
             ))
         }
     }
-    preview.tree?.let { tree ->
+    }
+    preview.tree?.let { tree -> VNextPanel {
         ParagraphText(stringResource(R.string.github_repos_tree), style = MaterialTheme.typography.titleMedium)
         when (tree) {
             is GitHubPreviewSection.Available -> {
@@ -155,6 +157,7 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
             }
             is GitHubPreviewSection.Unavailable -> ParagraphText(stringResource(tree.reason.messageResource()))
         }
+    }
     }
 }
 
@@ -169,6 +172,7 @@ private fun GitHubImportPreviewContent(repository: GitHubRepository, projects: L
         ParagraphText(stringResource(R.string.github_repos_import_invalid))
         return
     }
+    VNextPanel {
     ParagraphText(stringResource(R.string.github_repos_import_read_only))
     ParagraphText(proposal.project.name)
     ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
@@ -179,10 +183,12 @@ private fun GitHubImportPreviewContent(repository: GitHubRepository, projects: L
         ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
     }
     if (proposal.candidates.size > 10) ParagraphText(stringResource(R.string.github_repos_partial))
+    }
 }
 
 @Composable
 private fun GitHubSyncComparisonContent(comparison: GitHubSyncComparison) {
+    VNextPanel {
     ParagraphText(stringResource(when (comparison.disposition) {
         GitHubSyncDisposition.UNCHANGED -> R.string.github_repos_sync_unchanged
         GitHubSyncDisposition.REMOTE_ONLY -> R.string.github_repos_sync_remote
@@ -197,4 +203,5 @@ private fun GitHubSyncComparisonContent(comparison: GitHubSyncComparison) {
             GitHubRemoteChange.HEAD -> R.string.github_repos_sync_head
         }))
     }
+}
 }

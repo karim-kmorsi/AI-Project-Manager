@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -40,22 +41,22 @@ class ProjectWorkflowUiTest {
 
     @Test fun cancelledCreationDoesNotSaveAndValidCreationTrimsFields() = withStorage { file, storage ->
         compose.setContent { ProjectManagerApp(storage) }
-        compose.onNodeWithText("+").performClick()
-        compose.onNodeWithText("إنشاء").assertIsNotEnabled()
-        compose.onNodeWithText("اسم المشروع").performTextInput("   ")
-        compose.onNodeWithText("إنشاء").assertIsNotEnabled()
-        compose.onNodeWithText("اسم المشروع").performTextInput("Cancelled project")
-        compose.onNodeWithText("وصف مختصر").performTextInput("Must not persist")
-        compose.onNodeWithText("إنشاء").assertIsEnabled()
-        compose.onNodeWithText("إلغاء").performClick()
-        compose.onNodeWithText("إنشاء مشروع").assertDoesNotExist()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsNotEnabled()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performTextInput("   ")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsNotEnabled()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performTextInput("Cancelled project")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_description)).performTextInput("Must not persist")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsEnabled()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_cancel)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_title)).assertDoesNotExist()
         compose.runOnIdle { assertFalse(file.exists()) }
 
-        compose.onNodeWithText("+").performClick()
-        compose.onNodeWithText("إنشاء").assertIsNotEnabled()
-        compose.onNodeWithText("اسم المشروع").performTextInput("  Created project  ")
-        compose.onNodeWithText("وصف مختصر").performTextInput("  Saved description  ")
-        compose.onNodeWithText("إنشاء").performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsNotEnabled()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performTextInput("  Created project  ")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_description)).performTextInput("  Saved description  ")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).performClick()
         compose.onNodeWithText("Created project").assertExists()
         compose.onNodeWithText("Saved description").assertExists()
         compose.runOnIdle {
@@ -107,7 +108,7 @@ class ProjectWorkflowUiTest {
             taskList.performScrollToNode(hasText(status))
             compose.onNodeWithText(status).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
-            compose.onNodeWithText("تقدم مثبت: ${if (status == "VERIFIED") 1 else 0} من 1 مهمة").assertExists()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_manual_count, taskCountExpression(if (status == "VERIFIED") 1 else 0, 1))).assertExists()
             compose.onNodeWithText("المهام").performScrollTo().performClick()
         }
         compose.onNodeWithText("رجوع").performClick()
@@ -136,7 +137,8 @@ class ProjectWorkflowUiTest {
                 onDismissPreview = { dismissals++; preview.value = null; error.value = null }
             )
         }
-        compose.onNodeWithText("معاينة نسخة").performClick()
+        compose.onNodeWithContentDescription(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_more)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_backup_preview)).performClick()
         compose.onNodeWithText("معاينة نسخة احتياطية").assertExists()
         compose.onNodeWithText("عدد المشاريع: 1 | عدد المهام: 1").assertExists()
         compose.onNodeWithText("Backup project — 1 مهمة").assertExists()

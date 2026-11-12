@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,9 +38,9 @@ import kotlinx.coroutines.withContext
 internal fun GitHubConnectionSettings(signIn: GitHubSignIn, localProjects: List<ProjectItem>?) {
     val scope = rememberCoroutineScope()
     DisposableEffect(signIn) { onDispose { signIn.cancel() } }
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ParagraphText("GitHub", style = MaterialTheme.typography.titleMedium)
+            VNextSectionTitle("GitHub", R.drawable.vnext_link)
             GitHubSignInControls(signIn, scope, localProjects)
         }
     }
@@ -54,7 +53,7 @@ internal fun GitHubPublicConnectivityProbe() {
     var testing by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf(connectionMessage(null)) }
 
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ParagraphText(stringResource(R.string.settings_diagnostics), style = MaterialTheme.typography.titleMedium)
             ParagraphText(stringResource(R.string.settings_public_probe_description))

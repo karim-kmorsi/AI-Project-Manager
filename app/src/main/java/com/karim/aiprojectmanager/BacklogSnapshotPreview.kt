@@ -35,7 +35,7 @@ internal fun BacklogSnapshotPreview(onClose: () -> Unit) {
             }
         }
     }
-    AlertDialog(
+    VNextDialog(
         onDismissRequest = onClose,
         title = { Text("معاينة لقطة Backlog") },
         text = {

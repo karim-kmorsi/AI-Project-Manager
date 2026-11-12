@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,7 +36,7 @@ internal fun SettingsScreen(
         GitHubConnectionSettings(githubSignIn, localProjects)
         appearanceSettings()
         SettingsSectionTitle(R.string.settings_data_backup)
-        ElevatedCard(Modifier.fillMaxWidth()) {
+        VNextCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ParagraphText(stringResource(R.string.settings_backup_loss))
                 ParagraphText(stringResource(R.string.settings_backup_preview_warning))
@@ -56,6 +55,10 @@ internal fun SettingsScreen(
 
 @Composable
 internal fun SettingsSectionTitle(@StringRes title: Int) {
-    ParagraphText(stringResource(title), modifier = Modifier.semantics { heading() },
-        style = MaterialTheme.typography.headlineSmall)
+    VNextSectionTitle(stringResource(title), when (title) {
+        R.string.settings_connections -> R.drawable.vnext_link
+        R.string.settings_appearance -> R.drawable.vnext_layers
+        R.string.settings_data_backup -> R.drawable.vnext_save
+        else -> R.drawable.vnext_info
+    })
 }

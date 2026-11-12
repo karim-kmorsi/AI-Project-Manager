@@ -1,0 +1,26 @@
+<resources>
+    <string name="dashboard_more">المزيد</string>
+    <string name="dashboard_export">تصدير JSON</string>
+    <string name="dashboard_backup_preview">معاينة نسخة</string>
+    <string name="dashboard_create">مشروع جديد</string>
+    <string name="dashboard_my_projects">مشاريعي</string>
+    <string name="dashboard_project_count">عدد المشاريع: %1$d</string>
+    <string name="dashboard_search">بحث في المشاريع</string>
+    <string name="dashboard_manual_count">موسومة كمتحقق منها يدويًا: %1$s</string>
+    <string name="dashboard_empty_title">لا توجد مشاريع بعد</string>
+    <string name="dashboard_empty_detail">أنشئ مشروعًا لجمع خطته ومهامه على هذا الجهاز.</string>
+    <string name="dashboard_no_matches_title">لا توجد مشاريع مطابقة</string>
+    <string name="dashboard_no_matches_detail">جرّب اسم مشروع أو وصفًا آخر.</string>
+    <string name="dashboard_read_error_title">تعذّر تحميل المشاريع</string>
+    <string name="dashboard_read_error">لم تتغير بياناتك. عالج مشكلة التخزين ثم أعد المحاولة.</string>
+    <string name="dashboard_retry">إعادة المحاولة</string>
+    <string name="dashboard_write_error_title">تعذّر الحفظ</string>
+    <string name="dashboard_write_error">لم تُحفظ تغييرات المشروع. حاول مجددًا.</string>
+    <string name="dashboard_close">إغلاق</string>
+    <string name="dashboard_create_title">إنشاء مشروع</string>
+    <string name="dashboard_create_confirm">إنشاء</string>
+    <string name="dashboard_create_cancel">إلغاء</string>
+    <string name="dashboard_project_name">اسم المشروع</string>
+    <string name="dashboard_project_description">وصف مختصر</string>
+    <string name="dashboard_creation_error">تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.</string>
+</resources>

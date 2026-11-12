@@ -1,9 +1,25 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-10 (Asia/Kathmandu).
+Updated: 2026-11-12 (Asia/Kathmandu).
 Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
+
+## UI/UX VNext Package 01B — 2026-11-12
+
+Focused local Dashboard refinement atop the intentionally uncommitted Package 01 baseline. Reduced header/search/card spacing, shortened manual-verification labels and docked Create in a measured Scaffold bottom area so no list content is covered. Removed only the Dashboard's separate launcher-background layer; existing transparent foreground and all 14 launcher assets remain unchanged. No JSON/model/storage, editor, GitHub, signing or version changes.
+
+Configured Debug/test APK builds and Lint passed (0 errors, 13 warnings); 101 JVM tests and 91 scoped Android tests passed (6 focused + 85 existing, zero failures/skips in final runs). Owner explicitly approved disposable-emulator-only installation. Real screenshots cover Arabic/English Dark, Arabic Light and 200% font cases. Phone data/installation remain untouched. Light-mode white logo details and OEM/TalkBack/device behavior still need owner review.
+
+See [Package 01B report](UI_UX_VNEXT_PACKAGE_01B_REPORT.md) for exact commands, incremental file inventory, genuine screenshots, APK identity and device checklist. No commits or pushes. **NOT Ready for Release**.
+
+## UI/UX VNext Package 01 — 2026-11-12
+
+Implemented locally on `feature/github-snapshot-preview`, starting at `f77c66d1ed6681920ad1747b1327dc5e17dba782`; no commit or push. Only shared visual foundation and Dashboard were redesigned. Existing logo/launcher assets, JSON/storage, editor behavior, GitHub logic, signing and version configuration remain unchanged. Project-status filters are deferred; displayed progress describes manually marked task statuses.
+
+Configured Debug/test APK assembly and Lint passed (0 errors, 13 warnings); 101 JVM tests passed. The scoped Android batch produced 86 passes and five screenshot-fixture failures; after test-only lazy-list positioning corrections the six Dashboard tests passed, yielding 91 distinct scoped Android tests with passing results across the runs. This is not a full Android-suite or phone acceptance claim. Tests used a new disposable API 35 emulator and synthetic files. No physical-device install or data operations.
+
+See [the complete package report](UI_UX_VNEXT_PACKAGE_01_REPORT.md) for exact commands, all changed files, development failures, evidence, shared-theme effects, APK signature and safe owner device-acceptance instructions. **NOT Ready for Release**.
 
 ## GitHub authentication build configuration
 

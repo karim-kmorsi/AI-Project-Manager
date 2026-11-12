@@ -61,24 +61,24 @@ class StorageFailureUiTest {
     @Test fun corruptStartupShowsErrorAndBlocksCreationWithoutChangingBytes() = fixture { file, storage ->
         file.writeText("broken JSON")
         compose.setContent { ProjectManagerApp(storage) }
-        compose.onNodeWithText("تعذّر قراءة المشاريع. لم تتغير بياناتك؛ أعد المحاولة بعد معالجة مشكلة التخزين.").assertExists()
-        compose.onNodeWithText("+").assertDoesNotExist()
-        compose.onNodeWithText("إعادة المحاولة").performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_read_error)).assertExists()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).assertDoesNotExist()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_retry)).performClick()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()) }
         compose.runOnIdle { file.writeText("[]") }
-        compose.onNodeWithText("إعادة المحاولة").performClick()
-        compose.onNodeWithText("+").assertExists()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_retry)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).assertExists()
     }
     @Test fun failedCreationKeepsFormAndAllowsRetry() = fixture { file, storage ->
         compose.setContent { ProjectManagerApp(storage) }
-        compose.onNodeWithText("+").performClick()
-        compose.onNodeWithText("اسم المشروع").performTextInput("Retained name")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performTextInput("Retained name")
         compose.runOnIdle { file.writeText("broken JSON") }
-        compose.onNodeWithText("إنشاء").performClick()
-        compose.onNodeWithText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.").assertExists()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Retained name")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_creation_error)).assertExists()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).assertTextContains("Retained name")
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete() }
-        compose.onNodeWithText("إنشاء").performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).performClick()
         compose.runOnIdle { assertEquals("Retained name", storage.load().single().name) }
     }
     @Test fun taskFailureRetainsInputAndDoesNotAdvanceStatus() = fixture { file, storage ->

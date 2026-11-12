@@ -76,7 +76,7 @@ class ThemeUiTest {
 
     private fun openSettings() {
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
-        compose.onNode(hasClickAction() and hasText(settings)).performClick()
+        compose.onNode(hasClickAction() and hasContentDescription(settings)).performClick()
         compose.onNodeWithText("Follow System").performScrollTo().assertIsSelected()
     }
     private fun select(label: String, fixture: Fixture) {
@@ -85,7 +85,7 @@ class ThemeUiTest {
         compose.onNodeWithText(label).assertIsSelected()
     }
     private fun assertBackground(fixture: Fixture, dark: Boolean) {
-        compose.runOnIdle { assertEquals(Color(if (dark) 0xFF111418 else 0xFFF6F8FB), fixture.observedBackground) }
+        compose.runOnIdle { assertEquals(Color(if (dark) 0xFF0B101D else 0xFFF6F8FB), fixture.observedBackground) }
     }
 
     @Test fun selectionsPersistAndExplicitModesIgnoreSystemChanges() = withFixture { f ->
@@ -129,7 +129,10 @@ class ThemeUiTest {
 
     @Test fun systemAppearancePreservesProjectSearchListScrollAndBytes() = withFixture { f ->
         val before = f.file.readBytes()
-        compose.onNodeWithText("بحث في المشاريع").performScrollTo().performTextReplacement("Project")
+        compose.onNodeWithTag("dashboard_search").performScrollTo().performTextReplacement("Project")
+        // This regression measures theme/scroll preservation after submitting search;
+        // keyboard-open layout is covered separately by DashboardVNextUiTest.
+        compose.onNodeWithTag("dashboard_search").performImeAction()
         val list = compose.onNode(hasScrollToIndexAction())
         list.performScrollToNode(hasText("Project 9"))
         val scroll = list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
@@ -137,14 +140,14 @@ class ThemeUiTest {
         assertBackground(f, true)
         compose.onNodeWithText("Project 9").assertIsDisplayed()
         assertEquals(scroll, list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value(), .001f)
-        list.performScrollToNode(hasText("بحث في المشاريع"))
-        compose.onNodeWithText("بحث في المشاريع").assertTextContains("Project")
+        list.performScrollToNode(hasTestTag("dashboard_search"))
+        compose.onNodeWithTag("dashboard_search").assertTextContains("Project")
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 
     @Test fun settingsScrollAndBackPreserveSearchAfterAppearanceChange() = withFixture { f ->
         val before = f.file.readBytes()
-        compose.onNodeWithText("بحث في المشاريع").performTextReplacement("Alpha")
+        compose.onNodeWithTag("dashboard_search").performTextReplacement("Alpha")
         openSettings()
         compose.onNodeWithText("معاينة نسخة").performScrollTo()
         val scrollNode = compose.onNode(hasScrollAction())
@@ -153,7 +156,7 @@ class ThemeUiTest {
         compose.onNodeWithText("معاينة نسخة").assertIsDisplayed()
         assertEquals(scroll, scrollNode.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value(), .001f)
         compose.onNodeWithText("رجوع").performClick()
-        compose.onNodeWithText("بحث في المشاريع").assertTextContains("Alpha")
+        compose.onNodeWithTag("dashboard_search").assertTextContains("Alpha")
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 
@@ -171,7 +174,7 @@ class ThemeUiTest {
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("محتوى المستند").assertTextContains("Pending")
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
-        compose.onNode(hasClickAction() and hasText(settings)).assertDoesNotExist()
+        compose.onNode(hasClickAction() and hasContentDescription(settings)).assertDoesNotExist()
         compose.onNodeWithText("رجوع").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("تعديلات غير محفوظة").assertExists()

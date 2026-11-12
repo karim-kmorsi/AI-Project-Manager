@@ -27,19 +27,19 @@ class ProjectCreationAccessibilityUiTest {
         val visible = mutableStateOf(true)
         try {
             compose.setContent { if (visible.value) AppTheme { ProjectManagerApp(ProjectStorage(file)) } }
-            val create = compose.onNodeWithContentDescription("إنشاء مشروع")
+            val create = compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create))
                 .assertIsDisplayed().assertIsEnabled().assertHasClickAction()
             create.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            // Retain the existing symbol/semantics selector used by workflow regressions.
-            compose.onNodeWithText("+").assertIsDisplayed()
+            // The localized extended label replaces the old symbolic-only action.
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).assertIsDisplayed()
             create.performClick()
-            compose.onNodeWithText("إنشاء مشروع").assertIsDisplayed()
-            compose.onNodeWithText("إنشاء").assertIsNotEnabled()
-            compose.onNodeWithText("اسم المشروع").performTextReplacement("Unsaved synthetic project")
-            compose.onNodeWithText("إنشاء").assertIsEnabled()
-            compose.onNodeWithText("إلغاء").performClick()
-            compose.onNodeWithText("إنشاء مشروع").assertDoesNotExist()
-            compose.onNodeWithContentDescription("إنشاء مشروع").assertIsDisplayed()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_title)).assertIsDisplayed()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsNotEnabled()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performTextReplacement("Unsaved synthetic project")
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsEnabled()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_cancel)).performClick()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_title)).assertDoesNotExist()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create)).assertIsDisplayed()
             compose.runOnIdle {
                 assertArrayEquals(before, file.readBytes())
                 assertEquals(listOf("projects.json"), root.list()!!.toList())

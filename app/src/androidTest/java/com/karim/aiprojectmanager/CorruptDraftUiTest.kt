@@ -80,7 +80,7 @@ class CorruptDraftUiTest {
             openEditor()
             compose.onNodeWithText("محتوى المستند").assertIsNotEnabled()
             compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
-            compose.onNodeWithText("تقدم مثبت: 0 من 0 مهمة").assertExists()
+            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_manual_count, taskCountExpression(0, 0))).assertExists()
             compose.onNodeWithText(tab).performScrollTo().performClick()
             assertPreserved()
             if (failPreservation) {

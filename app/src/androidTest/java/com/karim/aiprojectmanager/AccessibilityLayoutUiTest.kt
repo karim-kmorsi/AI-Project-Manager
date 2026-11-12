@@ -57,17 +57,17 @@ class AccessibilityLayoutUiTest {
                     insets = WindowInsets(bottom = bottom))
             }
         }
-        compose.onNodeWithText("إنشاء").assertIsNotEnabled()
-        compose.onNodeWithText("اسم المشروع").performScrollTo().performTextReplacement("Synthetic العربية 42")
-        compose.onNodeWithText("وصف مختصر").performScrollTo().performTextReplacement("Pending description وصف")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsNotEnabled()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performScrollTo().performTextReplacement("Synthetic العربية 42")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_description)).performScrollTo().performTextReplacement("Pending description وصف")
         compose.runOnIdle { bottom = insetPixels }
-        compose.onNodeWithText("وصف مختصر").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("إنشاء").assertIsDisplayed().assertIsEnabled().performClick()
-        compose.onNodeWithText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_description)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_confirm)).assertIsDisplayed().assertIsEnabled().performClick()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_creation_error))
             .performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("اسم المشروع").performScrollTo().assertTextContains("Synthetic العربية 42")
-        compose.onNodeWithText("وصف مختصر").performScrollTo().assertTextContains("Pending description وصف")
-        val cancel = compose.onNodeWithText("إلغاء").assertIsDisplayed().assertHasClickAction()
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_name)).performScrollTo().assertTextContains("Synthetic العربية 42")
+        compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_project_description)).performScrollTo().assertTextContains("Pending description وصف")
+        val cancel = compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_create_cancel)).assertIsDisplayed().assertHasClickAction()
         val node = cancel.fetchSemanticsNode()
         val root = generateSequence(node) { it.parent }.last()
         assertTrue("Button must remain above the reserved bottom area",

@@ -23,8 +23,8 @@ class ThemeColorsTest {
     @Test fun approvedBaseColorsAndAllContainerRolesAreExplicit() {
         for (dark in listOf(false, true)) {
             val c = appearanceColors(dark)
-            val card = Color(if (dark) 0xFF2A2F36 else 0xFFFFFFFF)
-            assertEquals(Color(if (dark) 0xFF111418 else 0xFFF6F8FB), c.background)
+            val card = Color(if (dark) 0xFF172131 else 0xFFFFFFFF)
+            assertEquals(Color(if (dark) 0xFF0B101D else 0xFFF6F8FB), c.background)
             assertEquals(c.background, c.surface)
             assertEquals(Color(if (dark) 0xFFFFFFFF else 0xFF17263D), c.onSurface)
             assertEquals(Color(if (dark) 0xFFC4CCD6 else 0xFF536276), c.onSurfaceVariant)

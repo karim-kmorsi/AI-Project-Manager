@@ -56,7 +56,7 @@ class SettingsUiTest {
 
     private fun text(id: Int) = compose.activity.getString(id)
 
-    private fun settingsAction() = compose.onNode(hasClickAction() and hasText(text(R.string.settings_title)))
+    private fun settingsAction() = compose.onNode(hasClickAction() and hasContentDescription(text(R.string.settings_title)))
 
     private fun openSettings() {
         settingsAction().assertIsDisplayed().performClick()
@@ -65,22 +65,22 @@ class SettingsUiTest {
 
     @Test fun toolbarBackPreservesSearchAndProjectBytes() = withProjects { file, _ ->
         val before = file.readBytes()
-        compose.onNodeWithText("بحث في المشاريع").performTextReplacement("Alpha")
+        compose.onNodeWithTag("dashboard_search").performTextReplacement("Alpha")
         openSettings()
         compose.onNodeWithText("رجوع").performClick()
-        compose.onNodeWithText("بحث في المشاريع").assertTextContains("Alpha")
+        compose.onNodeWithTag("dashboard_search").assertTextContains("Alpha")
         compose.onNodeWithText("Beta").assertDoesNotExist()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
     @Test fun systemBackAfterRestorationReturnsToFilteredListWithoutWrites() = withProjects { file, restoration ->
         val before = file.readBytes()
-        compose.onNodeWithText("بحث في المشاريع").performTextReplacement("Alpha")
+        compose.onNodeWithTag("dashboard_search").performTextReplacement("Alpha")
         openSettings()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText(text(R.string.settings_data_backup)).assertExists()
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText("بحث في المشاريع").assertTextContains("Alpha")
+        compose.onNodeWithTag("dashboard_search").assertTextContains("Alpha")
         compose.onNodeWithText("Beta").assertDoesNotExist()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }

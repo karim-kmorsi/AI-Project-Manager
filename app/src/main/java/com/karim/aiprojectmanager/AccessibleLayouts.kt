@@ -6,9 +6,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
@@ -23,7 +28,8 @@ internal fun AccessibleAppBar(
     title: String,
     navigation: @Composable () -> Unit,
     actions: @Composable () -> Unit,
-    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
+    brand: Boolean = false
 ) {
     Surface(modifier = Modifier.semantics { isTraversalGroup = true; traversalIndex = -1f },
         color = MaterialTheme.colorScheme.surface) {
@@ -31,7 +37,11 @@ internal fun AccessibleAppBar(
             modifier = Modifier.windowInsetsPadding(windowInsets).padding(start = 16.dp, end = 4.dp),
             content = {
                 Box { navigation() }
-                ParagraphText(title, style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (brand) Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.size(36.dp))
+                    ParagraphText(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                }
                 FlowRow(horizontalArrangement = Arrangement.End, verticalArrangement = Arrangement.spacedBy(4.dp)) { actions() }
             }
         ) { children, constraints ->
@@ -65,21 +75,27 @@ internal fun ProjectCreationDialog(
     onDismiss: () -> Unit, onCreate: () -> Unit,
     insets: WindowInsets? = null
 ) {
-    AlertDialog(
+    val title = stringResource(R.string.dashboard_create_title)
+    val error = stringResource(R.string.dashboard_creation_error)
+    val nameLabel = stringResource(R.string.dashboard_project_name)
+    val detailsLabel = stringResource(R.string.dashboard_project_description)
+    val confirm = stringResource(R.string.dashboard_create_confirm)
+    val cancel = stringResource(R.string.dashboard_create_cancel)
+    VNextDialog(
         // Resolve native insets where the modifier is applied: inside the dialog's window.
         modifier = if (insets == null) Modifier.safeDrawingPadding() else Modifier.windowInsetsPadding(insets),
         properties = DialogProperties(decorFitsSystemWindows = false),
         onDismissRequest = onDismiss,
-        title = { ParagraphText("إنشاء مشروع") },
+        title = { ParagraphText(title) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (writeError) ParagraphText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.")
-                OutlinedTextField(name, onNameChange, textStyle = contentTextStyle(), label = { Text("اسم المشروع") })
-                OutlinedTextField(details, onDetailsChange, textStyle = contentTextStyle(), label = { Text("وصف مختصر") })
+                if (writeError) ParagraphText(error)
+                OutlinedTextField(name, onNameChange, textStyle = contentTextStyle(), label = { Text(nameLabel) })
+                OutlinedTextField(details, onDetailsChange, textStyle = contentTextStyle(), label = { Text(detailsLabel) })
             }
         },
-        confirmButton = { TextButton(onClick = onCreate, enabled = name.isNotBlank()) { Text("إنشاء") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("إلغاء") } }
+        confirmButton = { TextButton(onClick = onCreate, enabled = name.isNotBlank()) { Text(confirm) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(cancel) } }
     )
 }
 
