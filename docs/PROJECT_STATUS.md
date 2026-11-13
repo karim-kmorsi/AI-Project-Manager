@@ -1,9 +1,37 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-13 (Asia/Kathmandu).
+Updated: 2026-11-14 (Asia/Kathmandu).
 Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
+
+## Live GitHub acceptance — 2026-11-14
+
+On the existing API 35 `CI_Android_35_Repro` AVD (`emulator-5558`), the latest
+VNext APK built and installed with `adb install -r`; no app data was cleared.
+Normal GitHub OAuth completed in the emulator and VNext showed the account as
+verified (`karim-kmorsi`). After force-stop and relaunch, the session remained
+verified and the local project list still showed zero projects.
+
+The authenticated repository browser successfully loaded and refreshed live
+GitHub results, but returned only `karim-kmorsi/AIAndroidApp` and
+`karim-kmorsi/ZOOM-CCTV-Manager`. `karim-kmorsi/AI-Project-Manager` remained
+absent after the owner reported granting installation access and after further
+refreshes. An unauthenticated public API request returned 404, which does not
+distinguish a private repository from an unavailable name. No other repository
+was imported, no local project data was changed, and no remote write was made.
+Target preview/import, duplicate verification on that project, project
+persistence, repository refresh, Actions, Issues, and change-baseline live
+checks remain blocked until the VNext GitHub App installation actually exposes
+the target in its repository list.
+
+VNext Settings displayed Arabic RTL correctly; English was restored and showed
+English LTR labels. Repository-browser navigation, scrolling, and dismissal
+worked. The app launched successfully after relaunch; filtered emulator logs
+showed no matching VNext/System UI crashes or EGL errors. No product defect
+was confirmed and no app source was changed. The full instrumentation suite was
+not run. The latest APK is at `app/build/outputs/apk/vnext/app-vnext.apk`.
+Release status remains **NOT Ready for Release**.
 
 ## GitHub integration refresh and emulator verification — 2026-11-13
 
