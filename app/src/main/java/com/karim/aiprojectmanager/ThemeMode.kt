@@ -1,15 +1,13 @@
 package com.karim.aiprojectmanager
 
 internal enum class ThemeMode(val storedValue: String, val label: String) {
-    SYSTEM("SYSTEM", "Follow System"), LIGHT("LIGHT", "Light"), DARK("DARK", "Dark");
+    LIGHT("LIGHT", "Light"), DARK("DARK", "Dark");
 
-    fun isDark(systemDark: Boolean): Boolean = when (this) {
-        SYSTEM -> systemDark
-        LIGHT -> false
-        DARK -> true
-    }
+    fun isDark(): Boolean = this == DARK
 
     companion object {
-        fun decode(value: String?): ThemeMode = entries.firstOrNull { it.storedValue == value } ?: SYSTEM
+        const val LEGACY_SYSTEM_VALUE = "SYSTEM"
+
+        fun decode(value: String?): ThemeMode = entries.firstOrNull { it.storedValue == value } ?: DARK
     }
 }

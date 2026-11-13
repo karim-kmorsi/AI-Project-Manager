@@ -63,7 +63,13 @@ class DashboardVNextUiTest {
             assertTrue("Measured Create area is outside the entire scrolling viewport",
                 list.fetchSemanticsNode().boundsInRoot.bottom <= create.fetchSemanticsNode().boundsInRoot.top)
             val logo = compose.onNodeWithTag("dashboard_logo", useUnmergedTree = true).captureToImage().toPixelMap()
-            assertEquals("No opaque logo tile", appearanceColors(dark).background, logo[0, 0])
+            val background = appearanceColors(dark).background
+            assertEquals("No opaque logo tile", background, logo[0, 0])
+            assertEquals(
+                "The logo's transparent center must not retain a dark circular halo",
+                background,
+                logo[logo.width / 2, (logo.height * 410f / 1080f).toInt()]
+            )
             if (scale == 1f) {
                 val searchBounds = compose.onNodeWithTag("dashboard_search").fetchSemanticsNode().boundsInRoot
                 assertTrue("Compact search retains an accessible 48dp target", searchBounds.height >= 48 * context.resources.displayMetrics.density)
@@ -100,10 +106,10 @@ class DashboardVNextUiTest {
             last.assert(hasText(localized.getString(R.string.dashboard_manual_count, taskCountExpression(0, 0))))
             last.performClick()
             compose.onNodeWithText("Project 14").assertExists()
-            compose.onNodeWithText("رجوع").performClick()
+            compose.onNodeWithContentDescription(label(R.string.project_back)).performClick()
             compose.onNodeWithContentDescription(label(R.string.settings_title)).performClick()
             compose.onNodeWithText(label(R.string.settings_connections)).assertIsDisplayed()
-            compose.onNodeWithText("رجوع").performClick()
+            compose.onNodeWithContentDescription(label(R.string.project_back)).performClick()
             compose.onNodeWithContentDescription(label(R.string.dashboard_more)).performClick()
             compose.onNodeWithText(label(R.string.dashboard_export)).performClick()
             compose.onNodeWithContentDescription(label(R.string.dashboard_more)).performClick()

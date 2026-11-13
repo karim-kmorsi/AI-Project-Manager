@@ -17,26 +17,27 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-/** Injected system appearance and private fake preferences: no real settings or user files touched. */
+/** Private fake preferences and isolated project files: no real settings or user data touched. */
 @RunWith(AndroidJUnit4::class)
 class ThemeUiTest {
     @get:Rule val compose = createComposeRule()
-    private class Store : AppPreferences {
-        var value = "SYSTEM"
+    private class Store(var value: String? = "SYSTEM") : AppPreferences {
         var reject = false
-        override fun readString(key: String, defaultValue: String) = value
+        var writes = 0
+        override fun readString(key: String, defaultValue: String) = value ?: defaultValue
         override fun writeString(key: String, value: String): Boolean {
             if (reject) return false
+            writes++
             this.value = value
             return true
         }
     }
     private class Fixture(val file: File, val store: Store, val controller: ThemePreferences) {
-        val systemDark = mutableStateOf(false)
+        val renderedDark = mutableStateOf<Boolean?>(null)
         var observedBackground = Color.Unspecified
     }
 
-    private fun withFixture(block: (Fixture) -> Unit) {
+    private fun withFixture(initialValue: String? = "SYSTEM", block: (Fixture) -> Unit) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val root = File(context.cacheDir, "theme-${System.nanoTime()}")
         assertTrue(root.mkdirs())
@@ -45,7 +46,7 @@ class ThemeUiTest {
         ProjectStorage(file).save(listOf(
             ProjectItem("one", "Alpha", "Keep", "Original", "Original", listOf(TaskItem("task", "Keep task", "VERIFIED")))
         ) + (0..15).map { ProjectItem("p$it", "Project $it", "Other") })
-        val store = Store()
+        val store = Store(initialValue)
         val fixture = Fixture(file, store, ThemePreferences({ store }))
         runBlocking { fixture.controller.load() }
         val visible = mutableStateOf(true)
@@ -54,7 +55,7 @@ class ThemeUiTest {
                 if (visible.value) CompositionLocalProvider(LocalContext provides isolated) {
                     val state by fixture.controller.state.collectAsState()
                     val scope = rememberCoroutineScope()
-                    AppTheme(state.mode.isDark(fixture.systemDark.value)) {
+                    AppTheme(fixture.renderedDark.value ?: state.mode.isDark()) {
                         val background = androidx.compose.material3.MaterialTheme.colorScheme.background
                         SideEffect { fixture.observedBackground = background }
                         ProjectManagerApp(ProjectStorage(file), appearanceSettings = {
@@ -77,7 +78,8 @@ class ThemeUiTest {
     private fun openSettings() {
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
         compose.onNode(hasClickAction() and hasContentDescription(settings)).performClick()
-        compose.onNodeWithText("Follow System").performScrollTo().assertIsSelected()
+        compose.onNodeWithText("Follow System").assertDoesNotExist()
+        compose.onNodeWithText("Dark").performScrollTo().assertIsSelected()
     }
     private fun select(label: String, fixture: Fixture) {
         compose.onNodeWithText(label).performScrollTo().performClick()
@@ -88,46 +90,57 @@ class ThemeUiTest {
         compose.runOnIdle { assertEquals(Color(if (dark) 0xFF0B101D else 0xFFF6F8FB), fixture.observedBackground) }
     }
 
-    @Test fun selectionsPersistAndExplicitModesIgnoreSystemChanges() = withFixture { f ->
+    @Test fun legacyFollowSystemMigratesToDarkAndExplicitChoicesPersist() = withFixture { f ->
         val original = f.file.readBytes()
+        assertEquals(ThemeMode.DARK, f.controller.state.value.mode)
+        assertEquals("DARK", f.store.value)
+        assertEquals(1, f.store.writes)
         openSettings()
-        select("Dark", f)
         assertBackground(f, true)
-        compose.runOnIdle { f.systemDark.value = true }
-        assertBackground(f, true)
+        compose.onNodeWithText("Light").assertIsDisplayed()
+        compose.onNodeWithText("Follow System").assertDoesNotExist()
         select("Light", f)
         assertBackground(f, false)
-        compose.runOnIdle { f.systemDark.value = false }
-        assertBackground(f, false)
-        select("Follow System", f)
-        compose.runOnIdle { f.systemDark.value = true }
-        assertBackground(f, true)
-        compose.runOnIdle {
-            assertEquals("SYSTEM", f.store.value)
-            assertArrayEquals(original, f.file.readBytes())
-        }
+        assertEquals("LIGHT", f.store.value)
         runBlocking {
             val reopened = ThemePreferences({ f.store }); reopened.load()
-            assertEquals(ThemeMode.SYSTEM, reopened.state.value.mode)
+            assertEquals(ThemeMode.LIGHT, reopened.state.value.mode)
         }
+        select("Dark", f)
+        assertBackground(f, true)
+        assertEquals("DARK", f.store.value)
+        compose.runOnIdle { assertArrayEquals(original, f.file.readBytes()) }
+    }
+
+    @Test fun newInstallDefaultsToDarkWithoutWritingASelection() = withFixture(initialValue = null) { f ->
+        assertEquals(ThemeMode.DARK, f.controller.state.value.mode)
+        assertEquals(0, f.store.writes)
+        openSettings()
+        compose.onNodeWithText("Dark").assertIsSelected()
+        compose.onNodeWithText("Light").assertExists()
+        compose.onNodeWithText("Follow System").assertDoesNotExist()
+        assertBackground(f, true)
     }
 
     @Test fun failedSelectionKeepsConfirmedRadioAndAppearanceUntilRetry() = withFixture { f ->
         openSettings()
         compose.runOnIdle { f.store.reject = true }
-        compose.onNodeWithText("Dark").performScrollTo().performClick()
+        compose.onNodeWithText("Light").performScrollTo().performClick()
         compose.waitUntil(5_000) { f.controller.state.value.error == ThemePreferenceError.SAVE }
-        compose.onNodeWithText("Follow System").assertIsSelected()
-        assertBackground(f, false)
-        compose.onNodeWithText("تعذّر حفظ المظهر: Dark. بقي المظهر السابق؛ أعد المحاولة.").assertExists()
-        compose.runOnIdle { f.store.reject = false }
-        compose.onNodeWithText("إعادة محاولة المظهر").performScrollTo().performClick()
-        compose.waitUntil(5_000) { f.controller.state.value.mode == ThemeMode.DARK }
         compose.onNodeWithText("Dark").assertIsSelected()
         assertBackground(f, true)
+        val saveError = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.appearance_save_error, "Light")
+        compose.onNodeWithText(saveError).assertExists()
+        compose.runOnIdle { f.store.reject = false }
+        val retry = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.appearance_retry)
+        compose.onNodeWithText(retry).performScrollTo().performClick()
+        compose.waitUntil(5_000) { f.controller.state.value.mode == ThemeMode.LIGHT }
+        compose.onNodeWithText("Light").assertIsSelected()
+        assertBackground(f, false)
     }
 
-    @Test fun systemAppearancePreservesProjectSearchListScrollAndBytes() = withFixture { f ->
+    @Test fun appearanceRecompositionPreservesProjectSearchListScrollAndBytes() = withFixture { f ->
         val before = f.file.readBytes()
         compose.onNodeWithTag("dashboard_search").performScrollTo().performTextReplacement("Project")
         // This regression measures theme/scroll preservation after submitting search;
@@ -136,8 +149,8 @@ class ThemeUiTest {
         val list = compose.onNode(hasScrollToIndexAction())
         list.performScrollToNode(hasText("Project 9"))
         val scroll = list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
-        compose.runOnIdle { f.systemDark.value = true }
-        assertBackground(f, true)
+        compose.runOnIdle { f.renderedDark.value = false }
+        assertBackground(f, false)
         compose.onNodeWithText("Project 9").assertIsDisplayed()
         assertEquals(scroll, list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value(), .001f)
         list.performScrollToNode(hasTestTag("dashboard_search"))
@@ -152,7 +165,7 @@ class ThemeUiTest {
         compose.onNodeWithText("معاينة نسخة").performScrollTo()
         val scrollNode = compose.onNode(hasScrollAction())
         val scroll = scrollNode.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
-        compose.runOnIdle { f.systemDark.value = true }
+        compose.runOnIdle { f.renderedDark.value = false }
         compose.onNodeWithText("معاينة نسخة").assertIsDisplayed()
         assertEquals(scroll, scrollNode.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value(), .001f)
         compose.onNodeWithText("رجوع").performClick()
@@ -170,7 +183,7 @@ class ThemeUiTest {
         compose.mainClock.autoAdvance = false
         compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending")
         compose.mainClock.advanceTimeBy(64)
-        compose.runOnIdle { f.systemDark.value = true }
+        compose.runOnIdle { f.renderedDark.value = false }
         compose.mainClock.advanceTimeBy(64)
         compose.onNodeWithText("محتوى المستند").assertTextContains("Pending")
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
@@ -187,7 +200,7 @@ class ThemeUiTest {
         compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
         compose.onNodeWithText("اسم المشروع").performTextReplacement("Pending name")
         compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
-        compose.runOnIdle { f.systemDark.value = true }
+        compose.runOnIdle { f.renderedDark.value = false }
         compose.onNodeWithText("تأكيد إعادة التحميل").assertExists()
         compose.onNodeWithText("متابعة التحرير").performClick()
         compose.onNodeWithText("اسم المشروع").assertTextContains("Pending name")
@@ -202,7 +215,7 @@ class ThemeUiTest {
         compose.onNodeWithText("تعديل العنوان").performClick()
         compose.onNodeWithText("عنوان المهمة").performTextReplacement("Pending title")
         compose.onNodeWithText("إلغاء").performClick()
-        compose.runOnIdle { f.systemDark.value = true }
+        compose.runOnIdle { f.renderedDark.value = false }
         compose.onNodeWithText("تجاهل التعديلات").assertExists()
         compose.onNodeWithText("متابعة التحرير").performClick()
         compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
@@ -218,7 +231,7 @@ class ThemeUiTest {
         compose.onNodeWithText("بحث في المهام").performTextReplacement("Keep")
         compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
         compose.onNode(hasText("قيد التنفيذ") and hasAnyAncestor(isPopup())).performClick()
-        compose.runOnIdle { f.systemDark.value = true }
+        compose.runOnIdle { f.renderedDark.value = false }
         compose.onNodeWithText("مهمة جديدة").assertTextContains("Pending new task")
         compose.onNodeWithText("بحث في المهام").assertTextContains("Keep")
         compose.onNodeWithText("حالة المهام: قيد التنفيذ").assertExists()

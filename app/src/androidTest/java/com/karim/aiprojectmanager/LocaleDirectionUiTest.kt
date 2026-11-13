@@ -100,13 +100,13 @@ class LocaleDirectionUiTest {
                 }
             }
         }
-        fun labelCenter() = compose.onNodeWithText("Follow System", useUnmergedTree = true)
+        fun labelCenter() = compose.onNodeWithText("Dark", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.center.x
-        fun rowCenter() = compose.onNodeWithText("Follow System").fetchSemanticsNode().boundsInRoot.center.x
+        fun rowCenter() = compose.onNodeWithText("Dark").fetchSemanticsNode().boundsInRoot.center.x
         assertTrue(labelCenter() < rowCenter())
         compose.runOnIdle { locale.value = "ar" }
         assertTrue(labelCenter() > rowCenter())
-        compose.onNodeWithText("Follow System").assertIsSelected()
+        compose.onNodeWithText("Dark").assertIsSelected()
     }
 
     @Test fun isolatedCountHasLeftToRightGlyphOrderInBothLocales() {

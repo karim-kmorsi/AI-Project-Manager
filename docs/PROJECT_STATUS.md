@@ -5,6 +5,31 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Final logo and appearance refinements — 2026-11-14
+
+The dashboard logo's central cutout contained 29,822 low-alpha dark pixels in
+the foreground image. Only those alpha values were cleared; RGB artwork,
+dimensions, launcher background, and Compose layout were left unchanged.
+Appearance now offers Light and Dark only. New or missing preferences default
+to Dark, stored `SYSTEM` values migrate to Dark, explicit Light/Dark values
+remain intact, and language preferences are unchanged.
+
+Verification passed: 118 host tests, VNext APK and Android-test APK assembly,
+VNext lint (0 errors, 26 warnings), and six focused Android tests on the API 35
+SwiftShader AVD. Manual fresh-install checks showed Dark selected by default,
+only Light/Dark controls, and Light persisted after force-stop/relaunch;
+English remained selected. Filtered runtime-error logs were empty. Screenshots
+are saved in the session artifacts under `files/ui-refinements/`.
+
+After the connected test run, the emulator no longer reported the VNext package
+installed. No explicit ADB uninstall or data-clear was issued; the APK was
+installed again for manual checks, so the prior on-device preference was
+unavailable.
+Legacy `SYSTEM` migration is verified with isolated synthetic preferences in
+host and Android UI tests, not against the previously installed emulator app.
+The full instrumentation suite was not run. Release status remains
+**NOT Ready for Release**.
+
 ## Live GitHub acceptance — 2026-11-14
 
 On the existing API 35 `CI_Android_35_Repro` AVD (`emulator-5558`), the latest

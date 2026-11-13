@@ -46,12 +46,11 @@
     <string name="project_save_failed_title">تعذّر الحفظ</string>
     <string name="project_save_failed_message">تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.</string>
     <string name="project_save_failed_action">إغلاق</string>
-    <string name="appearance_follow_system">اتباع إعداد النظام</string>
     <string name="appearance_light">فاتح</string>
     <string name="appearance_dark">داكن</string>
     <string name="appearance_loading">جارٍ تحميل المظهر…</string>
     <string name="appearance_saving">جارٍ حفظ المظهر: %1$s…</string>
-    <string name="appearance_load_error">تعذّر تحميل تفضيل المظهر. يُستخدم إعداد النظام مؤقتًا؛ أعد المحاولة.</string>
+    <string name="appearance_load_error">تعذّر تحميل تفضيل المظهر. يُستخدم الوضع الداكن مؤقتًا؛ أعد المحاولة.</string>
     <string name="appearance_save_error">تعذّر حفظ المظهر %1$s. بقي المظهر السابق؛ أعد المحاولة.</string>
     <string name="appearance_retry">إعادة محاولة حفظ المظهر</string>
     <string name="appearance_language">اللغة</string>

@@ -3,7 +3,6 @@ package com.karim.aiprojectmanager
 import android.app.Activity
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -54,7 +53,7 @@ internal fun appearanceColors(dark: Boolean): ColorScheme {
 }
 
 @Composable
-internal fun AppTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+internal fun AppTheme(dark: Boolean = true, content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = appearanceColors(dark), typography = ProjectTypography, content = content)
 }
 

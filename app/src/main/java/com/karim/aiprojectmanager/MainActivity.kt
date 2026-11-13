@@ -109,7 +109,7 @@ open class MainActivity : ComponentActivity() {
         setContent {
             val appearance by themePreferences.state.collectAsState()
             LaunchedEffect(Unit) { themePreferences.load() }
-            val dark = appearance.mode.isDark(androidx.compose.foundation.isSystemInDarkTheme())
+            val dark = appearance.mode.isDark()
             AppTheme(dark) {
                 SideEffect { updateWindowAppearance(this@MainActivity, dark) }
                 ProjectManagerApp(storage, appearanceSettings = {

@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 internal enum class ThemePreferenceError { LOAD, SAVE }
 
 internal data class ThemeSettingsState(
-    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val mode: ThemeMode = ThemeMode.DARK,
     val loading: Boolean = true,
     val saving: Boolean = false,
     val pendingMode: ThemeMode? = null,
@@ -35,10 +35,30 @@ internal class ThemePreferences(
             mutableState.value = state.value.copy(loading = true, error = null)
         }
         try {
-            val mode = withContext(io) { ThemeMode.decode(open().readString(KEY, ThemeMode.SYSTEM.storedValue)) }
+            val loadedTheme = withContext(io) {
+                val preferences = open()
+                val storedMode = preferences.readString(KEY, ThemeMode.DARK.storedValue)
+                if (storedMode == ThemeMode.LEGACY_SYSTEM_VALUE) {
+                    ThemeLoadResult(
+                        mode = ThemeMode.DARK,
+                        migrationPending = !preferences.writeString(KEY, ThemeMode.DARK.storedValue)
+                    )
+                } else {
+                    ThemeLoadResult(ThemeMode.decode(storedMode), migrationPending = false)
+                }
+            }
             synchronized(gate) {
-                loaded = true
-                mutableState.value = ThemeSettingsState(mode = mode, loading = false)
+                if (loadedTheme.migrationPending) {
+                    mutableState.value = ThemeSettingsState(
+                        mode = ThemeMode.DARK,
+                        loading = false,
+                        pendingMode = ThemeMode.DARK,
+                        error = ThemePreferenceError.LOAD
+                    )
+                } else {
+                    loaded = true
+                    mutableState.value = ThemeSettingsState(mode = loadedTheme.mode, loading = false)
+                }
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -48,6 +68,8 @@ internal class ThemePreferences(
             synchronized(gate) { loadInProgress = false }
         }
     }
+
+    private data class ThemeLoadResult(val mode: ThemeMode, val migrationPending: Boolean)
 
     suspend fun select(mode: ThemeMode): Boolean {
         synchronized(gate) {

@@ -25,31 +25,74 @@ class ThemePreferencesTest {
 
     @Test fun stableSerializationAndUnsupportedValues() {
         ThemeMode.entries.forEach { assertEquals(it, ThemeMode.decode(it.storedValue)) }
-        listOf(null, "", "light", "UNKNOWN", " DARK ").forEach { assertEquals(ThemeMode.SYSTEM, ThemeMode.decode(it)) }
-    }
-
-    @Test fun resolutionUsesSystemOnlyForSystemMode() {
-        for (system in listOf(false, true)) {
-            assertEquals(system, ThemeMode.SYSTEM.isDark(system))
-            assertFalse(ThemeMode.LIGHT.isDark(system))
-            assertTrue(ThemeMode.DARK.isDark(system))
+        listOf(null, "", "SYSTEM", "light", "UNKNOWN", " DARK ").forEach {
+            assertEquals(ThemeMode.DARK, ThemeMode.decode(it))
         }
     }
 
-    @Test fun missingAndInvalidValuesUseSystemWithoutRewriting() = runBlocking {
+    @Test fun appearanceIsAlwaysExplicit() {
+        assertFalse(ThemeMode.LIGHT.isDark())
+        assertTrue(ThemeMode.DARK.isDark())
+    }
+
+    @Test fun missingAndInvalidValuesDefaultToDarkWithoutRewriting() = runBlocking {
         for (value in listOf(null, "unsupported")) {
             val store = Store(value)
             val controller = ThemePreferences({ store })
             controller.load()
-            assertEquals(ThemeMode.SYSTEM, controller.state.value.mode)
+            assertEquals(ThemeMode.DARK, controller.state.value.mode)
             assertFalse(controller.state.value.loading)
             assertEquals(0, store.writes)
             assertEquals(value, store.value)
         }
     }
 
+    @Test fun legacyFollowSystemMigratesToDarkAndRemainsPersisted() = runBlocking {
+        val store = Store("SYSTEM")
+        val controller = ThemePreferences({ store })
+
+        controller.load()
+
+        assertEquals(ThemeMode.DARK, controller.state.value.mode)
+        assertEquals("DARK", store.value)
+        assertEquals(1, store.writes)
+        val reopened = ThemePreferences({ store })
+        reopened.load()
+        assertEquals(ThemeMode.DARK, reopened.state.value.mode)
+        assertEquals(1, store.writes)
+    }
+
+    @Test fun failedLegacyMigrationRemainsPendingUntilPersisted() = runBlocking {
+        val store = Store("SYSTEM").apply { fail = true }
+        val controller = ThemePreferences({ store })
+
+        controller.load()
+
+        assertEquals(ThemeMode.DARK, controller.state.value.mode)
+        assertEquals(ThemeMode.DARK, controller.state.value.pendingMode)
+        assertEquals(ThemePreferenceError.LOAD, controller.state.value.error)
+        assertEquals("DARK", store.value)
+        store.fail = false
+        controller.retry()
+        assertEquals(ThemeMode.DARK, controller.state.value.mode)
+        assertNull(controller.state.value.pendingMode)
+        assertNull(controller.state.value.error)
+        assertEquals(2, store.writes)
+    }
+
+    @Test fun existingLightAndDarkChoicesArePreservedWithoutWrites() = runBlocking {
+        for ((stored, expected) in listOf("LIGHT" to ThemeMode.LIGHT, "DARK" to ThemeMode.DARK)) {
+            val store = Store(stored)
+            val controller = ThemePreferences({ store })
+            controller.load()
+            assertEquals(expected, controller.state.value.mode)
+            assertEquals(0, store.writes)
+            assertEquals(stored, store.value)
+        }
+    }
+
     @Test fun savesAndReloadsExplicitChoice() = runBlocking {
-        val store = Store()
+        val store = Store("LIGHT")
         val controller = ThemePreferences({ store })
         controller.load()
         assertTrue(controller.select(ThemeMode.DARK))
@@ -82,7 +125,7 @@ class ThemePreferencesTest {
         var unavailable = true
         val controller = ThemePreferences({ if (unavailable) error("Cannot open preferences") else store })
         controller.load()
-        assertEquals(ThemeMode.SYSTEM, controller.state.value.mode)
+        assertEquals(ThemeMode.DARK, controller.state.value.mode)
         assertEquals(ThemePreferenceError.LOAD, controller.state.value.error)
         assertFalse(controller.state.value.loading)
         unavailable = false
@@ -120,7 +163,7 @@ class ThemePreferencesTest {
         val release = CountDownLatch(1)
         val callerThread = Thread.currentThread().id
         var writeThread = callerThread
-        val store = object : Store() {
+        val store = object : Store("LIGHT") {
             override fun writeString(key: String, value: String): Boolean {
                 writeThread = Thread.currentThread().id
                 entered.countDown()
@@ -134,7 +177,7 @@ class ThemePreferencesTest {
         try {
             withContext(Dispatchers.Default) { assertTrue(entered.await(5, TimeUnit.SECONDS)) }
             assertTrue(controller.state.value.saving)
-            assertEquals(ThemeMode.SYSTEM, controller.state.value.mode)
+            assertEquals(ThemeMode.LIGHT, controller.state.value.mode)
             assertEquals(ThemeMode.DARK, controller.state.value.pendingMode)
             assertFalse(controller.select(ThemeMode.LIGHT))
             assertFalse(controller.select(ThemeMode.DARK))

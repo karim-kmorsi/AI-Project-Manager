@@ -31,11 +31,7 @@ internal fun AppearanceSettings(
                 ).heightIn(min = 48.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     RadioButton(selected = state.mode == mode, onClick = null, enabled = !state.loading && !state.saving)
-                    Text(stringResource(when (mode) {
-                        ThemeMode.SYSTEM -> R.string.appearance_follow_system
-                        ThemeMode.LIGHT -> R.string.appearance_light
-                        ThemeMode.DARK -> R.string.appearance_dark
-                    }))
+                    Text(stringResource(appearanceModeLabel(mode)))
                 }
             }
             Text(
@@ -59,24 +55,21 @@ internal fun AppearanceSettings(
             }
             if (state.loading || state.saving) ParagraphText(
                 if (state.loading) stringResource(R.string.appearance_loading)
-                else stringResource(R.string.appearance_saving, stringResource(when (state.pendingMode) {
-                    ThemeMode.LIGHT -> R.string.appearance_light
-                    ThemeMode.DARK -> R.string.appearance_dark
-                    else -> R.string.appearance_follow_system
-                })),
+                else stringResource(R.string.appearance_saving, stringResource(appearanceModeLabel(state.pendingMode))),
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             if (state.error != null) {
                 ParagraphText(if (state.error == ThemePreferenceError.LOAD)
                     stringResource(R.string.appearance_load_error)
-                else stringResource(R.string.appearance_save_error, stringResource(when (state.pendingMode) {
-                    ThemeMode.LIGHT -> R.string.appearance_light
-                    ThemeMode.DARK -> R.string.appearance_dark
-                    else -> R.string.appearance_follow_system
-                })),
+                else stringResource(R.string.appearance_save_error, stringResource(appearanceModeLabel(state.pendingMode))),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
                 TextButton(onClick = onRetry, enabled = !state.loading && !state.saving) { Text(stringResource(R.string.appearance_retry)) }
             }
         }
     }
+}
+
+private fun appearanceModeLabel(mode: ThemeMode?): Int = when (mode) {
+    ThemeMode.LIGHT -> R.string.appearance_light
+    ThemeMode.DARK, null -> R.string.appearance_dark
 }
