@@ -34,9 +34,10 @@ class TaskListControlsUiTest {
 
     // LazyColumn does not compose every off-screen card. Locate the item through its
     // scroll-to-index semantics before asking a descendant to bring itself into view.
-    private fun taskText(text: String): SemanticsNodeInteraction {
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(text))
-        return compose.onNodeWithText(text).performScrollTo()
+    private fun taskText(english: String, arabic: String? = null): SemanticsNodeInteraction {
+        val matcher = arabic?.let { hasText(english) or hasText(it) } ?: hasText(english)
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(matcher)
+        return compose.onNode(matcher).performScrollTo()
     }
 
     private fun text(id: Int) = InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
@@ -45,12 +46,12 @@ class TaskListControlsUiTest {
         storage.save(listOf(ProjectItem("p", "Empty project", "")))
         compose.setContent { MaterialTheme { ProjectManagerApp(storage) } }
         compose.onNodeWithText("Empty project").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        compose.selectProjectTab(3)
         taskText(text(R.string.tasks_empty)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.tasks_no_matches)).assertDoesNotExist()
 
-        compose.onNodeWithText("مهمة جديدة").performTextReplacement("First task")
-        compose.onNodeWithText("إضافة").performClick()
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextReplacement("First task")
+        compose.onLocalizedText("Add", "إضافة").performClick()
         taskText("First task").assertIsDisplayed()
         compose.onNodeWithText(text(R.string.tasks_empty)).assertDoesNotExist()
         compose.runOnIdle { assertEquals("First task", storage.load().single().tasks.single().title) }
@@ -66,21 +67,21 @@ class TaskListControlsUiTest {
         val before = file.readBytes()
         compose.setContent { MaterialTheme { ProjectManagerApp(storage) } }
         compose.onNodeWithText("Search project").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        taskText("بحث في المهام").performTextReplacement("  ALPHA  ")
-        taskText("حالة المهام: كل الحالات").performClick()
-        compose.onAllNodesWithText("قيد التنفيذ").onLast().performClick()
+        compose.selectProjectTab(3)
+        taskText("Search tasks", "بحث في المهام").performTextReplacement("  ALPHA  ")
+        taskText("Task status: All statuses", "حالة المهام: كل الحالات").performClick()
+        compose.onAllNodes(hasText("In progress") or hasText("قيد التنفيذ")).onLast().performClick()
         taskText("Alpha active").assertIsDisplayed()
         compose.onNodeWithText("Alpha pending").assertDoesNotExist()
         compose.onNodeWithText("Beta active").assertDoesNotExist()
-        taskText("بحث في المهام").performTextReplacement("missing")
+        taskText("Search tasks", "بحث في المهام").performTextReplacement("missing")
         taskText(text(R.string.tasks_no_matches)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.tasks_empty)).assertDoesNotExist()
-        taskText("مسح البحث").performClick()
+        taskText("Clear search", "مسح البحث").performClick()
         taskText("Alpha active").assertIsDisplayed()
         taskText("Beta active").assertIsDisplayed()
-        taskText("حالة المهام: قيد التنفيذ").performClick()
-        compose.onNodeWithText("كل الحالات").performClick()
+        taskText("Task status: In progress", "حالة المهام: قيد التنفيذ").performClick()
+        compose.onLocalizedText("All statuses", "كل الحالات").performClick()
         taskText("Alpha legacy").assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
@@ -95,12 +96,15 @@ class TaskListControlsUiTest {
             }
         }
         taskText("Layout project").assertIsDisplayed().performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        compose.selectProjectTab(3)
         taskText(title).assertIsDisplayed()
-        val labelsAndStatuses = listOf("قيد التنفيذ" to "IN_PROGRESS",
-            "كود غير متحقق" to "IMPLEMENTED_UNVERIFIED", "تم التحقق" to "VERIFIED")
-        for ((label, status) in labelsAndStatuses) {
-            val action = taskText(label)
+        val labelsAndStatuses = listOf(
+            Triple("In progress", "قيد التنفيذ", "IN_PROGRESS"),
+            Triple("Implemented, unverified", "كود غير متحقق", "IMPLEMENTED_UNVERIFIED"),
+            Triple("Mark verified", "تم التحقق", "VERIFIED")
+        )
+        for ((english, arabic, status) in labelsAndStatuses) {
+            val action = taskText(english, arabic)
             action.assertIsDisplayed()
             val bounds = action.getUnclippedBoundsInRoot()
             assertTrue("Action has positive width", bounds.right > bounds.left)

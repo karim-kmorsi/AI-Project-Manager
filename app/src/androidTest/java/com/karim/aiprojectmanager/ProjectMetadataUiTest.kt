@@ -38,10 +38,10 @@ class ProjectMetadataUiTest {
         val original = storage.load()
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("  عنوان English  ")
-        compose.onNodeWithText("وصف مختصر").performTextReplacement("  وصف\nDescription  ")
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("  عنوان English  ")
+        compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement("  وصف\nDescription  ")
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.onNodeWithText("عنوان English").assertExists()
         compose.runOnIdle {
             assertEquals(listOf(original[0].copy(name = "عنوان English", description = "  وصف\nDescription  "), original[1]), storage.load())
@@ -49,7 +49,7 @@ class ProjectMetadataUiTest {
             assertTrue(json.getJSONObject("extension").getBoolean("keep"))
             assertEquals(42, json.getJSONArray("tasks").getJSONObject(0).getInt("extra"))
         }
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithText("عنوان English").assertExists()
         compose.onNodeWithText("  وصف\nDescription  ").assertExists()
     }
@@ -59,20 +59,20 @@ class ProjectMetadataUiTest {
         val restoration = StateRestorationTester(compose)
         restoration.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("   ")
-        compose.onNodeWithText("حفظ").assertIsNotEnabled()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Unsubmitted")
-        compose.onNodeWithText("وصف مختصر").performTextReplacement("Unsaved description")
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("   ")
+        compose.onLocalizedText("Save", "حفظ").assertIsNotEnabled()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Unsubmitted")
+        compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement("Unsaved description")
         restoration.emulateSavedInstanceStateRestore()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Unsubmitted")
-        compose.onNodeWithText("وصف مختصر").assertTextContains("Unsaved description")
-        compose.onNodeWithText("إلغاء").performClick()
-        compose.onNodeWithText("تجاهل التعديلات").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Unsubmitted")
+        compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains("Unsaved description")
+        compose.onLocalizedText("Cancel", "إلغاء").performClick()
+        compose.onDiscardChanges().performClick()
         compose.onNodeWithText("Original").assertExists()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Original")
-        compose.onNodeWithText("وصف مختصر").assertTextContains("Description")
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Original")
+        compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains("Description")
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
@@ -80,21 +80,24 @@ class ProjectMetadataUiTest {
         val original = storage.load()
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Pending edit")
-        compose.onNodeWithText("وصف مختصر").performTextReplacement("Pending description")
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Pending edit")
+        compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement("Pending description")
         var newerBytes = byteArrayOf()
         compose.runOnIdle {
             storage.save(listOf(original[0].copy(blueprint = "Newer saved document"), original[1]))
             newerBytes = file.readBytes()
         }
-        compose.onNodeWithText("حفظ").performClick()
-        compose.onNodeWithText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.").assertExists()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Pending edit")
-        compose.onNodeWithText("وصف مختصر").assertTextContains("Pending description")
-        compose.onNodeWithText("حفظ").assertIsEnabled()
-        compose.onNodeWithText("إلغاء").performClick()
-        compose.onNodeWithText("تجاهل التعديلات").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
+        compose.onLocalizedText(
+            "Could not save the project. Changes were not applied; please retry.",
+            "تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا."
+        ).assertExists()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Pending edit")
+        compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains("Pending description")
+        compose.onLocalizedText("Save", "حفظ").assertIsEnabled()
+        compose.onLocalizedText("Cancel", "إلغاء").performClick()
+        compose.onDiscardChanges().performClick()
         compose.runOnIdle { assertArrayEquals(newerBytes, file.readBytes()) }
     }
     @Test fun transientFailureKeepsMetadataAndRetrySucceeds() = fixture { file, storage ->
@@ -102,15 +105,15 @@ class ProjectMetadataUiTest {
         val original = storage.load()
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Retry name")
-        compose.onNodeWithText("وصف مختصر").performTextReplacement("Retry description")
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Retry name")
+        compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement("Retry description")
         compose.runOnIdle { file.writeText("broken JSON") }
-        compose.onNodeWithText("حفظ").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Retry name")
-        compose.onNodeWithText("وصف مختصر").assertTextContains("Retry description")
+        compose.onLocalizedText("Save", "حفظ").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Retry name")
+        compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains("Retry description")
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.writeBytes(before) }
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.runOnIdle {
             assertEquals(listOf(original[0].copy(name = "Retry name", description = "Retry description"), original[1]), storage.load())
             assertEquals(42, JSONArray(file.readText()).getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getInt("extra"))
@@ -122,9 +125,9 @@ class ProjectMetadataUiTest {
         val restoration = StateRestorationTester(compose)
         restoration.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Pending name")
-        compose.onNodeWithText("وصف مختصر").performTextReplacement("Pending description")
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Pending name")
+        compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement("Pending description")
         lateinit var newer: ByteArray
         compose.runOnIdle {
             storage.save(listOf(original[0].copy(name = "Newer name", blueprint = "Newer blueprint"), original[1]))
@@ -132,19 +135,19 @@ class ProjectMetadataUiTest {
         }
         // Restored pending input must not adopt a newer storage snapshot as its original base.
         restoration.emulateSavedInstanceStateRestore()
-        compose.onNodeWithText("حفظ").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Pending name")
+        compose.onLocalizedText("Save", "حفظ").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Pending name")
         compose.runOnIdle { assertArrayEquals(newer, file.readBytes()) }
-        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
-        compose.onNodeWithText("متابعة التحرير").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Pending name")
-        compose.onNodeWithText("وصف مختصر").assertTextContains("Pending description")
-        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
-        compose.onNodeWithText("تأكيد إعادة التحميل").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Newer name")
+        compose.onLocalizedText("Reload current values", "إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onLocalizedText("Continue editing", "متابعة التحرير").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Pending name")
+        compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains("Pending description")
+        compose.onLocalizedText("Reload current values", "إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onLocalizedText("Confirm reload", "تأكيد إعادة التحميل").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Newer name")
         compose.runOnIdle { assertArrayEquals(newer, file.readBytes()) }
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Reviewed name")
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Reviewed name")
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.runOnIdle {
             assertEquals("Reviewed name", storage.load()[0].name)
             assertEquals("Newer blueprint", storage.load()[0].blueprint)
@@ -155,15 +158,18 @@ class ProjectMetadataUiTest {
     @Test fun failedReloadAndCancelledDismissalRetainPendingMetadata() = fixture { file, storage ->
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Original").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Pending")
-        compose.onNodeWithText("إلغاء").performClick()
-        compose.onNodeWithText("متابعة التحرير").performClick()
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Pending")
+        compose.onLocalizedText("Cancel", "إلغاء").performClick()
+        compose.onLocalizedText("Continue editing", "متابعة التحرير").performClick()
         compose.runOnIdle { file.writeText("broken JSON") }
-        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
-        compose.onNodeWithText("تأكيد إعادة التحميل").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Pending")
-        compose.onNodeWithText("تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا.").assertExists()
+        compose.onLocalizedText("Reload current values", "إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onLocalizedText("Confirm reload", "تأكيد إعادة التحميل").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Pending")
+        compose.onLocalizedText(
+            "Could not save the project. Changes were not applied; please retry.",
+            "تعذّر حفظ المشروع. لم تُعتمد التغييرات؛ حاول مجددًا."
+        ).assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()) }
     }
 

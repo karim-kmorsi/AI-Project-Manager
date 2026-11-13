@@ -39,6 +39,7 @@ class DocumentResultUiTest {
     @Volatile private var unavailablePicker: String? = null
     private val snapshotDirectory get() = File(fixtureCache, "pending-exports")
     private val host get() = checkNotNull(IsolatedWorkflowActivity.current)
+    private fun text(id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     @Before fun prepare() {
         fixtureRoot = compose.activity.fixtureRoot
@@ -73,8 +74,8 @@ class DocumentResultUiTest {
         fixtureRoot.deleteRecursively()
     }
     private fun dashboardAction(id: Int) {
-        compose.onNodeWithContentDescription(instrumentation.targetContext.getString(R.string.dashboard_more)).performClick()
-        compose.onNodeWithText(instrumentation.targetContext.getString(id)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.dashboard_more)).performClick()
+        compose.onNodeWithText(text(id)).performClick()
     }
     private fun launch(action: String) {
         dashboardAction(if (action == Intent.ACTION_CREATE_DOCUMENT) R.string.dashboard_export else R.string.dashboard_backup_preview)
@@ -114,7 +115,7 @@ class DocumentResultUiTest {
         assertTrue(host.notifications.isEmpty())
         export(); deliver(Activity.RESULT_OK, "export.json"); awaitJobs()
         assertArrayEquals(original, File(provider, "export.json").readBytes())
-        assertTrue(host.notifications.contains("تم تصدير النسخة الاحتياطية"))
+        assertTrue(host.notifications.contains(text(R.string.export_complete)))
         assertSnapshotsCleared(); assertLiveUnchanged()
     }
     @Test fun exportSnapshotSurvivesActualActivityRecreationWhilePickerIsOpen() {
@@ -128,7 +129,7 @@ class DocumentResultUiTest {
         deliver(Activity.RESULT_OK, "export.json"); awaitJobs()
         assertArrayEquals(snapshot, File(provider, "export.json").readBytes())
         assertArrayEquals(changed, source.readBytes())
-        assertTrue(host.notifications.contains("تم تصدير النسخة الاحتياطية"))
+        assertTrue(host.notifications.contains(text(R.string.export_complete)))
         assertSnapshotsCleared()
     }
     @Test fun missingExportSnapshotReportsFailureWithoutWritingDestination() {
@@ -136,7 +137,7 @@ class DocumentResultUiTest {
         assertTrue(snapshotDirectory.listFiles()!!.single().delete())
         recreateBehindPicker()
         deliver(Activity.RESULT_OK, "export.json"); awaitJobs()
-        assertTrue(host.notifications.contains("فشل التصدير؛ تحقق من الملف في مكان الحفظ"))
+        assertTrue(host.notifications.contains(text(R.string.export_failed)))
         assertFalse(File(provider, "export.json").exists())
         assertEquals(0, DeterministicDocumentProvider.opens.get())
         assertSnapshotsCleared(); assertLiveUnchanged()
@@ -144,15 +145,15 @@ class DocumentResultUiTest {
     @Test fun exportProviderErrorsPreserveSourceClearSnapshotAndReportFailure() {
         for (name in listOf("unavailable", "denied", "broken-output")) {
             export(); deliver(Activity.RESULT_OK, name); awaitJobs()
-            assertEquals("فشل التصدير؛ تحقق من الملف في مكان الحفظ", host.notifications.last())
+            assertEquals(text(R.string.export_failed), host.notifications.last())
             assertSnapshotsCleared(); assertLiveUnchanged()
         }
     }
     @Test fun cancelledPreviewDoesNotReadProviderOrChangeSavedBytes() {
         preview(); deliver(Activity.RESULT_CANCELED); awaitJobs()
         assertEquals(0, DeterministicDocumentProvider.opens.get())
-        compose.onNodeWithText("معاينة نسخة احتياطية").assertDoesNotExist()
-        compose.onNodeWithText("تعذرت المعاينة").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.backup_preview_title)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.backup_preview_error_title)).assertDoesNotExist()
         assertLiveUnchanged()
     }
     @Test fun unavailableExportPickerClearsPreparedSnapshotAndAllowsRetry() {
@@ -160,7 +161,7 @@ class DocumentResultUiTest {
         dashboardAction(R.string.dashboard_export)
         awaitJobs()
         assertEquals(listOf(Intent.ACTION_CREATE_DOCUMENT), launches.toList())
-        assertEquals(listOf("تعذّر تحضير النسخة الاحتياطية"), host.notifications.toList())
+        assertEquals(listOf(text(R.string.export_prepare_failed)), host.notifications.toList())
         assertSnapshotsCleared(); assertLiveUnchanged()
         assertEquals(0, DeterministicDocumentProvider.opens.get())
         unavailablePicker = null
@@ -171,8 +172,8 @@ class DocumentResultUiTest {
     @Test fun unavailablePreviewPickerReportsErrorWithoutReadingOrChangingData() {
         unavailablePicker = Intent.ACTION_OPEN_DOCUMENT
         dashboardAction(R.string.dashboard_backup_preview)
-        compose.onNodeWithText("تعذرت المعاينة").assertExists()
-        compose.onNodeWithText("تعذّر فتح منتقي الملفات. لم تتغير بياناتك.").assertExists()
+        compose.onNodeWithText(text(R.string.backup_preview_error_title)).assertExists()
+        compose.onNodeWithText(text(R.string.backup_picker_error)).assertExists()
         assertEquals(listOf(Intent.ACTION_OPEN_DOCUMENT), launches.toList())
         assertEquals(0, DeterministicDocumentProvider.opens.get())
         assertLiveUnchanged()
@@ -180,25 +181,25 @@ class DocumentResultUiTest {
     @Test fun selectedBackupUsesRealCallbackAndClosingPreviewIsReadOnly() {
         File(provider, "selected.json").writeText(backup("Selected backup"))
         preview(); deliver(Activity.RESULT_OK, "selected.json"); awaitJobs()
-        compose.onNodeWithText("Selected backup — 1 مهمة").assertExists()
-        compose.onNodeWithText("إغلاق").performClick()
-        compose.onNodeWithText("معاينة نسخة احتياطية").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.backup_preview_project_tasks, "Selected backup", 1)).assertExists()
+        compose.onNodeWithText(text(R.string.generic_close)).performClick()
+        compose.onNodeWithText(text(R.string.backup_preview_title)).assertDoesNotExist()
         assertEquals(1, DeterministicDocumentProvider.opens.get()); assertLiveUnchanged()
     }
     @Test fun malformedAndOversizedSelectedDocumentsReportErrorsWithoutMutatingProjects() {
         for (bytes in listOf("broken JSON".toByteArray(), ByteArray(8 * 1024 * 1024 + 1))) {
             File(provider, "selected.json").writeBytes(bytes)
             preview(); deliver(Activity.RESULT_OK, "selected.json"); awaitJobs()
-            compose.onNodeWithText("تعذرت المعاينة").assertExists()
-            compose.onNodeWithText("إغلاق").performClick()
+            compose.onNodeWithText(text(R.string.backup_preview_error_title)).assertExists()
+            compose.onNodeWithText(text(R.string.generic_close)).performClick()
             assertLiveUnchanged()
         }
     }
     @Test fun deniedAndUnavailablePreviewProvidersReportErrorsAndLeaveDataAlone() {
         for (name in listOf("denied", "unavailable")) {
             preview(); deliver(Activity.RESULT_OK, name); awaitJobs()
-            compose.onNodeWithText("تعذرت المعاينة").assertExists()
-            compose.onNodeWithText("إغلاق").performClick()
+            compose.onNodeWithText(text(R.string.backup_preview_error_title)).assertExists()
+            compose.onNodeWithText(text(R.string.generic_close)).performClick()
             assertLiveUnchanged()
         }
     }
@@ -208,8 +209,8 @@ class DocumentResultUiTest {
         compose.waitUntil(5_000) { DeterministicDocumentProvider.delayedStarted.count == 0L }
         preview(); deliver(Activity.RESULT_CANCELED)
         DeterministicDocumentProvider.releaseDelayed.countDown(); awaitJobs()
-        compose.onNodeWithText("معاينة نسخة احتياطية").assertDoesNotExist()
-        compose.onNodeWithText("تعذرت المعاينة").assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.backup_preview_title)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.backup_preview_error_title)).assertDoesNotExist()
         assertLiveUnchanged()
     }
     @Test fun olderPreviewCannotReplaceNewerSelection() {
@@ -218,10 +219,12 @@ class DocumentResultUiTest {
         preview(); deliver(Activity.RESULT_OK, "delayed.json")
         compose.waitUntil(5_000) { DeterministicDocumentProvider.delayedStarted.count == 0L }
         preview(); deliver(Activity.RESULT_OK, "selected.json")
-        compose.waitUntil(5_000) { compose.onAllNodesWithText("Newer backup — 1 مهمة").fetchSemanticsNodes().isNotEmpty() }
+        val newerBackup = text(R.string.backup_preview_project_tasks, "Newer backup", 1)
+        val olderBackup = text(R.string.backup_preview_project_tasks, "Older backup", 1)
+        compose.waitUntil(5_000) { compose.onAllNodesWithText(newerBackup).fetchSemanticsNodes().isNotEmpty() }
         DeterministicDocumentProvider.releaseDelayed.countDown(); awaitJobs()
-        compose.onNodeWithText("Newer backup — 1 مهمة").assertExists()
-        compose.onNodeWithText("Older backup — 1 مهمة").assertDoesNotExist()
+        compose.onNodeWithText(newerBackup).assertExists()
+        compose.onNodeWithText(olderBackup).assertDoesNotExist()
         assertLiveUnchanged()
     }
 }

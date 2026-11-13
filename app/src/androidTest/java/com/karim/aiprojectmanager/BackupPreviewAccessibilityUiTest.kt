@@ -62,19 +62,22 @@ class BackupPreviewAccessibilityUiTest {
                     }
                 }
             }
-            val close = compose.onNodeWithText("إغلاق").assertIsDisplayed().assertHasClickAction()
+            val close = compose.onLocalizedText("Close", "إغلاق").assertIsDisplayed().assertHasClickAction()
             val closeBounds = close.fetchSemanticsNode().boundsInRoot
-            compose.onNodeWithText("عدد المشاريع: 31 | عدد المهام: 0").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_counts, 31, 0))
+                .performScrollTo().assertIsDisplayed()
             (1..30).forEach { index ->
-                compose.onNodeWithText("${projectName(index)} — 0 مهمة").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText(isolated.getString(R.string.backup_preview_project_tasks, projectName(index), 0))
+                    .performScrollTo().assertIsDisplayed()
                 close.assertIsDisplayed()
                 assertEquals(closeBounds, close.fetchSemanticsNode().boundsInRoot)
             }
-            compose.onNodeWithText("${projectName(31)} — 0 مهمة").assertDoesNotExist()
-            compose.onNodeWithText("تُعرض أول 30 مشروعًا فقط").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("معاينة فقط: لن يتم استبدال أو دمج أي بيانات.").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_project_tasks, projectName(31), 0))
+                .assertDoesNotExist()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_limit)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_read_only)).performScrollTo().assertIsDisplayed()
             close.assertIsDisplayed().performClick()
-            compose.onNodeWithText("معاينة نسخة احتياطية").assertDoesNotExist()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_title)).assertDoesNotExist()
             compose.runOnIdle {
                 assertEquals(1, dismissals)
                 assertEquals(0, exports)

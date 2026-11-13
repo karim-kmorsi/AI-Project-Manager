@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -64,7 +65,7 @@ class ProjectWorkflowUiTest {
             assertTrue(saved.id.isNotBlank())
             assertEquals(ProjectItem(saved.id, "Created project", "Saved description"), saved)
         }
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithText("Created project").assertExists()
     }
 
@@ -75,13 +76,13 @@ class ProjectWorkflowUiTest {
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Task project").performClick()
         // ScrollableTabRow can place the Tasks tab off screen on narrow CI displays.
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("إضافة").assertIsNotEnabled()
-        compose.onNodeWithText("مهمة جديدة").performTextInput("   ")
-        compose.onNodeWithText("إضافة").assertIsNotEnabled()
-        compose.onNodeWithText("مهمة جديدة").performTextInput("New task  ")
-        compose.onNodeWithText("إضافة").performClick()
-        compose.onNodeWithText("إضافة").assertIsNotEnabled()
+        compose.selectProjectTab(3)
+        compose.onLocalizedText("Add", "إضافة").assertIsNotEnabled()
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextInput("   ")
+        compose.onLocalizedText("Add", "إضافة").assertIsNotEnabled()
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextInput("New task  ")
+        compose.onLocalizedText("Add", "إضافة").performClick()
+        compose.onLocalizedText("Add", "إضافة").assertIsNotEnabled()
         compose.onNodeWithText("New task").assertExists()
         var taskId = ""
         compose.runOnIdle {
@@ -90,28 +91,30 @@ class ProjectWorkflowUiTest {
             assertTrue(taskId.isNotBlank())
             assertEquals("NOT_STARTED", task.status)
         }
-        for ((button, status) in listOf(
-            "قيد التنفيذ" to "IN_PROGRESS",
-            "كود غير متحقق" to "IMPLEMENTED_UNVERIFIED",
-            "تم التحقق" to "VERIFIED"
+        for ((button, arabicButton, status, statusLabel, arabicStatusLabel) in listOf(
+            listOf("In progress", "قيد التنفيذ", "IN_PROGRESS", "In progress", "قيد التنفيذ"),
+            listOf("Implemented, unverified", "كود غير متحقق", "IMPLEMENTED_UNVERIFIED", "Implemented, unverified", "منفذة دون تحقق"),
+            listOf("Mark verified", "تم التحقق", "VERIFIED", "Manually verified", "موسومة كمتحقق منها يدويًا")
         )) {
             // A task card can extend past the viewport on the hosted emulator.
             val taskList = compose.onNode(hasScrollToIndexAction())
-            taskList.performScrollToNode(hasText(button))
-            compose.onNodeWithText(button).performScrollTo().assertIsDisplayed().performClick()
+            val actionMatcher = hasText(button) or hasText(arabicButton)
+            taskList.performScrollToNode(actionMatcher)
+            compose.onNode(actionMatcher).performScrollTo().assertIsDisplayed().performClick()
             compose.runOnIdle {
                 assertEquals(
                     listOf(active.copy(tasks = listOf(TaskItem(taskId, "New task", status))), untouched),
                     ProjectStorage(file).load()
                 )
             }
-            taskList.performScrollToNode(hasText(status))
-            compose.onNodeWithText(status).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
+            val statusMatcher = hasText(statusLabel) or hasText(arabicStatusLabel)
+            taskList.performScrollToNode(statusMatcher)
+            compose.onAllNodes(statusMatcher).onFirst().performScrollTo().assertIsDisplayed()
+            compose.selectProjectTab(0)
             compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_manual_count, taskCountExpression(if (status == "VERIFIED") 1 else 0, 1))).assertExists()
-            compose.onNodeWithText("المهام").performScrollTo().performClick()
+            compose.selectProjectTab(3)
         }
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         // The other project has one verified task too, so use the unique overview assertion above.
         compose.onNodeWithText("Task project").assertExists()
     }
@@ -139,20 +142,21 @@ class ProjectWorkflowUiTest {
         }
         compose.onNodeWithContentDescription(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_more)).performClick()
         compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_backup_preview)).performClick()
-        compose.onNodeWithText("معاينة نسخة احتياطية").assertExists()
-        compose.onNodeWithText("عدد المشاريع: 1 | عدد المهام: 1").assertExists()
-        compose.onNodeWithText("Backup project — 1 مهمة").assertExists()
-        compose.onNodeWithText("إغلاق").performClick()
-        compose.onNodeWithText("معاينة نسخة احتياطية").assertDoesNotExist()
+        compose.onBackupPreview().assertExists()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        compose.onNodeWithText(context.getString(R.string.backup_preview_counts, 1, 1)).assertExists()
+        compose.onNodeWithText(context.getString(R.string.backup_preview_project_tasks, "Backup project", 1)).assertExists()
+        compose.onLocalizedText("Close", "إغلاق").performClick()
+        compose.onBackupPreview().assertDoesNotExist()
         compose.runOnIdle {
             assertEquals(1, dismissals)
             assertArrayEquals(original, file.readBytes())
             error.value = "Invalid backup; data unchanged"
         }
-        compose.onNodeWithText("تعذرت المعاينة").assertExists()
+        compose.onLocalizedText("Preview unavailable", "تعذّرت المعاينة").assertExists()
         compose.onNodeWithText("Invalid backup; data unchanged").assertExists()
-        compose.onNodeWithText("إغلاق").performClick()
-        compose.onNodeWithText("تعذرت المعاينة").assertDoesNotExist()
+        compose.onLocalizedText("Close", "إغلاق").performClick()
+        compose.onLocalizedText("Preview unavailable", "تعذّرت المعاينة").assertDoesNotExist()
         compose.onNodeWithText("Local project").assertExists()
         compose.runOnIdle {
             assertEquals(2, dismissals)

@@ -50,8 +50,7 @@ internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPre
             .padding(horizontal = ProjectSpacing.screen, vertical = ProjectSpacing.xSmall)
             .semantics { isTraversalGroup = true }, verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(ProjectSpacing.small)) {
-            // Reuse the untouched transparent foreground. The separate launcher background
-            // belongs to adaptive icons, not the Dashboard; no bitmap derivative is created.
+            // Keep the dashboard logo transparent so its center follows the selected theme.
             Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null,
                 modifier = Modifier.size(72.dp).testTag("dashboard_logo"), contentScale = ContentScale.Fit)
             Text(buildAnnotatedString {

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -62,54 +63,55 @@ class CorruptDraftUiTest {
             }
             fun openEditor() {
                 compose.onNodeWithText(project.name).performClick()
-                compose.onNodeWithText(tab).performScrollTo().performClick()
+                compose.selectDocumentTab(tab)
             }
             fun assertPreserved() = compose.runOnIdle {
                 assertArrayEquals(corruptBytes, corruptFile.readBytes())
                 assertArrayEquals(originalProjects, file.readBytes())
             }
             openEditor()
-            compose.onNodeWithText("تعذّر حفظ أو قراءة المسودة. لم تتغير بياناتك؛ التحرير متوقف حتى الاحتفاظ بالمسودة.").assertExists()
-            compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Committed A")
-            compose.onNodeWithText("حفظ").assertIsNotEnabled()
+            compose.onNodeWithText(isolatedContext.getString(R.string.editor_recovery_error)).assertExists()
+            compose.onDocumentContent().assertTextContains("Committed A")
+            compose.onLocalizedText("Save", "حفظ").assertIsNotEnabled()
             assertPreserved()
-            compose.onNodeWithText("رجوع").performClick()
-            // A corrupt on-disk draft is preserved data, not an unsaved edit that traps navigation.
-            compose.onNodeWithText("مشاريعي").assertExists()
+            compose.pressProjectBack()
+            compose.onNodeWithText(isolatedContext.getString(R.string.dashboard_my_projects)).assertExists()
             assertPreserved()
             openEditor()
-            compose.onNodeWithText("محتوى المستند").assertIsNotEnabled()
-            compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
-            compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_manual_count, taskCountExpression(0, 0))).assertExists()
-            compose.onNodeWithText(tab).performScrollTo().performClick()
+            compose.onDocumentContent().assertIsNotEnabled()
+            compose.selectProjectTab(0)
+            compose.onNodeWithText(isolatedContext.getString(
+                R.string.dashboard_manual_count, taskCountExpression(0, 0)
+            )).assertExists()
+            compose.selectDocumentTab(tab)
             assertPreserved()
             if (failPreservation) {
-                compose.onNodeWithText("الاحتفاظ بالمسودة ومتابعة التحرير").performClick()
-                compose.onNodeWithText("تعذّر الاحتفاظ بالمسودة؛ لم تُحذف أي بيانات. حاول مجددًا؛ ستبقى التعديلات غير المحفوظة محمية من المغادرة.").assertExists()
-                compose.onNodeWithText("محتوى المستند").assertIsNotEnabled()
-                compose.onNodeWithText("حفظ").assertIsNotEnabled()
+                compose.onNodeWithText(isolatedContext.getString(R.string.editor_preserve_and_continue)).performClick()
+                compose.onNodeWithText(isolatedContext.getString(R.string.editor_preservation_failed)).assertExists()
+                compose.onDocumentContent().assertIsNotEnabled()
+                compose.onLocalizedText("Save", "حفظ").assertIsNotEnabled()
                 assertPreserved()
-                compose.onNodeWithText("رجوع").performClick()
-                compose.onNodeWithText("مشاريعي").assertExists()
+                compose.pressProjectBack()
+                compose.onNodeWithText(isolatedContext.getString(R.string.dashboard_my_projects)).assertExists()
                 assertPreserved()
                 compose.runOnIdle { assertTrue(preservationBlocker.delete()) }
                 openEditor()
             }
-            compose.onNodeWithText("الاحتفاظ بالمسودة ومتابعة التحرير").performClick()
-            compose.onNodeWithText("محتوى المستند").assertIsEnabled()
+            compose.onNodeWithText(isolatedContext.getString(R.string.editor_preserve_and_continue)).performClick()
+            compose.onDocumentContent().assertIsEnabled()
             compose.runOnIdle {
                 val preserved = File(draftDir, "preserved").walkTopDown().filter { it.isFile }.toList()
                 assertEquals(1, preserved.size)
                 assertArrayEquals(corruptBytes, preserved.single().readBytes())
                 assertArrayEquals(originalProjects, file.readBytes())
             }
-            compose.onNodeWithText("محتوى المستند").performTextReplacement("Edited C")
-            compose.onNodeWithText("حفظ").performClick()
-            compose.onNodeWithText("تم الحفظ").assertExists()
-            compose.onNodeWithText("رجوع").performClick()
-            compose.onNodeWithText("مشاريعي").assertExists()
+            compose.onDocumentContent().performTextReplacement("Edited C")
+            compose.onLocalizedText("Save", "حفظ").performClick()
+            compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
+            compose.pressProjectBack()
+            compose.onNodeWithText(isolatedContext.getString(R.string.dashboard_my_projects)).assertExists()
             openEditor()
-            compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Edited C")
+            compose.onDocumentContent().assertTextContains("Edited C")
             compose.runOnIdle {
                 val expected = if (document == "blueprint") project.copy(blueprint = "Edited C")
                     else project.copy(roadmap = "Edited C")

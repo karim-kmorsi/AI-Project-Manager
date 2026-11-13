@@ -100,13 +100,14 @@ class LocaleDirectionUiTest {
                 }
             }
         }
-        fun labelCenter() = compose.onNodeWithText("Dark", useUnmergedTree = true)
+        val darkLabel = hasText("Dark") or hasText("داكن")
+        fun labelCenter() = compose.onNode(darkLabel, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.center.x
-        fun rowCenter() = compose.onNodeWithText("Dark").fetchSemanticsNode().boundsInRoot.center.x
+        fun rowCenter() = compose.onNode(darkLabel).fetchSemanticsNode().boundsInRoot.center.x
         assertTrue(labelCenter() < rowCenter())
         compose.runOnIdle { locale.value = "ar" }
         assertTrue(labelCenter() > rowCenter())
-        compose.onNodeWithText("Dark").assertIsSelected()
+        compose.onAppearanceMode("Dark").assertIsSelected()
     }
 
     @Test fun isolatedCountHasLeftToRightGlyphOrderInBothLocales() {
@@ -138,8 +139,8 @@ class LocaleDirectionUiTest {
         val before = file.readBytes()
         changeLocale("ar")
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
-        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectProjectTab(1)
+        val field = compose.onDocumentContent().assertTextContains("Original")
         val layout = textLayout(field)
         assertEquals(ResolvedTextDirection.Ltr, layout.getParagraphDirection(0))
         assertEquals(0f, layout.getLineLeft(0), 1f)
@@ -149,8 +150,8 @@ class LocaleDirectionUiTest {
     @Test fun arabicRoadmapInputStartsAtRightUnderEnglishLocale() = withProject { file, _ ->
         val before = file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("Roadmap").performScrollTo().performClick()
-        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectProjectTab(2)
+        val field = compose.onDocumentContent().assertTextContains("Original")
         compose.mainClock.autoAdvance = false
         field.performTextReplacement("خطة عربية")
         compose.mainClock.advanceTimeBy(64)
@@ -166,8 +167,8 @@ class LocaleDirectionUiTest {
         val before = file.readBytes()
         changeLocale("ar")
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
-        val field = compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectProjectTab(1)
+        val field = compose.onDocumentContent().assertTextContains("Original")
         val text = "خطة عربية\nBlueprint task-42\n{\"count\":12345}"
         compose.mainClock.autoAdvance = false
         field.performTextReplacement(text)
@@ -218,34 +219,34 @@ class LocaleDirectionUiTest {
     @Test fun metadataDirectionChangeRetainsInputAndDiscardConfirmation() = withProject { file, changeLocale ->
         val before = file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("تعديل المشروع").performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("مشروع Pending 123")
+        compose.onEditProject().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("مشروع Pending 123")
         changeLocale("ar")
-        compose.onNodeWithText("اسم المشروع").assertTextContains("مشروع Pending 123")
-        compose.onNodeWithText("إلغاء").performClick()
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("متابعة التحرير").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("مشروع Pending 123")
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("مشروع Pending 123")
+        compose.onLocalizedText("Cancel", "إلغاء").performClick()
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Continue editing", "متابعة التحرير").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("مشروع Pending 123")
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
     @Test fun documentDirectionChangeRetainsDraftAndDirtyNavigationGuard() = withProject { file, changeLocale ->
         val before = file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectProjectTab(1)
+        compose.onDocumentContent().assertTextContains("Original")
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("مسودة Blueprint 123")
+        compose.onDocumentContent().performTextReplacement("مسودة Blueprint 123")
         compose.mainClock.advanceTimeBy(64)
         changeLocale("ar")
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("محتوى المستند").assertTextContains("مسودة Blueprint 123")
-        compose.onNodeWithText("رجوع").performClick()
+        compose.onDocumentContent().assertTextContains("مسودة Blueprint 123")
+        compose.pressProjectBack()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("محتوى المستند").assertTextContains("مسودة Blueprint 123")
+        compose.onDocumentContent().assertTextContains("مسودة Blueprint 123")
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 }

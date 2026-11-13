@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -62,8 +63,8 @@ class ManualSaveNavigationUiTest {
 
     private fun openEditor(tab: String) {
         compose.onNodeWithText("Manual save project").performClick()
-        compose.onNodeWithText(tab).performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Original")
+        compose.selectDocumentTab(tab)
+        compose.onDocumentContent().assertTextContains("Original")
     }
 
     private fun editedProject(project: ProjectItem, document: String) =
@@ -74,31 +75,31 @@ class ManualSaveNavigationUiTest {
         val original = file.readBytes()
         openEditor(tab)
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Manual edit")
+        compose.onDocumentContent().performTextReplacement("Manual edit")
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle {
             assertArrayEquals(original, file.readBytes())
             assertEquals(DraftStorage.Draft("Manual edit", "Original"), drafts.load(project.id, document))
         }
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تم الحفظ").assertExists()
+        compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
         compose.runOnIdle {
             assertEquals(listOf(editedProject(project, document), ProjectItem("other", "Other project", "Never change")), storage.load())
             assertNull(drafts.load(project.id, document))
         }
         compose.mainClock.autoAdvance = true
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_my_projects)).assertExists()
         compose.onNodeWithText(project.name).performClick()
-        compose.onNodeWithText(tab).performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Manual edit")
+        compose.selectDocumentTab(tab)
+        compose.onDocumentContent().assertTextContains("Manual edit")
     }
 
     private fun checkSaveFailure(document: String, tab: String) = withIsolatedProject { file, storage, project, drafts ->
         openEditor(tab)
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Manual edit")
+        compose.onDocumentContent().performTextReplacement("Manual edit")
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle {
             assertEquals(DraftStorage.Draft("Manual edit", "Original"), drafts.load(project.id, document))
@@ -106,22 +107,25 @@ class ManualSaveNavigationUiTest {
             file.writeText("invalid JSON to block writes")
         }
         val rejectedBytes = file.readBytes()
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن").assertExists()
+        compose.onLocalizedText(
+            "Could not save the project. The recovery draft is retained when possible.",
+            "تعذّر حفظ المشروع. ستُحتفظ بمسودة الاسترداد إن أمكن."
+        ).assertExists()
         // Navigation includes animated tab scrolling. A paused clock deadlocks performScrollTo
         // when Roadmap has moved Overview off screen. The corrupt fixture still blocks autosave.
         compose.mainClock.autoAdvance = true
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         // Render the guard before asserting it.
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
-        compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
+        compose.selectProjectTab(0)
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Manual edit")
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
+        compose.onDocumentContent().assertTextContains("Manual edit")
         compose.runOnIdle {
             assertArrayEquals(rejectedBytes, file.readBytes())
             assertEquals(DraftStorage.Draft("Manual edit", "Original"), drafts.load(project.id, document))
@@ -129,14 +133,14 @@ class ManualSaveNavigationUiTest {
             file.delete()
             storage.save(listOf(project, ProjectItem("other", "Other project", "Never change")))
         }
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تم الحفظ").assertExists()
+        compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
         compose.runOnIdle {
             assertEquals("Manual edit", if (document == "blueprint") storage.load()[0].blueprint else storage.load()[0].roadmap)
         }
         compose.mainClock.autoAdvance = true
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.dashboard_my_projects)).assertExists()
     }
 }

@@ -164,7 +164,7 @@ internal fun ScrollableDocumentBody(
         val body = children[1].measure(Constraints.fixed(allocation.bodyWidth, allocation.bodyHeight))
         layout(width, height) {
             save.place(width - save.width, allocation.verticalPadding)
-            body.placeRelative(0, if (allocation.sideAction) 0 else allocation.verticalPadding + save.height)
+            body.place(0, if (allocation.sideAction) 0 else allocation.verticalPadding + save.height)
         }
     }
 }

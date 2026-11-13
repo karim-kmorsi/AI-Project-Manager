@@ -27,8 +27,8 @@ class ActivityRecreationUiTest {
 
     private fun openEditor(tab: String) {
         compose.onNodeWithText("Lifecycle project").performClick()
-        compose.onNodeWithText(tab).performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertExists()
+        compose.selectDocumentTab(tab)
+        compose.onDocumentContent().assertExists()
     }
     private fun pendingDraft(tab: String, document: String) {
         val file = File(compose.activity.filesDir, "projects.json")
@@ -36,19 +36,19 @@ class ActivityRecreationUiTest {
         val drafts = DraftStorage(File(compose.activity.filesDir, "recovery-drafts"))
         openEditor(tab)
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending تعديل 123")
+        compose.onDocumentContent().performTextReplacement("Pending تعديل 123")
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle { assertEquals("Pending تعديل 123", drafts.load("active", document)?.text); assertArrayEquals(saved, file.readBytes()) }
         compose.activityRule.scenario.recreate()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Pending تعديل 123")
+        compose.onDocumentContent().assertTextContains("Pending تعديل 123")
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
+        compose.onUnsavedChanges().assertExists()
         compose.runOnIdle { assertArrayEquals(saved, file.readBytes()) }
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("حفظ").performClick()
+        compose.onLocalizedText("Save", "حفظ").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle {
             val result = ProjectStorage(file).load()
@@ -63,31 +63,31 @@ class ActivityRecreationUiTest {
         val bytes = file.readBytes()
         val blocked = File(file.path + ".new").apply { assertTrue(mkdir()); File(this, "keep-blocked").writeText("Disposable failure injection") }
         openEditor(tab)
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Failed then retained")
-        compose.onNodeWithText("حفظ").performClick()
-        compose.onNodeWithText("فشل حفظ المشروع — المسودة الاحتياطية محفوظة إن أمكن").assertExists()
+        compose.onDocumentContent().performTextReplacement("Failed then retained")
+        compose.onLocalizedText("Save", "حفظ").performClick()
+        compose.onNodeWithText(compose.activity.getString(R.string.editor_save_error)).assertExists()
         compose.runOnIdle { assertArrayEquals(bytes, file.readBytes()) }
         compose.activityRule.scenario.recreate()
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Failed then retained")
-        compose.onNodeWithText(nextTab).performScrollTo().performClick()
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
+        compose.onDocumentContent().assertTextContains("Failed then retained")
+        compose.selectDocumentTab(nextTab)
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
         compose.runOnIdle {
             assertArrayEquals(bytes, file.readBytes())
             assertEquals("Failed then retained", DraftStorage(File(file.parentFile, "recovery-drafts")).load("active", document)?.text)
             assertTrue(blocked.deleteRecursively())
         }
-        compose.onNodeWithText("حفظ").performClick()
-        compose.onNodeWithText("تم الحفظ").assertExists()
+        compose.onLocalizedText("Save", "حفظ").performClick()
+        compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
         compose.runOnIdle {
             val expected = original.toMutableList()
             expected[0] = if (document == "blueprint") expected[0].copy(blueprint = "Failed then retained") else expected[0].copy(roadmap = "Failed then retained")
             assertEquals(expected, ProjectStorage(file).load())
         }
         compose.activityRule.scenario.recreate()
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Failed then retained")
+        compose.onDocumentContent().assertTextContains("Failed then retained")
     }
 }

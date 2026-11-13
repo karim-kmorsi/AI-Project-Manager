@@ -27,14 +27,14 @@ class RapidTypingUiTest {
         try {
             compose.setContent { ProjectManagerApp(store) }
             compose.onNodeWithText("Rapid typing test").performClick()
-            compose.onNodeWithText("Blueprint").performClick()
-            compose.onNodeWithText("محتوى المستند").performTextClearance()
-            compose.onNodeWithText("محتوى المستند").performTextInput("first second third")
+            compose.selectProjectTab(1)
+            compose.onDocumentContent().performTextClearance()
+            compose.onDocumentContent().performTextInput("first second third")
             compose.waitUntil(15000) {
                 store.load().single().blueprint == "first second third"
             }
             assertEquals("first second third", store.load().single().blueprint)
-            compose.onNodeWithText("تم الحفظ").assertExists()
+            compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
         } finally {
             // Test data has an isolated, unique directory; no real app project file is touched.
             folder.deleteRecursively()

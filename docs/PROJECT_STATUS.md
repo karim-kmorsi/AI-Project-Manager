@@ -5,6 +5,56 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Final autonomous stabilization and delivery pass — 2026-11-14
+
+Work was performed on the owner-specified `feature/github-snapshot-preview` branch at the
+expected starting HEAD `13cb04503ec609e3670253624dba5e413f4c52df`. The existing stash was
+preserved. The batch corrected an RTL document-body overlap and made UI tests use stable project
+tab/back semantics and English/Arabic selectors rather than relying on one locale's literal
+strings. Existing persistence and storage assertions were retained.
+
+Final local Gradle checks passed: Debug/VNext assembly, Debug/VNext host tests, VNext Android-test
+APK assembly, and Debug/VNext Lint. Each host-test variant ran **118 tests, 118 passed**. The full
+API 35 VNext instrumentation report contains **220 tests: 215 passed, 0 failed, 5 skipped**;
+skipped cases are not counted as passes. Debug and VNext Lint each reported zero errors, 27
+warnings, and one hint. An older retained Debug instrumentation report dated 2026-11-12 records
+206 tests with 16 failures and 5 skips, including locale-sensitive text and task-control
+selectors. Those assertions were investigated and the updated source was subsequently exercised
+by the full passing VNext suite; the old Debug report was not overwritten or counted as passing.
+Instrumentation uses isolated synthetic data, not owner project data.
+
+The `CI_Android_35_Repro` API 35 AVD (`emulator-5554`) booted and remained ADB/System-UI
+responsive. Its configured guest RAM is 6 GiB; the run used SwiftShader. No AVD wipe, deletion,
+or RAM increase occurred. At the final host snapshot, about 0.9 GiB RAM was available, 8.2 GiB
+swap was in use, disk had 324 GiB free, and the emulator process briefly used about 313% CPU.
+Do not increase AVD RAM without new evidence. The instrumentation runner's `uninstall_after_test`
+setting explains why the package and private preferences disappeared after testing; the final
+APK was reinstalled with `adb install -r` and launched. No project data was present afterward.
+
+Appearance and language were visually checked in English/Arabic and Light/Dark. The final
+installed app was set to Dark/English and retained those preferences after force-stop/relaunch.
+The dashboard's in-app logo renders without the launcher halo. **The launcher logo defect is
+not resolved:** the final adaptive icon still shows a black circular ring in the Pixel app
+drawer (`app/build/acceptance-screenshots/final-launcher-adaptive.png`). A static-icon experiment
+removed the black ring but produced a white circular backplate and an undersized mark, so that
+approach was rejected and the adaptive resources were restored. Changing the background alpha
+from zero to one did not change the rendered ring and was reverted. The asset's transparent
+background alone did not establish a visually acceptable result. Dark/Light/Arabic/English and
+launcher evidence is retained under `app/build/acceptance-screenshots/`.
+
+The final VNext APK is `app/build/outputs/apk/vnext/app-vnext.apk`, package
+`com.karim.aiprojectmanager.vnext`, version `0.1.0-vnext` (code 1). SHA-256:
+`f021201b6852aa0074b8bf08eca60948d460d558a18dd9708527b10c8aaadd7c`. Signing-certificate
+SHA-256: `301a9e4f477d0e53116caaa7bb8856afce8fd721aa0e4897d4b8ce7139e6e65f`. The APK was
+update-installed and launched on the emulator. No physical device was targeted.
+
+No new live GitHub authorization or API acceptance was performed in this batch. The prior live
+repository browser results documented above exposed `AIAndroidApp` and `ZOOM-CCTV-Manager`, but
+not `AI-Project-Manager`; the app is currently disconnected after instrumentation cleanup.
+Target-repository access, its import/refresh/Actions/Issues workflows, launcher-halo acceptance,
+physical-device checks, and other open release gates remain pending. No remote GitHub write,
+push, merge, or main-branch change occurred. **NOT Ready for Release**.
+
 ## Final logo and appearance refinements — 2026-11-14
 
 The dashboard logo's central cutout contained 29,822 low-alpha dark pixels in

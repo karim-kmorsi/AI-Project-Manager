@@ -39,20 +39,26 @@ class TaskContextRestorationUiTest {
     private fun list() = compose.onNode(hasScrollToIndexAction())
     private fun open(name: String) {
         compose.onNodeWithText(name).performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        compose.selectProjectTab(3)
     }
     private fun select(query: String, label: String) {
         list().performScrollToIndex(0)
-        compose.onNodeWithText("بحث في المهام").performTextReplacement(query)
-        compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
-        compose.onNode(hasText(label) and hasAnyAncestor(isPopup())).performClick()
+        compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement(query)
+        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
+        val englishLabel = when (label) {
+            "قيد التنفيذ" -> "In progress"
+            "لم تبدأ" -> "Not started"
+            else -> label
+        }
+        compose.onAllNodes(hasText(label) or hasText(englishLabel)).onLast().performClick()
     }
     private fun position() = list().fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
     private fun assertContext(query: String, status: String, scroll: Float) {
         assertEquals("Restore scroll before scrolling to inspect controls", scroll, position(), 1f)
         list().performScrollToIndex(0)
-        compose.onNodeWithText("بحث في المهام").assertTextContains(query)
-        compose.onNodeWithText("حالة المهام: $status").assertExists()
+        compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains(query)
+        val englishStatus = if (status == "قيد التنفيذ") "In progress" else "Not started"
+        compose.onLocalizedText("Task status: $englishStatus", "حالة المهام: $status").assertExists()
         compose.onNode(isPopup()).assertDoesNotExist()
         assertArrayEquals(original, file.readBytes())
     }
@@ -63,12 +69,12 @@ class TaskContextRestorationUiTest {
         val scroll = position()
         compose.activityRule.scenario.recreate()
         assertContext("  A TASK  ", "قيد التنفيذ", scroll)
-        compose.onNodeWithText("حالة المهام: قيد التنفيذ").performScrollTo().performClick()
+        compose.onLocalizedText("Task status: In progress", "حالة المهام: قيد التنفيذ").performScrollTo().performClick()
         compose.onNode(isPopup()).assertExists()
         compose.activityRule.scenario.recreate()
         compose.onNode(isPopup()).assertDoesNotExist()
-        compose.onNodeWithText("بحث في المهام").assertTextContains("  A TASK  ")
-        compose.onNodeWithText("حالة المهام: قيد التنفيذ").assertExists()
+        compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains("  A TASK  ")
+        compose.onLocalizedText("Task status: In progress", "حالة المهام: قيد التنفيذ").assertExists()
         assertArrayEquals(original, file.readBytes())
     }
     @Test fun tabRoundTripAndProjectSwitchesRetainIndependentContextsWithoutWrites() {
@@ -76,22 +82,22 @@ class TaskContextRestorationUiTest {
         select("A task", "قيد التنفيذ")
         list().performScrollToIndex(12)
         val a = position()
-        compose.onNodeWithText("Roadmap").performScrollTo().performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
+        compose.selectProjectTab(2)
+        compose.selectProjectTab(3)
         assertEquals(a, position(), 1f)
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         open("Unrelated project")
         assertEquals(0f, position(), 1f)
-        compose.onNodeWithText("بحث في المهام").assert(SemanticsMatcher.expectValue(
+        compose.onLocalizedText("Search tasks", "بحث في المهام").assert(SemanticsMatcher.expectValue(
             SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
-        compose.onNodeWithText("حالة المهام: كل الحالات").assertExists()
+        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").assertExists()
         select("B task", "لم تبدأ")
         list().performScrollToIndex(5)
         val b = position()
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         open("Lifecycle project")
         assertContext("A task", "قيد التنفيذ", a)
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         open("Unrelated project")
         assertContext("B task", "لم تبدأ", b)
     }
@@ -102,7 +108,7 @@ class TaskContextRestorationUiTest {
         select("A task", "قيد التنفيذ")
         list().performScrollToIndex(12)
         val a = position()
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         open("Unrelated project")
         select("B task", "لم تبدأ")
         list().performScrollToIndex(5)
@@ -123,7 +129,7 @@ class TaskContextRestorationUiTest {
         compose.activityRule.scenario.recreate()
         phase("restoration-assertions-start")
         assertContext("B task", "لم تبدأ", b)
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         open("Lifecycle project")
         assertContext("A task", "قيد التنفيذ", a)
         phase("restoration-assertions-passed")

@@ -77,24 +77,24 @@ class SavedStatePayloadUiTest {
         val pending = "x".repeat(pendingUnits)
         when (editor) {
             "metadata" -> {
-                compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-                compose.onNodeWithText("وصف مختصر").performTextReplacement(pending)
+                compose.onNodeWithText(compose.activity.getString(R.string.project_edit_title)).performScrollTo().performClick()
+                compose.onLocalizedText("Short description", "وصف مختصر").performTextReplacement(pending)
             }
             "title" -> {
-                compose.onNodeWithText("المهام").performScrollTo().performClick()
+                compose.selectProjectTab(3)
                 compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Task 0"))
-                compose.onAllNodesWithText("تعديل العنوان").onFirst().performClick()
-                compose.onNodeWithText("عنوان المهمة").performTextReplacement(pending)
+                compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان")).onFirst().performClick()
+                compose.onLocalizedText("Task title", "عنوان المهمة").performTextReplacement(pending)
             }
             else -> {
-                compose.onNodeWithText(editor).performScrollTo().performClick()
+                compose.selectDocumentTab(editor)
                 phase("editor-readiness-start")
                 // Finish loading the editor before freezing autosave time.
-                compose.onNodeWithText("محتوى المستند").assertTextContains("B".repeat(units))
+                compose.onDocumentContent().assertTextContains("B".repeat(units))
                 phase("editor-ready")
                 compose.mainClock.autoAdvance = false
                 phase("pending-input-start")
-                compose.onNodeWithText("محتوى المستند").performTextReplacement(pending)
+                compose.onDocumentContent().performTextReplacement(pending)
                 phase("pending-input-entered")
                 compose.mainClock.advanceTimeByFrame()
             }
@@ -114,7 +114,11 @@ class SavedStatePayloadUiTest {
         phase("pending-recreated")
         if (editor == "Blueprint") compose.mainClock.advanceTimeByFrame()
         phase("restoration-assertions-start")
-        compose.onNodeWithText(when (editor) { "metadata" -> "وصف مختصر"; "title" -> "عنوان المهمة"; else -> "محتوى المستند" }).assertTextContains(pending)
+        when (editor) {
+            "metadata" -> compose.onLocalizedText("Short description", "وصف مختصر").assertTextContains(pending)
+            "title" -> compose.onLocalizedText("Task title", "عنوان المهمة").assertTextContains(pending)
+            else -> compose.onDocumentContent().assertTextContains(pending)
+        }
         assertArrayEquals(original, file.readBytes())
         phase("restoration-assertions-passed")
     }

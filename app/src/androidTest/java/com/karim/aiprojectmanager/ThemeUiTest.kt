@@ -79,7 +79,7 @@ class ThemeUiTest {
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
         compose.onNode(hasClickAction() and hasContentDescription(settings)).performClick()
         compose.onNodeWithText("Follow System").assertDoesNotExist()
-        compose.onNodeWithText("Dark").performScrollTo().assertIsSelected()
+        compose.onAppearanceMode("Dark").performScrollTo().assertIsSelected()
     }
     private fun select(label: String, fixture: Fixture) {
         compose.onNodeWithText(label).performScrollTo().performClick()
@@ -97,7 +97,7 @@ class ThemeUiTest {
         assertEquals(1, f.store.writes)
         openSettings()
         assertBackground(f, true)
-        compose.onNodeWithText("Light").assertIsDisplayed()
+        compose.onAppearanceMode("Light").assertIsDisplayed()
         compose.onNodeWithText("Follow System").assertDoesNotExist()
         select("Light", f)
         assertBackground(f, false)
@@ -116,8 +116,8 @@ class ThemeUiTest {
         assertEquals(ThemeMode.DARK, f.controller.state.value.mode)
         assertEquals(0, f.store.writes)
         openSettings()
-        compose.onNodeWithText("Dark").assertIsSelected()
-        compose.onNodeWithText("Light").assertExists()
+        compose.onAppearanceMode("Dark").assertIsSelected()
+        compose.onAppearanceMode("Light").assertExists()
         compose.onNodeWithText("Follow System").assertDoesNotExist()
         assertBackground(f, true)
     }
@@ -125,9 +125,9 @@ class ThemeUiTest {
     @Test fun failedSelectionKeepsConfirmedRadioAndAppearanceUntilRetry() = withFixture { f ->
         openSettings()
         compose.runOnIdle { f.store.reject = true }
-        compose.onNodeWithText("Light").performScrollTo().performClick()
+        compose.onAppearanceMode("Light").performScrollTo().performClick()
         compose.waitUntil(5_000) { f.controller.state.value.error == ThemePreferenceError.SAVE }
-        compose.onNodeWithText("Dark").assertIsSelected()
+        compose.onAppearanceMode("Dark").assertIsSelected()
         assertBackground(f, true)
         val saveError = InstrumentationRegistry.getInstrumentation().targetContext
             .getString(R.string.appearance_save_error, "Light")
@@ -136,7 +136,7 @@ class ThemeUiTest {
         val retry = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.appearance_retry)
         compose.onNodeWithText(retry).performScrollTo().performClick()
         compose.waitUntil(5_000) { f.controller.state.value.mode == ThemeMode.LIGHT }
-        compose.onNodeWithText("Light").assertIsSelected()
+        compose.onAppearanceMode("Light").assertIsSelected()
         assertBackground(f, false)
     }
 
@@ -162,13 +162,13 @@ class ThemeUiTest {
         val before = f.file.readBytes()
         compose.onNodeWithTag("dashboard_search").performTextReplacement("Alpha")
         openSettings()
-        compose.onNodeWithText("معاينة نسخة").performScrollTo()
+        compose.onLocalizedText("Preview backup", "معاينة نسخة").performScrollTo()
         val scrollNode = compose.onNode(hasScrollAction())
         val scroll = scrollNode.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
         compose.runOnIdle { f.renderedDark.value = false }
-        compose.onNodeWithText("معاينة نسخة").assertIsDisplayed()
+        compose.onLocalizedText("Preview backup", "معاينة نسخة").assertIsDisplayed()
         assertEquals(scroll, scrollNode.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value(), .001f)
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithTag("dashboard_search").assertTextContains("Alpha")
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
@@ -178,63 +178,64 @@ class ThemeUiTest {
     private fun pendingDocument(tab: String) = withFixture { f ->
         val before = f.file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText(tab).performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectDocumentTab(tab)
+        compose.onDocumentContent().assertTextContains("Original")
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending")
+        compose.onDocumentContent().performTextReplacement("Pending")
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle { f.renderedDark.value = false }
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Pending")
+        compose.onDocumentContent().assertTextContains("Pending")
         val settings = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.settings_title)
         compose.onNode(hasClickAction() and hasContentDescription(settings)).assertDoesNotExist()
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
+        compose.onUnsavedChanges().assertExists()
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 
     @Test fun metadataPendingInputAndReloadConfirmationSurviveThemeChange() = withFixture { f ->
         val before = f.file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("تعديل المشروع").performScrollTo().performClick()
-        compose.onNodeWithText("اسم المشروع").performTextReplacement("Pending name")
-        compose.onNodeWithText("إعادة تحميل القيم الحالية").performScrollTo().performClick()
+        compose.onEditProject().performScrollTo().performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").performTextReplacement("Pending name")
+        compose.onLocalizedText("Reload current values", "إعادة تحميل القيم الحالية").performScrollTo().performClick()
         compose.runOnIdle { f.renderedDark.value = false }
-        compose.onNodeWithText("تأكيد إعادة التحميل").assertExists()
-        compose.onNodeWithText("متابعة التحرير").performClick()
-        compose.onNodeWithText("اسم المشروع").assertTextContains("Pending name")
+        compose.onLocalizedText("Confirm reload", "تأكيد إعادة التحميل").assertExists()
+        compose.onLocalizedText("Continue editing", "متابعة التحرير").performClick()
+        compose.onLocalizedText("Project name", "اسم المشروع").assertTextContains("Pending name")
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 
     @Test fun taskTitlePendingInputAndDiscardConfirmationSurviveThemeChange() = withFixture { f ->
         val before = f.file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("تعديل العنوان"))
-        compose.onNodeWithText("تعديل العنوان").performClick()
-        compose.onNodeWithText("عنوان المهمة").performTextReplacement("Pending title")
-        compose.onNodeWithText("إلغاء").performClick()
+        compose.selectProjectTab(3)
+        val editTitle = hasText("Edit title") or hasText("تعديل العنوان")
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(editTitle)
+        compose.onLocalizedText("Edit title", "تعديل العنوان").performClick()
+        compose.onLocalizedText("Task title", "عنوان المهمة").performTextReplacement("Pending title")
+        compose.onLocalizedText("Cancel", "إلغاء").performClick()
         compose.runOnIdle { f.renderedDark.value = false }
-        compose.onNodeWithText("تجاهل التعديلات").assertExists()
-        compose.onNodeWithText("متابعة التحرير").performClick()
-        compose.onNodeWithText("عنوان المهمة").assertTextContains("Pending title")
+        compose.onDiscardChanges().assertExists()
+        compose.onLocalizedText("Continue editing", "متابعة التحرير").performClick()
+        compose.onLocalizedText("Task title", "عنوان المهمة").assertTextContains("Pending title")
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 
     @Test fun taskCreationSearchAndStatusFilterSurviveThemeChange() = withFixture { f ->
         val before = f.file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("مهمة جديدة").performTextReplacement("Pending new task")
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("بحث في المهام"))
-        compose.onNodeWithText("بحث في المهام").performTextReplacement("Keep")
-        compose.onNodeWithText("حالة المهام: كل الحالات").performScrollTo().performClick()
-        compose.onNode(hasText("قيد التنفيذ") and hasAnyAncestor(isPopup())).performClick()
+        compose.selectProjectTab(3)
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextReplacement("Pending new task")
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
+        compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
+        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
+        compose.onNode((hasText("In progress") or hasText("قيد التنفيذ")) and hasAnyAncestor(isPopup())).performClick()
         compose.runOnIdle { f.renderedDark.value = false }
-        compose.onNodeWithText("مهمة جديدة").assertTextContains("Pending new task")
-        compose.onNodeWithText("بحث في المهام").assertTextContains("Keep")
-        compose.onNodeWithText("حالة المهام: قيد التنفيذ").assertExists()
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Pending new task")
+        compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains("Keep")
+        compose.onLocalizedText("Task status: In progress", "حالة المهام: قيد التنفيذ").assertExists()
         val noMatches = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.tasks_no_matches)
         compose.onNodeWithText(noMatches).assertExists()
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }

@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -33,21 +34,22 @@ class OverviewScrollingUiTest {
         try {
             compose.setContent { ProjectManagerApp(storage) }
             compose.onNodeWithText(first.name).performClick()
-            val footer = "حساب GitHub غير متصل. ربط هذا المشروع بمستودع والفحص الآلي غير مفعّلين."
-            compose.onNodeWithText(footer).assertIsNotDisplayed()
-            compose.onNodeWithText(footer).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("نظرة عامة").assertIsDisplayed()
-            compose.onNodeWithText("رجوع").assertIsDisplayed()
-            compose.onNodeWithText("Pending task 40 — لم تبدأ").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("Blueprint").performScrollTo().performClick()
-            compose.onNodeWithText("محتوى المستند").assertIsDisplayed()
-            compose.onNodeWithText("نظرة عامة").performScrollTo().performClick()
-            compose.onNodeWithText(footer).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("رجوع").performClick()
+            compose.onNodeWithTag("overview_quick_info").assertIsNotDisplayed()
+            compose.onNodeWithTag("overview_quick_info").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("project_tab_0").assertIsDisplayed()
+            compose.onNodeWithTag("vnext_back").assertIsDisplayed()
+            compose.onLocalizedText("Pending task 40 — Not started", "Pending task 40 — لم تبدأ")
+                .performScrollTo().assertIsDisplayed()
+            compose.selectProjectTab(1)
+            compose.onDocumentContent().assertIsDisplayed()
+            compose.selectProjectTab(0)
+            compose.onNodeWithTag("overview_github_panel").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("overview_quick_info").performScrollTo().assertIsDisplayed()
+            compose.pressProjectBack()
             compose.onNodeWithText(second.name).performClick()
             compose.onNodeWithText(second.description).assertIsDisplayed()
-            compose.onNodeWithText(footer).assertIsNotDisplayed()
-            compose.onNodeWithText(footer).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("overview_quick_info").assertIsNotDisplayed()
+            compose.onNodeWithTag("overview_quick_info").performScrollTo().assertIsDisplayed()
             compose.runOnIdle { assertArrayEquals(original, file.readBytes()) }
         } finally {
             root.deleteRecursively()

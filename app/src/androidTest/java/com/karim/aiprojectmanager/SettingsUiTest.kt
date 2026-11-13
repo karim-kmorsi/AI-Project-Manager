@@ -67,7 +67,7 @@ class SettingsUiTest {
         val before = file.readBytes()
         compose.onNodeWithTag("dashboard_search").performTextReplacement("Alpha")
         openSettings()
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.onNodeWithTag("dashboard_search").assertTextContains("Alpha")
         compose.onNodeWithText("Beta").assertDoesNotExist()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
@@ -92,8 +92,8 @@ class SettingsUiTest {
             R.string.settings_backup_transfer_warning).forEach {
             compose.onNodeWithText(text(it)).performScrollTo().assertIsDisplayed()
         }
-        compose.onNodeWithText("تصدير JSON").performScrollTo().performClick()
-        compose.onNodeWithText("معاينة نسخة").performScrollTo().performClick()
+        compose.onLocalizedText("Export JSON", "تصدير JSON").performScrollTo().performClick()
+        compose.onLocalizedText("Preview backup", "معاينة نسخة").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(1, exports)
             assertEquals(1, previews)
@@ -106,10 +106,11 @@ class SettingsUiTest {
         openSettings()
         val heading = SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)
         compose.onNode(heading and hasText(text(R.string.settings_connections))).assertIsDisplayed()
-        compose.onNodeWithText("ربط حساب GitHub").assertIsDisplayed()
+        compose.onLocalizedText("Connect GitHub account", "ربط حساب GitHub").assertIsDisplayed()
         compose.onNode(heading and hasText(text(R.string.settings_advanced))).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(text(R.string.settings_diagnostics)).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("اختبار اتصال GitHub العام").performScrollTo().assertIsDisplayed()
+        compose.onLocalizedText("Test public GitHub connection", "اختبار اتصال GitHub العام")
+            .performScrollTo().assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
@@ -117,29 +118,29 @@ class SettingsUiTest {
         val before = file.readBytes()
         compose.onNodeWithText("Alpha").performClick()
         compose.onNodeWithText("الخطوة التالية:", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("التقدم لا يُعتبر مكتملًا دون دليل مستقل.").assertExists()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("الحالة VERIFIED تُسجَّل يدويًا ولا تعني تحققًا آليًا.").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.overview_manual_note)).assertExists()
+        compose.selectProjectTab(3)
+        compose.onNodeWithText(text(R.string.task_screen_manual_warning)).assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
     @Test fun settingsCannotBypassDirtyDocumentGuard() = withProjects { _, _ ->
         compose.onNodeWithText("Alpha").performClick()
-        compose.onNodeWithText("Blueprint").performScrollTo().performClick()
+        compose.selectProjectTab(1)
         // Let the tab change compose the editor before holding the autosave clock.
-        compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", "Original")
+        compose.onDocumentContent().assertTextContains("Original")
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("محتوى المستند").performTextReplacement("Pending edit")
+        compose.onDocumentContent().performTextReplacement("Pending edit")
         compose.mainClock.advanceTimeBy(64)
         settingsAction().assertDoesNotExist()
-        compose.onNodeWithText("رجوع").performClick()
+        compose.pressProjectBack()
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
-        compose.onNodeWithText("العودة إلى المحرر").performClick()
+        compose.onUnsavedChanges().assertExists()
+        compose.onLocalizedText("Return to editor", "العودة إلى المحرر").performClick()
         compose.mainClock.advanceTimeBy(64)
         compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.mainClock.advanceTimeBy(64)
-        compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
+        compose.onUnsavedChanges().assertExists()
         settingsAction().assertDoesNotExist()
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -56,10 +57,10 @@ class EditorDraftRevertUiTest {
                 }
             }
             compose.onNodeWithText(project.name).performClick()
-            compose.onNodeWithText(tab).performScrollTo().performClick()
-            compose.onNodeWithText("محتوى المستند").assertExists()
+            compose.selectDocumentTab(tab)
+            compose.onDocumentContent().assertExists()
             compose.mainClock.autoAdvance = false
-            compose.onNodeWithText("محتوى المستند").performTextReplacement("B")
+            compose.onDocumentContent().performTextReplacement("B")
             compose.mainClock.advanceTimeBy(64)
             compose.runOnIdle {
                 assertEquals(DraftStorage.Draft("B", "A"), drafts.load(project.id, document))
@@ -68,7 +69,7 @@ class EditorDraftRevertUiTest {
                 if (preserveNewerDraft) drafts.save(project.id, document, "A", "C")
             }
             // Cancel B's pending autosave by restoring A, before the 700 ms debounce.
-            compose.onNodeWithText("محتوى المستند").performTextReplacement("A")
+            compose.onDocumentContent().performTextReplacement("A")
             compose.mainClock.advanceTimeBy(64)
             compose.runOnIdle {
                 assertArrayEquals(committedBytes, file.readBytes())
@@ -76,11 +77,11 @@ class EditorDraftRevertUiTest {
             }
             // Navigation may need scrolling frames on narrow displays; the revert is now complete.
             compose.mainClock.autoAdvance = true
-            compose.onNodeWithText("رجوع").performClick()
+            compose.pressProjectBack()
             compose.mainClock.advanceTimeBy(64)
             compose.onNodeWithText(project.name).performClick()
             compose.mainClock.advanceTimeBy(64)
-            compose.onNodeWithText(tab).performScrollTo().performClick()
+            compose.selectDocumentTab(tab)
             compose.mainClock.advanceTimeBy(64)
             // Also advance beyond any autosave scheduled when reopening the editor.
             compose.mainClock.advanceTimeBy(1000)
@@ -96,7 +97,7 @@ class EditorDraftRevertUiTest {
                 assertEquals(DraftStorage.Draft("Legitimate other document draft", "A"), drafts.load(project.id, otherDocument))
                 assertEquals(DraftStorage.Draft("Legitimate other project draft", ""), drafts.load(other.id, document))
             }
-            compose.onNodeWithText("محتوى المستند").assertTextEquals("محتوى المستند", expectedText)
+            compose.onDocumentContent().assertTextContains(expectedText)
         } finally {
             compose.mainClock.autoAdvance = true
             compose.runOnIdle { visible.value = false }

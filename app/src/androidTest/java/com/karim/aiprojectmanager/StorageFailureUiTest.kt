@@ -39,11 +39,11 @@ class StorageFailureUiTest {
             CompositionLocalProvider(LocalContext provides isolated) { ProjectManagerApp(storage) }
         }
         compose.onNodeWithText("Editor project").performClick()
-        compose.onNodeWithText(tab).performScrollTo().performClick()
-        compose.onNodeWithText("محتوى المستند").assertTextContains("Original")
+        compose.selectDocumentTab(tab)
+        compose.onDocumentContent().assertTextContains("Original")
         compose.mainClock.autoAdvance = false
         try {
-            compose.onNodeWithText("محتوى المستند").performTextReplacement("تعديل English 123")
+            compose.onDocumentContent().performTextReplacement("تعديل English 123")
             compose.mainClock.advanceTimeBy(64)
             compose.runOnIdle {
                 assertEquals("تعديل English 123", DraftStorage(File(file.parentFile, "recovery-drafts")).load("p", document)?.text)
@@ -51,10 +51,10 @@ class StorageFailureUiTest {
             }
             restoration.emulateSavedInstanceStateRestore()
             compose.mainClock.advanceTimeBy(64)
-            compose.onNodeWithText("محتوى المستند").assertTextContains("تعديل English 123")
-            compose.onNodeWithText("رجوع").performClick()
+            compose.onDocumentContent().assertTextContains("تعديل English 123")
+            compose.pressProjectBack()
             compose.mainClock.advanceTimeBy(64)
-            compose.onNodeWithText("تعديلات غير محفوظة").assertExists()
+            compose.onUnsavedChanges().assertExists()
         } finally { compose.mainClock.autoAdvance = true; compose.waitForIdle() }
     }
 
@@ -86,17 +86,20 @@ class StorageFailureUiTest {
         storage.save(original)
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Task project").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("مهمة جديدة").performTextInput("Retain task")
+        compose.selectProjectTab(3)
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextInput("Retain task")
         compose.runOnIdle { file.writeText("broken JSON") }
-        compose.onNodeWithText("إضافة").performClick()
-        compose.onNodeWithText("إغلاق").performClick()
-        compose.onNodeWithText("مهمة جديدة").assertTextContains("Retain task")
-        compose.onNodeWithText("قيد التنفيذ").performClick()
-        compose.onNodeWithText("إغلاق").performClick()
-        compose.onNodeWithText("NOT_STARTED").assertExists()
+        compose.onLocalizedText("Add", "إضافة").performClick()
+        compose.onLocalizedText("Close", "إغلاق").performClick()
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Retain task")
+        val inProgressAction = hasText("In progress", substring = false) or
+            hasText("قيد التنفيذ", substring = false)
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(inProgressAction)
+        compose.onNode(inProgressAction).performClick()
+        compose.onLocalizedText("Close", "إغلاق").performClick()
+        compose.onLocalizedText("Not started", "لم تبدأ").assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete(); storage.save(original) }
-        compose.onNodeWithText("إضافة").performClick()
+        compose.onLocalizedText("Add", "إضافة").performClick()
         compose.runOnIdle { assertEquals(listOf("Existing", "Retain task"), storage.load().single().tasks.map { it.title }) }
     }
     @Test fun selectedTabAndUnsubmittedTaskSurviveSavedStateRestoration() = fixture { _, storage ->
@@ -104,9 +107,9 @@ class StorageFailureUiTest {
         val restoration = StateRestorationTester(compose)
         restoration.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Task project").performClick()
-        compose.onNodeWithText("المهام").performScrollTo().performClick()
-        compose.onNodeWithText("مهمة جديدة").performTextInput("Unsaved input")
+        compose.selectProjectTab(3)
+        compose.onLocalizedText("New task", "مهمة جديدة").performTextInput("Unsaved input")
         restoration.emulateSavedInstanceStateRestore()
-        compose.onNodeWithText("مهمة جديدة").assertTextContains("Unsaved input")
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Unsaved input")
     }
 }

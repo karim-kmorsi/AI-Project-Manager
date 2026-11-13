@@ -67,7 +67,7 @@ class CaretVisibilityUiTest {
                 }
             }
             compose.onNodeWithText("Accessibility العربية English 42").performClick()
-            compose.onNodeWithText(document).performScrollTo().performClick()
+            compose.selectDocumentTab(document)
             val field = compose.onNode(hasSetTextAction())
             field.performScrollTo().performClick()
             compose.mainClock.autoAdvance = false
