@@ -121,11 +121,11 @@ class GitHubRepositoriesUiTest {
         clickLabel(R.string.github_repos_import_action)
         compose.onNodeWithText(label(R.string.github_repos_import_confirm_title)).assertIsDisplayed()
         compose.runOnIdle { assertEquals(null, imported) }
-        clickLabel(R.string.github_repos_import_cancel)
+        compose.onNode(hasText(label(R.string.github_repos_import_cancel)) and hasClickAction()).performClick()
         compose.runOnIdle { assertEquals(null, imported) }
 
         clickLabel(R.string.github_repos_import_action)
-        clickLabel(R.string.github_repos_import_confirm_action)
+        compose.onNode(hasText(label(R.string.github_repos_import_confirm_action)) and hasClickAction()).performClick()
         compose.runOnIdle { assertEquals(repository, imported) }
     }
 

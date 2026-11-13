@@ -55,7 +55,7 @@ internal fun interface GitHubRepositorySource {
 internal class GitHubRepositoryApi(
     private val token: String,
     private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }
-) : GitHubRepositorySource, GitHubRepositoryPreviewSource {
+) : GitHubRepositorySource, GitHubProjectRefreshSource {
     private val rateLimitedUntil = AtomicLong()
 
     override suspend fun repositories(cursor: GitHubRepositoryCursor): GitHubRepositoryPage {
@@ -78,6 +78,13 @@ internal class GitHubRepositoryApi(
         val next = if (response.hasNext) cursor.copy(repositoryPage = cursor.repositoryPage + 1)
         else cursor.copy(installationIds = cursor.installationIds.drop(1), repositoryPage = 1)
         return GitHubRepositoryPage(items, next.takeIf { it.installationIds.isNotEmpty() || it.installationsPage != null })
+    }
+
+    override suspend fun repositoryById(repositoryId: Long): GitHubRepository = readJson {
+        if (repositoryId <= 0) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        val repository = get("/repositories/$repositoryId").json().repository()
+        if (repository.id != repositoryId) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        repository
     }
 
     override suspend fun branch(repository: GitHubRepository): GitHubBranchPreview = readJson {
@@ -118,6 +125,91 @@ internal class GitHubRepositoryApi(
         if (current.id != repository.id) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
         GitHubRemoteSnapshot(current, branch(current).commitSha)
     }
+
+    override suspend fun workflowSnapshot(repository: GitHubRepository): GitHubWorkflowSnapshot = readJson {
+        val response = get("${repository.path()}/actions/runs?per_page=1").json()
+        val total = response.getInt("total_count")
+        if (total < 0) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        val runs = response.getJSONArray("workflow_runs")
+        if ((total == 0) != (runs.length() == 0)) {
+            throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        }
+        val latest = runs.takeIf { it.length() > 0 }?.getJSONObject(0)?.let { run ->
+            GitHubWorkflowRun(
+                id = run.getLong("id").takeIf { it > 0 }
+                    ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE),
+                name = run.getString("name").takeIf { it.isNotBlank() }
+                    ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE),
+                runNumber = run.getLong("run_number").takeIf { it > 0 }
+                    ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE),
+                status = run.getString("status"),
+                conclusion = run.optString("conclusion").takeUnless { run.isNull("conclusion") || it.isBlank() },
+                createdAt = run.getString("created_at"),
+                updatedAt = run.getString("updated_at"),
+                url = run.getString("html_url")
+            )
+        }
+        GitHubWorkflowSnapshot(total, latest)
+    }
+
+    override suspend fun issueSnapshot(repository: GitHubRepository): GitHubIssuesSnapshot {
+        val open = issueSearch(repository, "open")
+        val closed = issueSearch(repository, "closed")
+        return GitHubIssuesSnapshot(open.first, closed.first, open.second, closed.second)
+    }
+
+    override suspend fun compareCommits(
+        repository: GitHubRepository,
+        baseSha: String,
+        headSha: String
+    ): GitHubCommitComparison = readJson {
+        val base = baseSha.checkedSha()
+        val head = headSha.checkedSha()
+        val response = get("${repository.path()}/compare/$base...$head").json()
+        val aheadBy = response.getInt("ahead_by")
+        if (aheadBy < 0) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+        GitHubCommitComparison(aheadBy)
+    }
+
+    private suspend fun issueSearch(repository: GitHubRepository, state: String): Pair<Int, List<GitHubIssue>> =
+        readJson {
+            val query = URLEncoder.encode(
+                "repo:${repository.fullName} is:issue is:$state",
+                "UTF-8"
+            )
+            val response = get("/search/issues?q=$query&sort=updated&order=desc&per_page=10").json()
+            if (response.getBoolean("incomplete_results")) {
+                throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+            }
+            val total = response.getInt("total_count")
+            if (total < 0) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+            val items = response.getJSONArray("items")
+            val issues = buildList {
+                for (index in 0 until items.length()) {
+                    val item = items.getJSONObject(index)
+                    if (item.has("pull_request")) continue
+                    val issueState = item.getString("state")
+                    if (issueState != state) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+                    add(
+                        GitHubIssue(
+                            id = item.getLong("id").takeIf { it > 0 }
+                                ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE),
+                            number = item.getLong("number").takeIf { it > 0 }
+                                ?: throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE),
+                            title = item.getString("title"),
+                            state = issueState,
+                            createdAt = item.getString("created_at"),
+                            updatedAt = item.getString("updated_at"),
+                            url = item.getString("html_url")
+                        )
+                    )
+                }
+            }
+            if (issues.size > total || (total == 0) != issues.isEmpty()) {
+                throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)
+            }
+            total to issues
+        }
 
     private fun GitHubRepository.path(): String {
         if (!isGitHubRepositoryName(fullName)) {

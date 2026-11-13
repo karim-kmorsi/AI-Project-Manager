@@ -1,9 +1,47 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-12 (Asia/Kathmandu).
+Updated: 2026-11-13 (Asia/Kathmandu).
 Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
+
+## GitHub integration refresh and emulator verification — 2026-11-13
+
+Linked projects now refresh by stable GitHub repository ID, so a remote rename
+does not break the association or rewrite local project fields. Manual refresh
+and a 15-minute throttled refresh when opening the linked project read the
+default branch and latest commit, repository metadata, latest Actions run,
+and open/closed Issue counts and recent issue details (excluding pull requests).
+The overview separates those remote signals from locally marked task progress
+and does not calculate an overall completion percentage.
+
+Successful refreshes are stored in a versioned SharedPreferences sidecar,
+separate from project JSON. A refresh becomes the new baseline only when all
+requested sections and any required commit comparison are complete. Invalid,
+partial, stale, or failed writes leave the previous successful snapshot intact.
+The overview reports localized status, errors, last-success time, and changes
+since the prior successful refresh in English and Arabic. No authentication,
+credential, project JSON, signing, or application-ID configuration changed.
+
+Final checks passed: Debug and VNext APK assembly, 115 host unit tests, VNext
+Android-test APK assembly, and Debug/VNext Lint (0 errors, 26 existing
+warnings). The project configures `testBuildType` as `vnext`, so
+`:app:assembleDebugAndroidTest` is not a task; the matching
+`:app:assembleVnextAndroidTest` task was used. Four focused mocked API, storage,
+repository-browser/import, and overview test classes passed on API 35 (14 tests).
+The installed VNext app opened to its dashboard and filtered logs showed no
+app/System UI crashes.
+
+The host-GPU emulator process later exited with code 139 after repeated
+`eglMakeCurrent` failures. The same AVD was restarted without wiping data using
+SwiftShader software rendering; the focused tests passed again and the AVD
+remained responsive. No physical device was targeted. Live GitHub
+authentication, repository browsing/import against GitHub, and an end-to-end
+local project import/restart on the emulator were not performed; those require
+available authorization and remain acceptance work. Mocked API/UI results are
+not live GitHub evidence. The VNext APK is at
+`app/build/outputs/apk/vnext/app-vnext.apk`. Release acceptance remains open.
+**NOT Ready for Release**.
 
 ## GitHub repository import — 2026-11-13
 

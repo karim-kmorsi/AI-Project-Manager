@@ -248,6 +248,9 @@ fun ProjectManagerApp(
     var showNew by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     val applicationContext = LocalContext.current.applicationContext
+    val githubSnapshotStore = remember(applicationContext) {
+        GitHubProjectSnapshotStore(GitHubSnapshotPreferences.open(applicationContext))
+    }
     val githubSignIn = remember {
         GitHubSignIn(persistence = EncryptedGitHubSessionPersistence(applicationContext))
     }
@@ -373,7 +376,13 @@ fun ProjectManagerApp(
                 }
                 when (tab) {
                     0 -> key(active.id) {
-                        ProjectOverviewScreen(active, githubSignIn.session != null) { editingProjectId = active.id }
+                        ProjectOverviewScreen(
+                            active,
+                            githubSignIn.session != null,
+                            onEdit = { editingProjectId = active.id },
+                            repositoryApi = githubSignIn.session?.repositoryApi,
+                            snapshotStore = githubSnapshotStore
+                        )
                     }
                     1 -> key(active.id) { EditableDocument(active.id, "blueprint", active.blueprint, stringResource(R.string.blueprint_editor_hint), { editorDirty = it }) {
                         update(active.copy(blueprint = it))
