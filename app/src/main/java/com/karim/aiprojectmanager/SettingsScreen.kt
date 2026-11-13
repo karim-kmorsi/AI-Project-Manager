@@ -30,13 +30,14 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier, onExport: () -> Unit, onPreview: () -> Unit,
     githubSignIn: GitHubSignIn,
     localProjects: List<ProjectItem>? = null,
+    onGitHubImport: ((GitHubRepository) -> GitHubImportOutcome)? = null,
     appearanceSettings: @Composable () -> Unit = {}
 ) {
     var showSnapshot by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SettingsSectionTitle(R.string.settings_connections)
-        GitHubConnectionSettings(githubSignIn, localProjects)
+        GitHubConnectionSettings(githubSignIn, localProjects, onGitHubImport)
         appearanceSettings()
         SettingsSectionTitle(R.string.settings_data_backup)
         VNextCard(Modifier.fillMaxWidth()) {

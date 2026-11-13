@@ -59,7 +59,8 @@ internal fun GitHubRepositoriesDialog(
     onExpired: () -> Unit,
     onClose: () -> Unit,
     previewSource: GitHubRepositoryPreviewSource? = null,
-    localProjects: List<ProjectItem>? = null
+    localProjects: List<ProjectItem>? = null,
+    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
 ) {
     var repositories by remember { mutableStateOf(emptyList<GitHubRepository>()) }
     var cursor by remember { mutableStateOf<GitHubRepositoryCursor?>(GitHubRepositoryCursor()) }
@@ -107,7 +108,10 @@ internal fun GitHubRepositoriesDialog(
     val visible = remember(repositories, query, filter) { filterGitHubRepositories(repositories, query, filter) }
     val selectedRepository = selected
     if (selectedRepository != null && previewSource != null) {
-        GitHubRepositoryPreviewDialog(selectedRepository, previewSource, localProjects, onExpired) { selected = null }
+        GitHubRepositoryPreviewDialog(
+            selectedRepository, previewSource, localProjects, onExpired,
+            onBack = { selected = null }, onImport = onImport
+        )
         return
     }
     Dialog(onDismissRequest = onClose) {

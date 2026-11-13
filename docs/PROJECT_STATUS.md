@@ -5,6 +5,25 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub repository import — 2026-11-13
+
+The existing GitHub repository preview now offers an explicit Import project
+action and a confirmation showing the proposed local record. Confirmation
+rechecks repository-ID, project-name, and canonical GitHub URL duplicates
+against the current project list. Any possible duplicate blocks import; no
+existing project is overwritten or merged. A new project is appended through
+`persistProjectChange()`, then selected and opened. Existing JSON storage and
+authentication remain unchanged; synchronization is still not implemented.
+Import labels, confirmation, and feedback are available in English and Arabic.
+
+Debug assembly, all 112 host unit tests, VNext Android test APK assembly, and
+Debug Lint passed (0 errors, 26 warnings). The focused GitHub preparation host
+tests passed (5 tests). The new confirmation UI regression compiled but was not
+run: no emulator or instrumentation tests were used. The VNext compile-only
+build used a placeholder Gradle property to satisfy the existing build guard;
+no APK was installed and no authentication credentials were changed. Release
+acceptance remains open. **NOT Ready for Release**.
+
 ## UI/UX VNext continuation — 2026-11-12
 
 Continued from `e7f198f` on `feature/github-snapshot-preview`. Overview now presents saved

@@ -301,6 +301,27 @@ fun ProjectManagerApp(
             SettingsScreen(
                 Modifier.padding(padding), onExport, onRestorePreview, githubSignIn,
                 localProjects = projects.takeUnless { loadError },
+                onGitHubImport = { repository ->
+                    if (loadError) {
+                        GitHubImportOutcome.FAILED
+                    } else {
+                        val current = projects.toList()
+                        val proposal = previewGitHubImport(repository, current)
+                        when {
+                            proposal == null -> GitHubImportOutcome.FAILED
+                            proposal.candidates.isNotEmpty() -> GitHubImportOutcome.DUPLICATE
+                            else -> try {
+                                persistProjectChange(storage, current, current + proposal.project)
+                                projects.add(proposal.project)
+                                activeId = proposal.project.id
+                                showSettings = false
+                                GitHubImportOutcome.IMPORTED
+                            } catch (_: Exception) {
+                                GitHubImportOutcome.FAILED
+                            }
+                        }
+                    }
+                },
                 appearanceSettings = appearanceSettings
             )
         } else if (loadError) {

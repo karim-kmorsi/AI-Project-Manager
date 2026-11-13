@@ -45,6 +45,13 @@
     <string name="github_repos_import_empty_fields">Blueprint, roadmap, and tasks start empty.</string>
     <string name="github_repos_import_none">No potential duplicates found.</string>
     <string name="github_repos_import_duplicate">Possible existing project: %1$s</string>
+    <string name="github_repos_import_action">Import project</string>
+    <string name="github_repos_import_confirm_title">Import this project?</string>
+    <string name="github_repos_import_confirm_action">Confirm import</string>
+    <string name="github_repos_import_cancel">Cancel</string>
+    <string name="github_repos_import_duplicate_blocked">A possible duplicate exists. Import is blocked; existing projects will not be overwritten.</string>
+    <string name="github_repos_import_failed">Could not complete the import. Review your projects and try again.</string>
+    <string name="github_repos_import_success">GitHub project imported.</string>
     <string name="github_repos_sync_compare">Compare with GitHub</string>
     <string name="github_repos_sync_loading">Fetching the current repository snapshot…</string>
     <string name="github_repos_sync_unchanged">No changes since this preview opened.</string>

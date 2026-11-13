@@ -41,13 +41,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-internal fun GitHubConnectionSettings(signIn: GitHubSignIn, localProjects: List<ProjectItem>?) {
+internal fun GitHubConnectionSettings(
+    signIn: GitHubSignIn,
+    localProjects: List<ProjectItem>?,
+    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
+) {
     val scope = rememberCoroutineScope()
     DisposableEffect(signIn) { onDispose { signIn.cancel() } }
     VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             VNextSectionTitle("GitHub", R.drawable.vnext_link)
-            GitHubSignInControls(signIn, scope, localProjects)
+            GitHubSignInControls(signIn, scope, localProjects, onImport)
         }
     }
 }
@@ -97,7 +101,8 @@ internal fun GitHubPublicConnectivityProbe() {
 private fun GitHubSignInControls(
     signIn: GitHubSignIn,
     scope: CoroutineScope,
-    localProjects: List<ProjectItem>?
+    localProjects: List<ProjectItem>?,
+    onImport: ((GitHubRepository) -> GitHubImportOutcome)?
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -173,7 +178,8 @@ private fun GitHubSignInControls(
             onExpired = { signIn.expire(session, scope) },
             onClose = { showRepositories = false },
             previewSource = session.repositoryApi,
-            localProjects = localProjects
+            localProjects = localProjects,
+            onImport = onImport
         )
     }
 }

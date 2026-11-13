@@ -45,6 +45,13 @@
     <string name="github_repos_import_empty_fields">يبدأ المخطط وخريطة الطريق والمهام فارغة.</string>
     <string name="github_repos_import_none">لم يُعثر على مشاريع مكررة محتملة.</string>
     <string name="github_repos_import_duplicate">مشروع موجود محتمل: %1$s</string>
+    <string name="github_repos_import_action">استيراد المشروع</string>
+    <string name="github_repos_import_confirm_title">هل تريد استيراد هذا المشروع؟</string>
+    <string name="github_repos_import_confirm_action">تأكيد الاستيراد</string>
+    <string name="github_repos_import_cancel">إلغاء</string>
+    <string name="github_repos_import_duplicate_blocked">يوجد مشروع مكرر محتمل. تم إيقاف الاستيراد ولن تُستبدل المشاريع الحالية.</string>
+    <string name="github_repos_import_failed">تعذّر إكمال الاستيراد. راجع مشاريعك ثم حاول مجددًا.</string>
+    <string name="github_repos_import_success">تم استيراد مشروع GitHub.</string>
     <string name="github_repos_sync_compare">مقارنة مع GitHub</string>
     <string name="github_repos_sync_loading">جارٍ جلب لقطة المستودع الحالية…</string>
     <string name="github_repos_sync_unchanged">لا توجد تغييرات منذ فتح هذه المعاينة.</string>

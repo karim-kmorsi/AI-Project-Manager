@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -30,7 +32,8 @@ internal fun GitHubRepositoryPreviewDialog(
     source: GitHubRepositoryPreviewSource,
     localProjects: List<ProjectItem>?,
     onExpired: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
 ) {
     var preview by remember(repository) { mutableStateOf<GitHubRepositoryPreview?>(null) }
     var error by remember(repository) { mutableStateOf<GitHubReadFailure?>(null) }
@@ -38,9 +41,12 @@ internal fun GitHubRepositoryPreviewDialog(
     val scope = rememberCoroutineScope()
     val localBaseline = remember(repository) { localProjects?.toList() }
     var showImport by remember(repository) { mutableStateOf(false) }
+    var confirmImport by remember(repository) { mutableStateOf(false) }
+    var importMessage by remember(repository) { mutableIntStateOf(0) }
     var comparing by remember(repository) { mutableStateOf(false) }
     var comparison by remember(repository) { mutableStateOf<GitHubSyncComparison?>(null) }
     var comparisonError by remember(repository) { mutableStateOf<GitHubReadError?>(null) }
+    val context = LocalContext.current
     LaunchedEffect(repository, request) {
         try {
             preview = loadGitHubRepositoryPreview(source, repository)
@@ -61,7 +67,10 @@ internal fun GitHubRepositoryPreviewDialog(
                         TextButton(onClick = { showImport = !showImport }) {
                             Text(stringResource(R.string.github_repos_import_preview))
                         }
-                        if (showImport) GitHubImportPreviewContent(repository, localProjects)
+                        if (showImport) GitHubImportPreviewContent(
+                            repository, localProjects, onImport != null, importMessage,
+                            onImport = { confirmImport = true; importMessage = 0 }
+                        )
                         val branch = (preview?.branch as? GitHubPreviewSection.Available)?.value
                         if (branch != null && localBaseline != null && localProjects != null) {
                             TextButton(enabled = !comparing, onClick = {
@@ -110,6 +119,56 @@ internal fun GitHubRepositoryPreviewDialog(
                 TextButton(onClick = onBack) { Text(stringResource(R.string.github_repos_back)) }
             }
         }
+    }
+    if (confirmImport) {
+        val proposal = localProjects?.let { previewGitHubImport(repository, it) }
+        val canImport = proposal != null && proposal.candidates.isEmpty() && onImport != null
+        AlertDialog(
+            onDismissRequest = { confirmImport = false },
+            title = { Text(stringResource(R.string.github_repos_import_confirm_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    when {
+                        localProjects == null -> ParagraphText(stringResource(R.string.github_repos_import_unavailable))
+                        proposal == null -> ParagraphText(stringResource(R.string.github_repos_import_invalid))
+                        else -> {
+                            ParagraphText(proposal.project.name)
+                            ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
+                            ParagraphText(proposal.project.description)
+                            ParagraphText(stringResource(R.string.github_repos_import_empty_fields))
+                            if (proposal.candidates.isNotEmpty()) {
+                                ParagraphText(stringResource(R.string.github_repos_import_duplicate_blocked))
+                                proposal.candidates.take(10).forEach { candidate ->
+                                    ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = canImport, onClick = {
+                    val outcome = onImport?.invoke(repository) ?: GitHubImportOutcome.FAILED
+                    confirmImport = false
+                    when (outcome) {
+                        GitHubImportOutcome.IMPORTED -> android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.github_repos_import_success),
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                        GitHubImportOutcome.DUPLICATE ->
+                            importMessage = R.string.github_repos_import_duplicate_blocked
+                        GitHubImportOutcome.FAILED ->
+                            importMessage = R.string.github_repos_import_failed
+                    }
+                }) { Text(stringResource(R.string.github_repos_import_confirm_action)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmImport = false }) {
+                    Text(stringResource(R.string.github_repos_import_cancel))
+                }
+            }
+        )
     }
 }
 
@@ -162,7 +221,13 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
 }
 
 @Composable
-private fun GitHubImportPreviewContent(repository: GitHubRepository, projects: List<ProjectItem>?) {
+private fun GitHubImportPreviewContent(
+    repository: GitHubRepository,
+    projects: List<ProjectItem>?,
+    canRequestImport: Boolean,
+    importMessage: Int,
+    onImport: () -> Unit
+) {
     if (projects == null) {
         ParagraphText(stringResource(R.string.github_repos_import_unavailable))
         return
@@ -183,6 +248,14 @@ private fun GitHubImportPreviewContent(repository: GitHubRepository, projects: L
         ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
     }
     if (proposal.candidates.size > 10) ParagraphText(stringResource(R.string.github_repos_partial))
+    if (proposal.candidates.isNotEmpty()) {
+        ParagraphText(stringResource(R.string.github_repos_import_duplicate_blocked))
+    }
+    if (importMessage != 0) ParagraphText(stringResource(importMessage))
+    TextButton(
+        enabled = canRequestImport && proposal.candidates.isEmpty(),
+        onClick = onImport
+    ) { Text(stringResource(R.string.github_repos_import_action)) }
     }
 }
 

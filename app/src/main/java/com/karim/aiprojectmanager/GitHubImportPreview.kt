@@ -2,6 +2,8 @@ package com.karim.aiprojectmanager
 
 internal data class GitHubImportPreview(val project: ProjectItem, val candidates: List<ProjectItem>)
 
+internal enum class GitHubImportOutcome { IMPORTED, DUPLICATE, FAILED }
+
 internal fun previewGitHubImport(repository: GitHubRepository, local: List<ProjectItem>): GitHubImportPreview? {
     val name = repository.fullName
     if (repository.id <= 0 || !isGitHubRepositoryName(name)) {

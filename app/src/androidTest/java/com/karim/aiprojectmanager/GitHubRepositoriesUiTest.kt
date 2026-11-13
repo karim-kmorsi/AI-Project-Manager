@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
@@ -70,13 +71,17 @@ class GitHubRepositoriesUiTest {
             }
             compose.setContent {
                 AppTheme(true) {
-                    GitHubRepositoriesDialog(source, {}, {}, previewSource = detail, localProjects = projects)
+                    GitHubRepositoriesDialog(
+                        source, {}, {}, previewSource = detail, localProjects = projects,
+                        onImport = { GitHubImportOutcome.IMPORTED }
+                    )
                 }
             }
             clickLabel(R.string.github_repos_preview)
             clickLabel(R.string.github_repos_import_preview)
             val duplicate = compose.activity.getString(R.string.github_repos_import_duplicate, "owner/repo-1")
             compose.onNodeWithText(duplicate).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(label(R.string.github_repos_import_action)).performScrollTo().assertIsNotEnabled()
             clickLabel(R.string.github_repos_sync_compare)
             compose.onNodeWithText(label(R.string.github_repos_sync_conflict)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(label(R.string.github_repos_sync_head)).performScrollTo().assertIsDisplayed()
@@ -87,6 +92,41 @@ class GitHubRepositoriesUiTest {
         } finally {
             fixture.delete()
         }
+    }
+
+    @Test fun importRequiresExplicitConfirmationBeforeCallingOwner() {
+        val repository = repo(45, false)
+        val source = GitHubRepositorySource { GitHubRepositoryPage(listOf(repository), null) }
+        val detail = object : GitHubRepositoryPreviewSource {
+            override suspend fun branch(repository: GitHubRepository) =
+                GitHubBranchPreview("main", false, "head", "tree", "Initial commit", null)
+            override suspend fun readme(repository: GitHubRepository, commitSha: String) =
+                GitHubReadmePreview("", false)
+            override suspend fun tree(repository: GitHubRepository, treeSha: String) =
+                GitHubTreePreview(emptyList(), false)
+            override suspend fun snapshot(repository: GitHubRepository) = GitHubRemoteSnapshot(repository, "head")
+        }
+        var imported: GitHubRepository? = null
+        compose.setContent {
+            AppTheme(true) {
+                GitHubRepositoriesDialog(
+                    source, {}, {}, previewSource = detail, localProjects = emptyList(),
+                    onImport = { imported = it; GitHubImportOutcome.IMPORTED }
+                )
+            }
+        }
+
+        clickLabel(R.string.github_repos_preview)
+        clickLabel(R.string.github_repos_import_preview)
+        clickLabel(R.string.github_repos_import_action)
+        compose.onNodeWithText(label(R.string.github_repos_import_confirm_title)).assertIsDisplayed()
+        compose.runOnIdle { assertEquals(null, imported) }
+        clickLabel(R.string.github_repos_import_cancel)
+        compose.runOnIdle { assertEquals(null, imported) }
+
+        clickLabel(R.string.github_repos_import_action)
+        clickLabel(R.string.github_repos_import_confirm_action)
+        compose.runOnIdle { assertEquals(repository, imported) }
     }
 
     @Test fun shipsArabicResourcesAndKeepsRepositoryNamesVisibleInRtl() {
