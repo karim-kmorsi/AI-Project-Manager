@@ -5,6 +5,49 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## GitHub access follow-up and APK preparation — 2026-11-14
+
+Starting state was the owner-specified `feature/github-snapshot-preview` branch at
+`3b59f664c72fc6d84d580ad732b89cd6b6679d4c`, with a clean worktree. The existing stash and
+independent backup were preserved. The existing `CI_Android_35_Repro` API 35 AVD was already
+booted with 6 GiB guest RAM and SwiftShader; it remained ADB-connected, so it was not restarted,
+wiped, or reconfigured. No physical device was used.
+
+VNext started a fresh GitHub App device flow. GitHub accepted the app-generated device code and
+showed the consent page for **Karim AI Project Manager**, signed in as `karim-kmorsi`. The page
+identified the requested identity/resource access, but its visible **Authorize** control was
+disabled while the form reported valid; **Cancel** was the only enabled consent action. The
+pending attempt was canceled. No user-access token was issued or persisted, and no token-bearing
+API request was made from VNext during this follow-up.
+
+The implementation still uses the expected GitHub App user-token flow (`ghu_` bearer token,
+verified with `GET /user`) and enumerates `GET /user/installations` followed by
+`GET /user/installations/{installation_id}/repositories`, with numbered pages and `Link`
+pagination. The browser defaults to all visibility and applies search/privacy filters only to
+loaded results; no durable repository cache or target-name exclusion was found. Prior live VNext
+evidence still records only `AIAndroidApp` and `ZOOM-CCTV-Manager`. The owner’s separate `gh`
+credential can read the private target but is not the VNext token; its installation-list request
+was rejected, so it cannot establish VNext installation access. The exact live API response for
+the VNext token, target visibility in its installation, and import/refresh/Actions/Issues remain
+**BLOCKED** pending successful GitHub consent. No installation settings, permissions, repository
+visibility, or remote contents were changed.
+
+The focused repository API/UI instrumentation suite from the immediately preceding attempt ran
+**9 tests: 9 passed, 0 failed, 0 skipped**; those responses were synthetic, not live GitHub
+acceptance. This follow-up did not rerun instrumentation because its prior Gradle cleanup removed
+the tested package. No app source defect was confirmed and no code fix was made.
+
+`:app:assembleVnext` completed successfully. `app/build/outputs/apk/vnext/app-vnext.apk` is
+package `com.karim.aiprojectmanager.vnext`, version `0.1.0-vnext` (code 1), SHA-256
+`f021201b6852aa0074b8bf08eca60948d460d558a18dd9708527b10c8aaadd7c`, signing-certificate
+SHA-256 `301a9e4f477d0e53116caaa7bb8856afce8fd721aa0e4897d4b8ce7139e6e65f`. The installed and
+built APK signatures matched; the APK was update-installed without clearing app data and launched
+on the emulator. No project or GitHub session existed in the fresh VNext app before the flow.
+
+The GitHub access cause is **not resolved** because the normal consent action is externally
+blocked; do not infer an installation-selection defect without the VNext token’s API response.
+No source or remote-repository changes were made. Release status remains **NOT Ready for Release**.
+
 ## Final autonomous stabilization and delivery pass — 2026-11-14
 
 Work was performed on the owner-specified `feature/github-snapshot-preview` branch at the
