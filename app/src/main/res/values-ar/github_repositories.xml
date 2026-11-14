@@ -1,5 +1,4 @@
 <resources>
-    <string name="github_repos_browse">تصفّح مستودعات GitHub</string>
     <string name="github_repos_title">مستودعات GitHub</string>
     <string name="github_repos_close">إغلاق</string>
     <string name="github_repos_search">ابحث في المستودعات المحمّلة</string>
@@ -31,6 +30,7 @@
     <string name="github_repos_committed_at">تاريخ الإيداع %1$s</string>
     <string name="github_repos_readme">معاينة README</string>
     <string name="github_repos_readme_absent">لم يُرجع GitHub ملف README لهذا الإيداع.</string>
+    <string name="github_repos_document_too_large">يتجاوز حجم المستند حد الاستيراد البالغ 64 كيلوبايت.</string>
     <string name="github_repos_tree">الملفات والمجلدات في الجذر</string>
     <string name="github_repos_tree_empty">شجرة الجذر فارغة.</string>
     <string name="github_repos_folder">مجلد: %1$s</string>
@@ -42,7 +42,18 @@
     <string name="github_repos_import_unavailable">المشاريع المحلية غير متاحة للتحقق من التكرار.</string>
     <string name="github_repos_import_invalid">تعذّر تحويل هذا المستودع إلى مشروع.</string>
     <string name="github_repos_import_id">معرّف المشروع المقترح %1$s</string>
-    <string name="github_repos_import_empty_fields">يبدأ المخطط وخريطة الطريق والمهام فارغة.</string>
+    <string name="github_repos_import_project_name">المشروع المقترح: %1$s</string>
+    <string name="github_repos_import_repository_identity">مستودع GitHub: %1$s (المعرّف %2$d)</string>
+    <string name="github_repos_import_tasks_empty">تبدأ المهام فارغة؛ ولا يتضمن هذا الاستيراد استخراجًا للمهام.</string>
+    <string name="github_repos_import_readme_mapping">تظهر معاينة README.md فقط، ولا يُستورد.</string>
+    <string name="github_repos_import_blueprint_mapping">سيُستورد BLUEPRINT.md إلى حقل المخطط في المشروع.</string>
+    <string name="github_repos_import_roadmap_mapping">سيُستورد ROADMAP.md إلى حقل خارطة الطريق في المشروع.</string>
+    <string name="github_repos_import_blueprint_absent">ملف BLUEPRINT.md غير موجود في جذر المستودع؛ سيبقى حقل المخطط فارغًا.</string>
+    <string name="github_repos_import_roadmap_absent">ملف ROADMAP.md غير موجود في جذر المستودع؛ سيبقى حقل خارطة الطريق فارغًا.</string>
+    <string name="github_repos_import_document_too_large">يتجاوز %1$s حجم 64 كيلوبايت ولن يُستورد.</string>
+    <string name="github_repos_import_document_unavailable">تعذّر جلب %1$s؛ ولن يُستورد.</string>
+    <string name="github_repos_import_document_empty">المستند فارغ.</string>
+    <string name="github_repos_import_documents_loading">جارٍ التحقق من مستندات الجذر عند الإيداع المعروض…</string>
     <string name="github_repos_import_none">لم يُعثر على مشاريع مكررة محتملة.</string>
     <string name="github_repos_import_duplicate">مشروع موجود محتمل: %1$s</string>
     <string name="github_repos_import_action">استيراد المشروع</string>

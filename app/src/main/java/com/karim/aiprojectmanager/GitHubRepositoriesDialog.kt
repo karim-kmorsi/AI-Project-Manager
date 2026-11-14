@@ -60,7 +60,7 @@ internal fun GitHubRepositoriesDialog(
     onClose: () -> Unit,
     previewSource: GitHubRepositoryPreviewSource? = null,
     localProjects: List<ProjectItem>? = null,
-    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
+    onImport: ((GitHubRepository, Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>) -> GitHubImportOutcome)? = null
 ) {
     var repositories by remember { mutableStateOf(emptyList<GitHubRepository>()) }
     var cursor by remember { mutableStateOf<GitHubRepositoryCursor?>(GitHubRepositoryCursor()) }
@@ -201,6 +201,7 @@ internal fun GitHubReadError.messageResource(): Int = when (this) {
     GitHubReadError.FORBIDDEN -> R.string.github_repos_forbidden
     GitHubReadError.NOT_FOUND -> R.string.github_repos_not_found
     GitHubReadError.EMPTY -> R.string.github_repos_empty_repo
+    GitHubReadError.TOO_LARGE -> R.string.github_repos_document_too_large
     GitHubReadError.RATE_LIMIT -> R.string.github_repos_limited
     GitHubReadError.NETWORK -> R.string.github_repos_network
     GitHubReadError.TIMEOUT -> R.string.github_repos_timeout

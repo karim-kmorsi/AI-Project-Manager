@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -247,6 +246,7 @@ fun ProjectManagerApp(
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showRepositories by remember { mutableStateOf(false) }
     val applicationContext = LocalContext.current.applicationContext
     val githubSnapshotStore = remember(applicationContext) {
         GitHubProjectSnapshotStore(GitHubSnapshotPreferences.open(applicationContext))
@@ -268,6 +268,26 @@ fun ProjectManagerApp(
             val next = projects.toMutableList().apply { set(index, item) }
             persistProjectChange(storage, projects.toList(), next)
             projects[index] = item
+        }
+    }
+    fun importGitHubProject(
+        repository: GitHubRepository,
+        planningDocuments: Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>
+    ): GitHubImportOutcome {
+        if (loadError) return GitHubImportOutcome.FAILED
+        val current = projects.toList()
+        val proposal = previewGitHubImport(repository, current, planningDocuments)
+            ?: return GitHubImportOutcome.FAILED
+        if (proposal.candidates.isNotEmpty()) return GitHubImportOutcome.DUPLICATE
+        return try {
+            persistProjectChange(storage, current, current + proposal.project)
+            projects.add(proposal.project)
+            activeId = proposal.project.id
+            showSettings = false
+            showRepositories = false
+            GitHubImportOutcome.IMPORTED
+        } catch (_: Exception) {
+            GitHubImportOutcome.FAILED
         }
     }
     val active = projects.find { it.id == activeId }
@@ -296,35 +316,19 @@ fun ProjectManagerApp(
                 }) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.project_back)) }
             })
     }, bottomBar = {
-        if (active == null && !loadError && !settingsVisible) DashboardCreateBar {
-            writeError = false; showNew = true
-        }
+        if (active == null && !loadError && !settingsVisible) DashboardHomeActionBar(
+            onImport = {
+                if (githubSignIn.session != null) showRepositories = true else showSettings = true
+            },
+            onCreate = {
+                writeError = false
+                showNew = true
+            }
+        )
     }) { padding ->
         if (settingsVisible) {
             SettingsScreen(
                 Modifier.padding(padding), onExport, onRestorePreview, githubSignIn,
-                localProjects = projects.takeUnless { loadError },
-                onGitHubImport = { repository ->
-                    if (loadError) {
-                        GitHubImportOutcome.FAILED
-                    } else {
-                        val current = projects.toList()
-                        val proposal = previewGitHubImport(repository, current)
-                        when {
-                            proposal == null -> GitHubImportOutcome.FAILED
-                            proposal.candidates.isNotEmpty() -> GitHubImportOutcome.DUPLICATE
-                            else -> try {
-                                persistProjectChange(storage, current, current + proposal.project)
-                                projects.add(proposal.project)
-                                activeId = proposal.project.id
-                                showSettings = false
-                                GitHubImportOutcome.IMPORTED
-                            } catch (_: Exception) {
-                                GitHubImportOutcome.FAILED
-                            }
-                        }
-                    }
-                },
                 appearanceSettings = appearanceSettings
             )
         } else if (loadError) {
@@ -345,31 +349,39 @@ fun ProjectManagerApp(
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (!compactProject) VNextProjectHero(active)
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
-                        R.string.project_tab_roadmap, R.string.project_tab_tasks).forEachIndexed { index, label ->
-                        val selected = index == tab
-                        Surface(onClick = {
-                            if (!selected && editorDirty) warnOnExit = true else tab = index
-                        }, modifier = Modifier.testTag("project_tab_$index").heightIn(min = 48.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            color = if (selected) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer,
-                            border = androidx.compose.foundation.BorderStroke(1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
-                            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically) {
-                                VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers,
-                                    R.drawable.vnext_route, R.drawable.vnext_check)[index],
-                                    modifier = Modifier.size(18.dp),
-                                    tint = if (selected) androidx.compose.ui.graphics.Color.White
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(stringResource(label), style = MaterialTheme.typography.labelLarge,
-                                    color = if (selected) androidx.compose.ui.graphics.Color.White
-                                    else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    val columns = if (maxWidth < 400.dp || density.fontScale > 1.15f) 2 else 4
+                    val tabs = listOf(
+                        R.string.project_tab_overview to R.drawable.vnext_info,
+                        R.string.project_tab_blueprint to R.drawable.vnext_layers,
+                        R.string.project_tab_roadmap to R.drawable.vnext_route,
+                        R.string.project_tab_tasks to R.drawable.vnext_check
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        tabs.chunked(columns).forEachIndexed { rowIndex, rowTabs ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                rowTabs.forEachIndexed { columnIndex, (label, icon) ->
+                                    val index = rowIndex * columns + columnIndex
+                                    val selected = index == tab
+                                    Surface(onClick = {
+                                        if (!selected && editorDirty) warnOnExit = true else tab = index
+                                    }, modifier = Modifier.weight(1f).testTag("project_tab_$index").heightIn(min = 48.dp),
+                                        shape = RoundedCornerShape(24.dp),
+                                        color = if (selected) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp,
+                                            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+                                        Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically) {
+                                            VNextIcon(icon, modifier = Modifier.size(18.dp),
+                                                tint = if (selected) androidx.compose.ui.graphics.Color.White
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(label), style = MaterialTheme.typography.labelLarge,
+                                                color = if (selected) androidx.compose.ui.graphics.Color.White
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -413,6 +425,23 @@ fun ProjectManagerApp(
                 }
             }
         }
+    }
+    val repositorySession = githubSignIn.session
+    LaunchedEffect(showRepositories, repositorySession) {
+        if (showRepositories && repositorySession == null) showRepositories = false
+    }
+    if (showRepositories && repositorySession != null) {
+        GitHubRepositoriesDialog(
+            source = repositorySession.repositoryApi,
+            onExpired = {
+                showRepositories = false
+                githubSignIn.expire(repositorySession, githubScope)
+            },
+            onClose = { showRepositories = false },
+            previewSource = repositorySession.repositoryApi,
+            localProjects = projects.takeUnless { loadError },
+            onImport = ::importGitHubProject
+        )
     }
     if (restorePreview != null || restoreError != null) {
         VNextDialog(onDismissRequest = onDismissPreview,

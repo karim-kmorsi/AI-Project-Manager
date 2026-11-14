@@ -1,5 +1,4 @@
 <resources>
-    <string name="github_repos_browse">Browse GitHub repositories</string>
     <string name="github_repos_title">GitHub repositories</string>
     <string name="github_repos_close">Close</string>
     <string name="github_repos_search">Search loaded repositories</string>
@@ -31,6 +30,7 @@
     <string name="github_repos_committed_at">Committed %1$s</string>
     <string name="github_repos_readme">README preview</string>
     <string name="github_repos_readme_absent">GitHub returned no README for this commit.</string>
+    <string name="github_repos_document_too_large">This document exceeds the 64 KiB import limit.</string>
     <string name="github_repos_tree">Root files and folders</string>
     <string name="github_repos_tree_empty">The root tree is empty.</string>
     <string name="github_repos_folder">Folder: %1$s</string>
@@ -42,7 +42,18 @@
     <string name="github_repos_import_unavailable">Local projects are unavailable for duplicate checking.</string>
     <string name="github_repos_import_invalid">This repository cannot be mapped to a project.</string>
     <string name="github_repos_import_id">Proposed project ID %1$s</string>
-    <string name="github_repos_import_empty_fields">Blueprint, roadmap, and tasks start empty.</string>
+    <string name="github_repos_import_project_name">Proposed project: %1$s</string>
+    <string name="github_repos_import_repository_identity">GitHub repository: %1$s (ID %2$d)</string>
+    <string name="github_repos_import_tasks_empty">Tasks start empty; task extraction is not part of this import.</string>
+    <string name="github_repos_import_readme_mapping">README.md is shown in the preview only; it is not imported.</string>
+    <string name="github_repos_import_blueprint_mapping">BLUEPRINT.md populates the Blueprint field in the new project.</string>
+    <string name="github_repos_import_roadmap_mapping">ROADMAP.md populates the Roadmap field in the new project.</string>
+    <string name="github_repos_import_blueprint_absent">BLUEPRINT.md is not in the repository root; Blueprint will remain empty.</string>
+    <string name="github_repos_import_roadmap_absent">ROADMAP.md is not in the repository root; Roadmap will remain empty.</string>
+    <string name="github_repos_import_document_too_large">%1$s exceeds 64 KiB and will not be imported.</string>
+    <string name="github_repos_import_document_unavailable">Could not fetch %1$s; it will not be imported.</string>
+    <string name="github_repos_import_document_empty">The document is empty.</string>
+    <string name="github_repos_import_documents_loading">Checking supported root documents at the previewed commit…</string>
     <string name="github_repos_import_none">No potential duplicates found.</string>
     <string name="github_repos_import_duplicate">Possible existing project: %1$s</string>
     <string name="github_repos_import_action">Import project</string>

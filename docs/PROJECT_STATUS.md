@@ -5,6 +5,45 @@ Phase 2A audit branch: `feature/github-snapshot-preview`.
 Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
 Release status: **NOT Ready for Release**.
 
+## Phase 1 — GitHub planning-document import — 2026-11-14
+
+Implemented on `feature/vnext2-document-import`, starting from clean HEAD
+`c1ff5cfb2cd1ca17492e36bf39ac141d40911cff`. The preview detects exact root `README.md`,
+`BLUEPRINT.md` and `ROADMAP.md` names at the displayed commit. README remains preview-only;
+available Blueprint and Roadmap content is fetched at that commit, mapped in the confirmation
+preview, and saved into a newly imported local project. Existing repository metadata, duplicate
+checks, stale-write protection and local project data are preserved. Missing/unavailable files
+are reported; planning documents over 64 KiB are skipped instead of truncated. No task extraction,
+recursive discovery, manual file selection, local schema change or GitHub write was added.
+
+The import action is now in a fixed preview footer. Final confirmation shows project/repository
+identity and compact document statuses rather than repeating document text; its summary is
+scrollable with confirmation actions outside it. English and Arabic labels were updated.
+Focused Debug host tests passed: **8 tests, 8 passed** across
+`GitHubPreparationTest` and `GitHubPlanningDocumentImportTest`. The focused Gradle command also
+compiled the changed Debug app sources. The focused UI regression was updated but not run;
+instrumentation and live GitHub/API validation were not performed. No emulator actions occurred.
+These results do not verify real repository authorization, live response behavior, or Android UI
+acceptance. Release status remains **NOT Ready for Release**.
+
+## VNext 2 final UI improvements — 2026-11-14
+
+On `feature/vnext2-document-import`, the project-details navigation now keeps all four tabs
+visible: one row when the available width and font scale allow it, otherwise two rows. The home
+footer now has separate Import from GitHub and New Project actions, retains navigation/IME inset
+handling, and reserves its measured height from the project list. The import action opens the
+existing authenticated repository browser directly when connected, or routes to Settings to
+connect. Settings retains GitHub status and Disconnect while removing its duplicate browse entry.
+Arabic and English labels are provided. Import mapping, duplicate checks, read-only API calls,
+and project persistence are unchanged.
+
+Debug app assembly and VNext Android UI test-source compilation succeeded. The focused host tests
+passed: **8 tests, 8 passed** across `GitHubPreparationTest` and
+`GitHubPlanningDocumentImportTest`. The SDK emitted a non-fatal SDK-XML-version compatibility
+warning; Kotlin reported deprecated clipboard and soft-input APIs. Updated Compose UI tests were
+compiled but not executed; instrumentation, emulator, install, and live GitHub checks were not
+performed. Release status remains **NOT Ready for Release**.
+
 ## GitHub access follow-up and APK preparation — 2026-11-14
 
 Starting state was the owner-specified `feature/github-snapshot-preview` branch at

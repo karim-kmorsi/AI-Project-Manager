@@ -394,6 +394,7 @@ private fun readErrorLabel(error: GitHubReadError): String = stringResource(when
     GitHubReadError.FORBIDDEN -> R.string.github_read_error_forbidden
     GitHubReadError.NOT_FOUND -> R.string.github_read_error_not_found
     GitHubReadError.EMPTY -> R.string.github_read_error_empty
+    GitHubReadError.TOO_LARGE -> R.string.github_repos_document_too_large
     GitHubReadError.RATE_LIMIT -> R.string.github_read_error_rate_limit
     GitHubReadError.NETWORK -> R.string.github_read_error_network
     GitHubReadError.TIMEOUT -> R.string.github_read_error_timeout
