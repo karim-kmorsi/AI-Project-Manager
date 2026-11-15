@@ -4,6 +4,52 @@ Updated: 2026-11-16 (Asia/Kathmandu).
 Current authorized cycle: VNext 3 on `feature/vnext3`, starting HEAD `a9afb30`.
 Release status: **NOT Ready for Release**.
 
+## Version 0.2.0 configuration — 2026-11-16
+
+Starting branch/HEAD: `feature/vnext3` /
+`c35242563f7978ee193f79d866970a66ea891588`. This is a configuration-only
+increment, not a built, installed, distributed, or accepted release.
+
+Local evidence was inspected before choosing versionCode 3, without accessing
+Android devices or remote services:
+
+- Read-only `aapt dump badging` of existing official and Copilot APKs confirmed
+  base Debug `0.1.0` / code 1 and isolated VNext `0.1.0-vnext3` / code 2.
+  Retained output metadata agrees; Android-test APK codes are not app releases.
+- Official local Git history affecting version settings records only app codes
+  1 and 2. The Codex source configuration remains code 1. Inspected local status
+  and release documentation did not identify a higher distributed app code.
+- Copilot's existing `docs/VNEXT3_RELEASE_READINESS.md`, in its emulator acceptance
+  section, records the prior authorized VNext in-place update from code 1 to 2.
+  This is historical documentation, not a new installed-package inspection.
+
+Code 3 is therefore the next code supported by available local evidence. This
+does not establish the current version or signer on the owner's installation;
+that remains a separate check before any approved installation. If a higher
+installed/distributed code is later established, choose a code above it first.
+
+| Variant | Configured versionName | Configured versionCode | Application ID |
+|---|---|---|---|
+| Debug | `0.2.0` | 3 | `com.karim.aiprojectmanager` |
+| Release | `0.2.0` | 3 | `com.karim.aiprojectmanager` |
+| VNext | `0.2.0-dev.1` | 3 | `com.karim.aiprojectmanager.vnext` |
+
+Both the default code and the explicit VNext output override were advanced to 3.
+The `vnext` build type, isolated application-ID suffix, signing behavior, source
+sets, test build type, and GitHub Actions remain unchanged. Subsequent distributed
+builds need increasing codes for the same package, including development builds;
+update the base code and VNext override consistently. Version names follow
+MAJOR.MINOR.PATCH, with `-dev.1` denoting this development candidate. No historical
+release or Git tag was created, and historical artifact records remain unchanged.
+
+Verification: exact diff review and `git diff --check` only. No build, test, Lint,
+emulator/device action, install/uninstall, commit, push, or backup modification was
+performed. Existing APKs and output metadata still describe the older builds;
+there is no newly verified 0.2.0 APK. Future acceptance must check packaged metadata,
+package/signature compatibility and non-destructive upgrade/data continuity,
+along with pending startup/language, storage/restore and GitHub acceptance.
+**NOT Ready for Release**.
+
 ## Finalization — static startup and two-option language UI — 2026-11-16
 
 Starting branch/HEAD: `feature/vnext3` /

@@ -4,6 +4,40 @@ Updated: 2026-11-06
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.
 
+## Current version configuration — 2026-11-16
+
+On `feature/vnext3`, starting at `c35242563f7978ee193f79d866970a66ea891588`,
+the configured base version is now `0.2.0` / versionCode 3. The preserved isolated
+`vnext` build type uses `0.2.0-dev.1` / versionCode 3 and retains application ID
+`com.karim.aiprojectmanager.vnext`. Debug/Release retain the base application ID;
+no signing configuration was changed.
+
+VersionCode 3 follows the highest app code identified in inspected local evidence,
+2: existing official/Copilot APK metadata and read-only APK inspection, version
+configuration history, and the historical documented VNext update from code 1 to 2.
+See [project status](PROJECT_STATUS.md#version-020-configuration--2026-11-16)
+for evidence and limits. No device or remote distribution state was inspected.
+
+This version-label change does not close any release gate. Before distribution:
+
+- Build and inspect the new APK's actual package, version name/code and signer;
+  no build or test was run for this configuration-only batch.
+- Confirm the intended installed package's code and signer under separate owner
+  approval. If a higher code exists, choose a greater code before installation.
+  Debug shares the original application ID and must not replace the protected
+  original as an isolation shortcut. Never uninstall or clear data to bypass a
+  signature/version mismatch; production signing and upgrade compatibility remain
+  unaccepted.
+- Complete pending startup/language visual and lifecycle checks, storage/restore
+  acceptance, GitHub acceptance, and non-destructive data-continuity verification.
+- Keep version codes increasing per package for later distributed builds; update
+  both the base code and explicit VNext output override. Preserve historical
+  records; no retroactive release/tag is established by this configuration.
+
+The configuration statements in earlier checkpoint sections below are historical;
+their outstanding safety and acceptance requirements remain in force.
+**NOT Ready for Release**.
+
 ## Current interpretation and stabilization authorization — 2026-11-06
 
 The owner selected `codex/baseline-reconciliation-v0-2` as the continuing development baseline,

@@ -26,8 +26,8 @@ android {
         applicationId = "com.karim.aiprojectmanager"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.2.0"
         buildConfigField("String", "GITHUB_APP_CLIENT_ID", "\"$githubAppClientId\"")
     }
     // Installs beside the owner's app with an independent private data directory.
@@ -36,7 +36,7 @@ android {
         create("vnext") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".vnext"
-            versionNameSuffix = "-vnext3"
+            versionNameSuffix = "-dev.1"
             matchingFallbacks += listOf("debug")
         }
     }
@@ -58,7 +58,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("vnext")) { variant ->
-        variant.outputs.forEach { output -> output.versionCode.set(2) }
+        variant.outputs.forEach { output -> output.versionCode.set(3) }
     }
 }
 
