@@ -32,6 +32,48 @@ class RestoreTransactionTest {
         } finally { dir.deleteRecursively() }
     }
 
+    @Test fun firstRunRestoreCreatesStorageWithoutInventingARecoveryCopy() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val snapshot = File(dir, "recovery/safety.json")
+            val fresh = """[{"id":"new","name":"Incoming","tasks":[{"id":"t","title":"Verified","status":"VERIFIED"}]}]""".toByteArray()
+            incoming.writeBytes(fresh)
+
+            RestoreTransaction.replace(
+                target, incoming, snapshot, authorized = true,
+                expectedTargetSha256 = RestoreTransaction.fingerprint(target),
+                expectedCandidateSha256 = RestoreTransaction.hash(fresh)
+            )
+
+            assertArrayEquals(fresh, target.readBytes())
+            assertFalse(snapshot.exists())
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun corruptExistingStorageIsPreservedExactlyBeforeConfirmedRestore() {
+        val dir = root()
+        try {
+            val target = File(dir, "test-live.json")
+            val incoming = File(dir, "candidate.json")
+            val snapshot = File(dir, "recovery/safety.json")
+            val corruptOriginal = "recoverable raw bytes \u0000".toByteArray()
+            val fresh = """[{"id":"new","name":"Incoming"}]""".toByteArray()
+            target.writeBytes(corruptOriginal)
+            incoming.writeBytes(fresh)
+
+            RestoreTransaction.replace(
+                target, incoming, snapshot, authorized = true,
+                expectedTargetSha256 = RestoreTransaction.fingerprint(target),
+                expectedCandidateSha256 = RestoreTransaction.hash(fresh)
+            )
+
+            assertArrayEquals(corruptOriginal, snapshot.readBytes())
+            assertArrayEquals(fresh, target.readBytes())
+        } finally { dir.deleteRecursively() }
+    }
+
     @Test fun rejectionAndMissingAuthorizationNeverModifySource() {
         val dir = root()
         try {

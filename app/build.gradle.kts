@@ -34,7 +34,7 @@ android {
         create("vnext") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".vnext"
-            versionNameSuffix = "-vnext"
+            versionNameSuffix = "-vnext3"
             matchingFallbacks += listOf("debug")
         }
     }
@@ -51,6 +51,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("vnext")) { variant ->
+        variant.outputs.forEach { output -> output.versionCode.set(2) }
     }
 }
 

@@ -1,9 +1,41 @@
 # AI Project Manager — current project status
 
 Updated: 2026-11-14 (Asia/Kathmandu).
-Phase 2A audit branch: `feature/github-snapshot-preview`.
-Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
+Current authorized cycle: VNext 3 on `feature/vnext3`, starting HEAD `a9afb30`.
 Release status: **NOT Ready for Release**.
+
+## VNext 3 daily-use stabilization — 2026-11-14
+
+The owner-approved work started on the clean `feature/vnext3` baseline
+`a9afb300b9efe8b3aea86ffd257998e5ee463959`. Existing project/task JSON and
+application package identity remain unchanged. VNext alone advances to version
+code 2 / `0.1.0-vnext3`; signing configuration and the existing debug signing
+key were not changed.
+
+Tasks now have confirmed deletion and an explicit reset-to-NOT_STARTED action.
+Roadmap entries are parsed locally using conservative Markdown/imperative
+rules; proposals are capped, deduplicated against existing tasks, editable,
+selectable, and saved only after confirmation. Phases stay visible in the
+proposal review. A restore flow now stages and validates the legacy JSON array,
+previews its contents, requires a second explicit replace-all confirmation,
+checks the candidate and live-file fingerprints, and keeps an exact private
+safety copy before replacing existing bytes. Missing storage is supported;
+corrupt existing bytes can be replaced only after explicit confirmation and
+are snapshotted without reinterpretation. No schema, merge, or GitHub write
+path was added.
+
+Focused host regressions passed: **6/6** roadmap proposal and task deletion
+tests. Debug/VNext APK assembly, VNext Android-test APK assembly, and Debug and
+VNext Lint succeeded; Android-test sources compiled but were not executed.
+Lint reports 0 errors, 27 warnings, and 1 hint. No emulator, device, install,
+instrumentation, live GitHub request, commit, or push was performed. The VNext
+APK metadata and hash, test artifacts, gate decisions, and remaining acceptance
+work are recorded in [VNext 3 release readiness](VNEXT3_RELEASE_READINESS.md).
+
+Storage/restore round-trip execution, task UI acceptance, backup restoration on
+Android, offline use, live authenticated GitHub workflows, and installed-app
+upgrade acceptance remain unverified. Release status remains **NOT Ready for
+Release**.
 
 ## Phase 1 — GitHub planning-document import — 2026-11-14
 

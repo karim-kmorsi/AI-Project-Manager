@@ -36,8 +36,24 @@
     <string name="backup_preview_counts">Projects: %1$d · Tasks: %2$d</string>
     <string name="backup_preview_project_tasks">%1$s — %2$d tasks</string>
     <string name="backup_preview_limit">Only the first 30 projects are shown.</string>
-    <string name="backup_preview_read_only">Preview only. No data will be replaced or merged.</string>
+    <string name="backup_preview_confirmation_warning">Restoring replaces all local projects; review the contents and confirm on the next screen.</string>
+    <string name="backup_restore_review">Review restore</string>
+    <string name="backup_restore_confirm_title">Replace local projects?</string>
+    <string name="backup_restore_confirm_message">This replaces every local project with the selected backup.</string>
+    <string name="backup_restore_safety_copy">Before replacing the data, the app saves an exact recovery copy of the current project file. Keep that file until you verify the restored data.</string>
+    <string name="backup_restore_confirm_action">Replace projects</string>
+    <string name="backup_restore_cancel">Cancel</string>
+    <string name="backup_restore_in_progress">Restoring…</string>
+    <string name="backup_restore_failed">Restore could not be verified. Your existing recovery copy, if created, is retained. Reopen or retry only after reviewing the current project data.</string>
     <string name="generic_close">Close</string>
+    <plurals name="backup_restore_project_count">
+        <item quantity="one">Backup contains %1$d project.</item>
+        <item quantity="other">Backup contains %1$d projects.</item>
+    </plurals>
+    <plurals name="backup_restore_task_count">
+        <item quantity="one">Backup contains %1$d task.</item>
+        <item quantity="other">Backup contains %1$d tasks.</item>
+    </plurals>
     <string name="backup_read_error">The backup file is invalid or could not be read. Your data is unchanged.</string>
     <string name="backup_picker_error">Could not open the file picker. Your data is unchanged.</string>
     <string name="export_complete">Backup exported</string>

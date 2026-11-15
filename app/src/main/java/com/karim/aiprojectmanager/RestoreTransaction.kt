@@ -6,13 +6,18 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.security.MessageDigest
 
-/**
- * Isolated restore transaction engine. Not connected to MainActivity or real storage.
- * Requires explicit authorization from a future, separately reviewed caller.
- */
+/** Atomic legacy-array restore, invoked only after the user confirms full project replacement. */
 internal object RestoreTransaction {
+    private const val MISSING_TARGET = "missing"
+
     internal fun hash(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
+    fun fingerprint(file: File): String {
+        if (!file.exists()) return MISSING_TARGET
+        if (!file.isFile) throw IOException("Project storage is not a regular file")
+        return hash(file.readBytes())
+    }
 
     // Share the same mutex as ProjectStorage.save within this process.
     fun replace(
@@ -33,28 +38,35 @@ internal object RestoreTransaction {
                 throw IOException("Restore input has pending atomic writes")
             }
         }
-        if (!target.isFile || !candidate.isFile) throw IOException("Missing restore input")
+        if (target.exists() && !target.isFile || !candidate.isFile) throw IOException("Invalid restore input")
         if (snapshot.exists() || File(snapshot.path + ".new").exists() || File(snapshot.path + ".bak").exists()) {
             throw IOException("Refusing to overwrite previous safety copy")
         }
-        if (candidate.length() > 8L * 1024 * 1024 || target.length() > 8L * 1024 * 1024) {
+        if (candidate.length() > 8L * 1024 * 1024 ||
+            target.isFile && target.length() > 8L * 1024 * 1024) {
             throw IOException("Restore file exceeds 8 MiB limit")
         }
         val candidateBytes = candidate.readBytes()
-        val originalBytes = target.readBytes()
+        val originalBytes = target.takeIf { it.isFile }?.readBytes()
         LocalBackup.validate(candidateBytes)
-        LocalBackup.validate(originalBytes)
-        if (hash(originalBytes) != expectedTargetSha256 || hash(candidateBytes) != expectedCandidateSha256) {
+        if (fingerprint(target) != expectedTargetSha256 || hash(candidateBytes) != expectedCandidateSha256) {
             throw IOException("Restore files changed since preview; no changes made")
         }
-        // This immutable snapshot must exist and match the original before any target write.
-        LocalBackup.createSnapshot(target, snapshot)
-        if (!snapshot.readBytes().contentEquals(originalBytes)) {
-            throw IOException("Safety snapshot does not match original")
+        if (originalBytes != null) {
+            snapshot.parentFile?.let { parent ->
+                if (!parent.exists() && !parent.mkdirs()) throw IOException("Cannot create recovery directory")
+            }
+            writeSafetySnapshot(snapshot, originalBytes)
+            if (!snapshot.readBytes().contentEquals(originalBytes)) {
+                throw IOException("Safety snapshot does not match original")
+            }
         }
         afterSnapshot()
-        if (hash(target.readBytes()) != expectedTargetSha256 || hash(candidate.readBytes()) != expectedCandidateSha256) {
+        if (fingerprint(target) != expectedTargetSha256 || hash(candidate.readBytes()) != expectedCandidateSha256) {
             throw IOException("Restore inputs changed before commit")
+        }
+        target.parentFile?.let { parent ->
+            if (!parent.exists() && !parent.mkdirs()) throw IOException("Cannot create project storage directory")
         }
         val atomic = AtomicFile(target)
         val output = atomic.startWrite()
@@ -68,6 +80,22 @@ internal object RestoreTransaction {
         // Never automatically overwrite an existing target again on post-commit failure.
         if (!verifyCommitted(target, candidateBytes)) {
             throw IOException("Restore verification failed; recovery copy is retained")
+        }
+    }
+
+    private fun writeSafetySnapshot(snapshot: File, bytes: ByteArray) {
+        if (snapshot.exists() || File(snapshot.path + ".new").exists() || File(snapshot.path + ".bak").exists()) {
+            throw IOException("Refusing to overwrite previous safety copy")
+        }
+        val atomic = AtomicFile(snapshot)
+        val output = atomic.startWrite()
+        try {
+            output.write(bytes)
+            output.fd.sync()
+            atomic.finishWrite(output)
+        } catch (error: Exception) {
+            atomic.failWrite(output)
+            throw error
         }
     }
 }
