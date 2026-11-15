@@ -4,11 +4,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 val githubAppClientId = providers.gradleProperty("githubAppClientId").orElse("").get()
+val githubAppClientIdConfigured = githubAppClientId.isNotBlank() &&
+    !githubAppClientId.equals("LOCALBUILDDUMMY", ignoreCase = true)
 val requireGitHubAppClientId = providers.gradleProperty("requireGitHubAppClientId")
     .map { it.toBooleanStrict() }
     .orElse(false)
     .get()
-require(!requireGitHubAppClientId || githubAppClientId.isNotEmpty()) {
+require(!requireGitHubAppClientId || githubAppClientIdConfigured) {
     "GitHub authentication builds require githubAppClientId. Configure APP_CLIENT_ID in GitHub Actions."
 }
 require(githubAppClientId.isEmpty() || githubAppClientId.matches(Regex("[A-Za-z0-9]{1,100}"))) {
@@ -63,7 +65,7 @@ androidComponents {
 // Validate only tasks for the isolated build type; ordinary Debug/Release remain independent.
 val verifyVnextGitHubAppClientId = tasks.register("verifyVnextGitHubAppClientId") {
     doLast {
-        if (githubAppClientId.isEmpty()) {
+        if (!githubAppClientIdConfigured) {
             throw GradleException(
                 "VNext requires githubAppClientId. Configure the Gradle property or GitHub Actions APP_CLIENT_ID."
             )
