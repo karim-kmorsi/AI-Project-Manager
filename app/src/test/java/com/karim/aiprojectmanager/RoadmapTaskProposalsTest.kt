@@ -2,6 +2,7 @@ package com.karim.aiprojectmanager
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -68,5 +69,35 @@ class RoadmapTaskProposalsTest {
         val analysis = analyzeRoadmapTasks("x".repeat(1_000_001), emptyList())
         assertTrue(analysis.sourceTooLarge)
         assertTrue(analysis.proposals.isEmpty())
+    }
+
+    @Test fun roadmapChangesWithCollidingStringHashesHaveDifferentReviewSnapshots() {
+        val first = ProjectItem("project", "Name", "", roadmap = "- Implement Aa")
+        val second = first.copy(roadmap = "- Implement BB")
+
+        assertEquals(first.roadmap.hashCode(), second.roadmap.hashCode())
+        assertNotEquals(roadmapReviewSnapshot(first), roadmapReviewSnapshot(second))
+        assertEquals(roadmapReviewSnapshot(first), roadmapReviewSnapshot(first.copy()))
+    }
+
+    @Test fun taskChangesWithCollidingListHashesHaveDifferentReviewSnapshots() {
+        val first = ProjectItem("project", "Name", "", roadmap = "- Implement task",
+            tasks = listOf(TaskItem("task", "Aa")))
+        val second = first.copy(tasks = listOf(TaskItem("task", "BB")))
+
+        assertEquals(first.tasks.hashCode(), second.tasks.hashCode())
+        assertNotEquals(roadmapReviewSnapshot(first), roadmapReviewSnapshot(second))
+    }
+
+    @Test fun reviewSnapshotDoesNotAliasTheProjectsMutableTaskList() {
+        val original = TaskItem("task", "Original", "VERIFIED")
+        val tasks = mutableListOf(original)
+        val project = ProjectItem("project", "Name", "", roadmap = "- Implement task", tasks = tasks)
+        val snapshot = roadmapReviewSnapshot(project)
+
+        tasks[0] = original.copy(title = "Changed", status = "NOT_STARTED")
+
+        assertEquals(roadmapReviewSnapshot(project.copy(tasks = listOf(original))), snapshot)
+        assertNotEquals(snapshot, roadmapReviewSnapshot(project))
     }
 }

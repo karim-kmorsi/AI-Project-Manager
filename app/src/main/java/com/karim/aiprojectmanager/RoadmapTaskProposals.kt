@@ -2,6 +2,16 @@ package com.karim.aiprojectmanager
 
 import java.util.Locale
 
+/** Exact review identity; copied task entries cannot change through a caller-owned list. */
+internal data class RoadmapReviewSnapshot(
+    val projectId: String,
+    val roadmap: String,
+    val tasks: List<TaskItem>
+)
+
+internal fun roadmapReviewSnapshot(project: ProjectItem): RoadmapReviewSnapshot =
+    RoadmapReviewSnapshot(project.id, project.roadmap, project.tasks.toList())
+
 internal data class RoadmapTaskProposal(
     val sourceLine: Int,
     val phase: String?,

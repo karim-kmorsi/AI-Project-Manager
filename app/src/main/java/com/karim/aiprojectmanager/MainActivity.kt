@@ -904,7 +904,7 @@ private fun TaskScreen(
     }
     val currentRoadmapAnalysis = roadmapAnalysis
     if (showRoadmapProposals && currentRoadmapAnalysis != null) {
-        val proposalStateKey = "${project.id}:${project.roadmap.hashCode()}:${project.tasks.hashCode()}"
+        val proposalStateKey = roadmapReviewSnapshot(project)
         var titles by rememberSaveable(proposalStateKey) {
             mutableStateOf(currentRoadmapAnalysis.proposals.map { it.title })
         }
