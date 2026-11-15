@@ -26,7 +26,7 @@ android {
         applicationId = "com.karim.aiprojectmanager"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
+        versionCode = 5
         versionName = "0.2.0"
         buildConfigField("String", "GITHUB_APP_CLIENT_ID", "\"$githubAppClientId\"")
     }
@@ -58,7 +58,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("vnext")) { variant ->
-        variant.outputs.forEach { output -> output.versionCode.set(3) }
+        variant.outputs.forEach { output -> output.versionCode.set(5) }
     }
 }
 

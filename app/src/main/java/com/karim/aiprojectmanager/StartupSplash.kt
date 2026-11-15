@@ -55,11 +55,41 @@ internal fun StartupSplash(loading: Boolean, failed: Boolean, onRetry: () -> Uni
                 }
             }
         }
-        Text("© Karim S.K. Morsi 2026",
-            modifier = Modifier.align(Alignment.TopCenter).offset(y = maxHeight * 0.887f),
-            color = Color.White, fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Medium,
-            fontSize = (maxWidth.value * 0.0353f).coerceIn(13f, 18f).sp,
-            letterSpacing = 0.1.sp, textAlign = TextAlign.Center, maxLines = 1)
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter)
+                .offset(y = maxHeight * 0.855f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "AI Project Manager",
+                    color = Color.White,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+                Text(
+                    "v${BuildConfig.VERSION_NAME}",
+                    color = Color.White,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+            }
+            Text(
+                "© Karim S.K. Morsi 2026",
+                color = Color.White,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                letterSpacing = 0.1.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+        }
     }
 }
