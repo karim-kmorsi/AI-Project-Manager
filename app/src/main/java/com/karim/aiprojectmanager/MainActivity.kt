@@ -44,6 +44,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 
 data class TaskItem(val id: String, val title: String, val status: String = "NOT_STARTED")
@@ -54,7 +56,9 @@ data class ProjectItem(
 )
 
 open class MainActivity : ComponentActivity() {
+    private val languagePreferences by lazy { AppLanguagePreferences(this) }
     private val themePreferences by lazy { ThemePreferences({ AndroidAppPreferences.open(applicationContext) }) }
+    private var startupCompleted = false
     private lateinit var storage: ProjectStorage
     private var pendingExportToken: String? = null
     private var exportPreparing = false
@@ -113,26 +117,75 @@ open class MainActivity : ComponentActivity() {
         }
     }
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("startupCompleted", startupCompleted)
         outState.putString("pendingExportToken", pendingExportToken)
         super.onSaveInstanceState(outState)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        startupCompleted = savedInstanceState?.getBoolean("startupCompleted") ?: false
         pendingExportToken = savedInstanceState?.getString("pendingExportToken")
         storage = ProjectStorage(File(filesDir, "projects.json"))
         setContent {
             val appearance by themePreferences.state.collectAsState()
-            LaunchedEffect(Unit) { themePreferences.load() }
-            val dark = appearance.mode.isDark()
+            var showStartup by rememberSaveable { mutableStateOf(!startupCompleted) }
+            var visibleNanos by rememberSaveable { mutableLongStateOf(0L) }
+            var startupAttempt by remember { mutableIntStateOf(0) }
+            val startupLoader = remember {
+                StartupLoader {
+                    if (themePreferences.state.value.error != null) themePreferences.retry()
+                    else themePreferences.load()
+                    if (themePreferences.state.value.error != null) throw IOException("Appearance unavailable")
+                    storage.load(readOnly = true)
+                }
+            }
+            val startup by startupLoader.state.collectAsState()
+            LaunchedEffect(startupAttempt) {
+                startupLoader.load()
+            }
+            val ready by rememberUpdatedState(startup.projects != null && !startup.failed)
+            if (showStartup) {
+                val clock = remember { StartupClock(visibleNanos) }
+                DisposableEffect(clock) {
+                    clock.setResumed(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+                    val observer = LifecycleEventObserver { _, event ->
+                        when (event) {
+                            Lifecycle.Event.ON_RESUME -> clock.setResumed(true)
+                            Lifecycle.Event.ON_PAUSE -> clock.setResumed(false)
+                            else -> Unit
+                        }
+                    }
+                    lifecycle.addObserver(observer)
+                    onDispose { lifecycle.removeObserver(observer) }
+                }
+                LaunchedEffect(clock) {
+                    while (showStartup) {
+                        withFrameNanos { frame ->
+                            clock.onFrame(frame)
+                            visibleNanos = clock.visibleNanos
+                            if (clock.canDismiss(ready)) {
+                                startupCompleted = true
+                                showStartup = false
+                            }
+                        }
+                    }
+                }
+            }
+            val startupVisible = showStartup || startup.projects == null
+            BackHandler(enabled = startupVisible) { /* Keep startup gated; Home can background the app. */ }
+            val dark = if (startupVisible) true else appearance.mode.isDark()
             AppTheme(dark) {
                 SideEffect { updateWindowAppearance(this@MainActivity, dark) }
-                ProjectManagerApp(storage, appearanceSettings = {
+                if (startupVisible) {
+                    StartupSplash(loading = startup.loading, failed = startup.failed,
+                        onRetry = { startupAttempt++ })
+                } else ProjectManagerApp(storage, initialProjects = startup.projects, appearanceSettings = {
                     AppearanceSettings(appearance,
                         onSelect = { mode -> lifecycleScope.launch { themePreferences.select(mode) } },
                         onRetry = { lifecycleScope.launch { themePreferences.retry() } },
-                        language = AppLanguagePreferences(this@MainActivity).current(),
+                        language = languagePreferences.current(),
                         onLanguageSelect = { language ->
-                            val preferences = AppLanguagePreferences(this@MainActivity)
+                            val preferences = languagePreferences
                             if (preferences.current() != language) {
                                 if (preferences.select(language)) recreate()
                                 else notifyUser(getString(R.string.language_save_error))
@@ -176,12 +229,18 @@ open class MainActivity : ComponentActivity() {
 }
 
 class ProjectStorage(internal val file: File) {
-    fun load(): List<ProjectItem> = synchronized(ProjectWriteLock.monitor) {
+    fun load(readOnly: Boolean = false): List<ProjectItem> = synchronized(ProjectWriteLock.monitor) {
+        if (readOnly && (File(file.path + ".new").exists() || File(file.path + ".bak").exists())) {
+            throw IOException("Interrupted project write requires recovery; startup leaves all bytes untouched")
+        }
         if (!file.exists() && !File(file.path + ".bak").exists()) {
             if (File(file.path + ".new").exists()) throw IOException("Interrupted initial write; recovery required")
             return emptyList()
         }
-        val array = try { JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }) } catch (e: Exception) {
+        val array = try {
+            val input = if (readOnly) file.inputStream() else AtomicFile(file).openRead()
+            JSONArray(input.bufferedReader(Charsets.UTF_8).use { it.readText() })
+        } catch (e: Exception) {
             throw IOException("Cannot read saved projects; writes are blocked until recovery", e)
         }
         LocalBackup.validateArray(array)
@@ -258,12 +317,13 @@ fun ProjectManagerApp(
     restoreError: String? = null,
     restoreCandidate: RestoreCandidate.Staged? = null,
     onDismissPreview: () -> Unit = {},
-    appearanceSettings: @Composable () -> Unit = {}
+    appearanceSettings: @Composable () -> Unit = {},
+    initialProjects: List<ProjectItem>? = null
 ) {
     var loadError by remember { mutableStateOf(false) }
     val projects = remember {
         mutableStateListOf<ProjectItem>().apply {
-            try { addAll(storage.load()) } catch (_: Exception) { loadError = true }
+            try { addAll(initialProjects ?: storage.load()) } catch (_: Exception) { loadError = true }
         }
     }
     var writeError by remember { mutableStateOf(false) }

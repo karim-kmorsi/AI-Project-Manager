@@ -70,6 +70,7 @@
     <string name="appearance_save_error">Could not save appearance %1$s. The previous appearance remains; retry.</string>
     <string name="appearance_retry">Retry appearance</string>
     <string name="appearance_language">Language</string>
+    <string name="language_system">Follow device language</string>
     <string name="language_arabic">العربية</string>
     <string name="language_english">English</string>
     <string name="language_save_error">Could not save the language preference.</string>
@@ -129,4 +130,7 @@
     <string name="backlog_next_action">Next action: %1$s</string>
     <string name="backlog_none">None</string>
     <string name="backlog_dependencies">Dependencies: %1$s</string>
+    <string name="startup_loading">Loading your projects…</string>
+    <string name="startup_failed">The app could not load safely. Your projects have not been replaced. Retry; if the problem continues, keep your data and request recovery assistance.</string>
+    <string name="startup_retry">Retry</string>
 </resources>

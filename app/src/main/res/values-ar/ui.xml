@@ -78,6 +78,7 @@
     <string name="appearance_save_error">تعذّر حفظ المظهر %1$s. بقي المظهر السابق؛ أعد المحاولة.</string>
     <string name="appearance_retry">إعادة محاولة حفظ المظهر</string>
     <string name="appearance_language">اللغة</string>
+    <string name="language_system">اتباع لغة الجهاز</string>
     <string name="language_arabic">العربية</string>
     <string name="language_english">English</string>
     <string name="language_save_error">تعذّر حفظ تفضيل اللغة.</string>
@@ -137,4 +138,7 @@
     <string name="backlog_next_action">الإجراء التالي: %1$s</string>
     <string name="backlog_none">لا يوجد</string>
     <string name="backlog_dependencies">التبعيات: %1$s</string>
+    <string name="startup_loading">جارٍ تحميل مشاريعك…</string>
+    <string name="startup_failed">تعذّر تحميل التطبيق بأمان. لم تُستبدل مشاريعك. أعد المحاولة؛ وإذا استمرت المشكلة فاحتفظ ببياناتك واطلب المساعدة لاستردادها.</string>
+    <string name="startup_retry">إعادة المحاولة</string>
 </resources>

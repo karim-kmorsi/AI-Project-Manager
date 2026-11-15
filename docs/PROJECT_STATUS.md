@@ -1,8 +1,156 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-14 (Asia/Kathmandu).
+Updated: 2026-11-16 (Asia/Kathmandu).
 Current authorized cycle: VNext 3 on `feature/vnext3`, starting HEAD `a9afb30`.
 Release status: **NOT Ready for Release**.
+
+## Finalization — static startup and two-option language UI — 2026-11-16
+
+Starting branch/HEAD: `feature/vnext3` /
+`1bc25c74a53e68764da2427cf47d39de89bd079e`. The uncommitted Phase 2B work
+was preserved. No commit, remote operation, emulator/device action, installation,
+uninstall/data clear, version/identity/signing change, or backup edit occurred.
+The two temporary MainActivity copies remain untouched.
+
+### Implementation
+
+- Settings now displays exactly العربية and English. Automatic mode remains the
+  default for missing/invalid values and remains compatible with stored `system`.
+  The UI marks the effective device-resolved language without saving a preference;
+  clicking either option records an explicit choice through the existing workflow.
+  Existing `ar`/`en`, XML translations, RTL/LTR and Activity recreation remain.
+  This supersedes Phase 2B's visible third option, not its persistence behavior.
+- Added a static Compose splash with the existing approved launcher foreground,
+  the byte-identical reference-derived background from the Copilot workspace,
+  and the exact text `© Karim S.K. Morsi 2026`. Logo size/placement follows the
+  reference implementation. The background does not animate; no Aurora layer
+  was invented. Day/night launch windows use deep navy and API 31+ has native
+  splash color/icon resources before the custom Compose frame.
+- `StartupClock` requires at least 3,000 ms of resumed, displayed-frame time and
+  completed initialization. Paused/background time does not count. Visible time
+  survives Activity saved-state recreation. A completed startup does not impose
+  another timed hold on recreation; pending loading still has visible feedback.
+- Initialization loads appearance and project models off the main thread.
+  `StartupLoader` prevents concurrent/duplicate reads after success and supports
+  explicit retry after failure. A spinner and localized loading text are shown
+  while pending; failure shows a localized explanation and Retry. Retry does not
+  add another three-second hold if the required visible time already elapsed.
+- Startup reads project storage with `readOnly = true`, using a plain input stream
+  instead of AtomicFile recovery. Pending `.new`/`.bak` files are rejected and
+  retained, never deleted or promoted during the splash. Normal storage APIs keep
+  their existing default behavior. Loaded models are passed into ProjectManagerApp,
+  avoiding its duplicate initial read; app navigation/GitHub initialization starts
+  after the gate. The schema and existing write safeguards are unchanged.
+
+### Executed verification
+
+Installed Gradle 8.13 / JDK 17, offline:
+
+```text
+gradle --offline --no-daemon --console=plain :app:assembleDebug \
+  :app:testDebugUnitTest \
+  --tests com.karim.aiprojectmanager.StartupStateTest \
+  --tests com.karim.aiprojectmanager.AppLanguageTest \
+  --tests com.karim.aiprojectmanager.AppLanguagePreferencesTest \
+  --tests com.karim.aiprojectmanager.AppPreferencesTest \
+  --tests com.karim.aiprojectmanager.ThemePreferencesTest :app:lintDebug
+```
+
+- Final Debug assembly/resource processing succeeded. The final Debug artifact was
+  rebuilt without the synthetic Client ID override used for compile-only VNext
+  verification. Debug retains the original application ID: do not install it over
+  the owner's protected application as an acceptance shortcut.
+- JUnit XML confirms **33 passed, 0 failures/errors/skips**: startup 5, language 5,
+  language preferences 4, preference adapter 7, appearance preferences 12.
+  Startup tests cover the exact three-second boundary, slow readiness, foreground
+  pauses, saved elapsed time, success reuse, failure/retry and concurrent requests.
+- Lint succeeded: **0 errors, 19 warnings, 1 hint**. SDK XML compatibility and
+  deprecated-API warnings remain. App Bundle language-delivery acceptance remains
+  outside this local Debug check. `git diff --check` passed.
+- `:app:compileVnextAndroidTestKotlin` was checked with the explicitly synthetic
+  `-PgithubAppClientId=SyntheticBuildFixture`, for source/resource compilation only.
+  No VNext APK from that fixture was installed or presented as login-ready.
+- Added six Android acceptance cases in `StartupAcceptanceTest.kt` (presentation
+  and storage classes): two visible language choices without preference writes,
+  loading/copyright, Retry, unchanged project bytes/unknown fields, retained atomic
+  sidecars, and malformed-byte preservation. These were compiled, **not executed**.
+
+### Remaining acceptance and limits
+
+No running Android screenshot or visual match is claimed. The supplied reference
+and its existing background derivative were inspected, not a rendered app. Native
+system-splash transition, crop on other aspect ratios, logo/copyright proportions,
+large fonts, TalkBack, cold start, pause/recreation timing, pending editor/navigation
+state, device-language changes and real preference durability need owner-authorized
+Android acceptance. The existing derivative itself also needs visual comparison
+with the original reference; byte equality does not establish visual acceptance.
+Permanent corrupt data or pending atomic files may require separately approved
+recovery; Retry intentionally does not repair/delete/overwrite those files.
+Startup does not wait for online GitHub verification; existing GitHub behavior is
+retained. Fatal platform/resource failures cannot be guaranteed recoverable by an
+in-app Retry. Prepare a VNext build with the owner's genuine configured Client ID
+and verify its isolated package/signature before any separately approved install.
+**NOT Ready for Release**.
+
+## Phase 2B — follow device language — 2026-11-16
+
+Starting branch: `feature/vnext3`; HEAD:
+`1bc25c74a53e68764da2427cf47d39de89bd079e`. The only starting untracked
+files were the two temporary MainActivity backup copies; both remain untouched.
+
+- Added `system` alongside the existing `ar` and `en` values in the existing
+  `ui_preferences` / `language` preference. Missing or unsupported values resolve
+  to Follow device language without automatically rewriting the stored value.
+  Existing explicit Arabic/English selections retain their meanings.
+- System mode resolves the device's primary `ar` language to Arabic and every
+  other primary language to English. Locale resolution uses
+  `Resources.getSystem().configuration`, independently of the Activity's
+  overridden locale; copied configurations retain other settings and apply
+  the resolved locale and RTL/LTR direction. Normal Android locale configuration
+  recreation remains in use; no locale configChanges interception was added.
+- Added the third radio option using the existing Settings design and XML
+  translations. Successful selection still recreates the Activity. The Activity
+  now retains one language preference controller so a failed disk commit does
+  not falsely change its confirmed selection even if SharedPreferences changed
+  its in-memory map. The existing failure notification and user retry remain.
+- Reused the existing AppPreferences adapter for isolated JVM coverage. No
+  new translation catalog, dependencies, application identity, signing, versions,
+  appearance preferences, project data/schema, or GitHub logic was changed.
+
+Verification actually executed with installed Gradle 8.13 / JDK 17, offline:
+
+```text
+gradle --offline --no-daemon --console=plain \
+  :app:compileDebugKotlin :app:processDebugResources \
+  :app:testDebugUnitTest \
+  --tests com.karim.aiprojectmanager.AppLanguageTest \
+  --tests com.karim.aiprojectmanager.AppLanguagePreferencesTest \
+  --tests com.karim.aiprojectmanager.AppPreferencesTest \
+  :app:lintDebug
+```
+
+- Gradle completed successfully. Debug Kotlin/Java compilation and Android
+  resource processing succeeded; this was not an APK installation or runtime test.
+- JUnit XML records **16 passed, 0 failed/errors/skipped**: 5 language tests,
+  4 language preference tests, and 7 existing platform preference adapter tests.
+  Coverage includes legacy values, missing/invalid values without writes,
+  primary-language resolution, explicit overrides, save/reload through a new
+  controller, failed commits including in-memory changes, and retry.
+- Lint completed with **0 errors, 19 warnings, 1 hint**. In particular,
+  `AppBundleLocaleChanges` warns about future language delivery in split App
+  Bundles; no bundle/dependency change was made. SDK XML compatibility and
+  deprecated API warnings were also emitted. `git diff --check` passed.
+
+Deferred: actual Android preference durability after cold restart, system-language
+change delivery, Arabic/English visual and RTL/LTR acceptance, Activity recreation
+with pending edits/navigation/restore or GitHub state, and accessibility. JVM
+save/reload tests use an isolated store and do not establish platform durability.
+A failed platform commit can leave changed in-memory preferences; this controller
+retains its confirmed choice, but behavior across later recreation/process restart
+under storage failure still needs Android acceptance. No state-loss defect was
+reproduced, so no alternative navigation/session architecture was introduced.
+No emulator/device, instrumentation, commit, merge, push, or backup modification
+was performed. **NOT Ready for Release**.
 
 ## VNext 3 daily-use stabilization — 2026-11-14
 
