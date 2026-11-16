@@ -40,10 +40,12 @@ jobs:
       - name: Compile APK and Android instrumentation test sources
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest
       - uses: actions/upload-artifact@v4
+        continue-on-error: true # Storage quota must not block emulator acceptance.
         with:
           name: ai-project-manager-debug-apk
           path: app/build/outputs/apk/debug/*.apk
       - uses: actions/upload-artifact@v4
+        continue-on-error: true # Storage quota must not block emulator acceptance.
         with:
           name: ai-project-manager-vnext-apk
           path: app/build/outputs/apk/vnext/*.apk
@@ -62,6 +64,7 @@ jobs:
           script: gradle --no-daemon :app:connectedVnextAndroidTest
       - name: Upload Android instrumentation reports
         if: always()
+        continue-on-error: true # Preserve test result even when artifact storage is full.
         uses: actions/upload-artifact@v4
         with:
           name: android-instrumentation-reports
