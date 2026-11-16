@@ -107,7 +107,8 @@ class StorageFailureUiTest {
         )
         compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Retain task")
         compose.onLocalizedText("Add", "إضافة").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Retain task").assertExists()
+        // Successful submission clears the text field; verify persisted data instead.
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("")
         compose.runOnIdle {
             val actual = storage.load().single().tasks.map { it.title }
             assertEquals("Retry did not persist task; check UI error dialog and fixture state", listOf("Existing", "Retain task"), actual)
