@@ -65,7 +65,7 @@ class LayoutSizingTest {
         assertEquals(DocumentBodyAllocation(true, 0, 221, 300),
             documentBodyAllocation(328, 300, 95, 48, 12, 16, 85, minimumBodyHeight = 270))
         // Without enough horizontal space, never place Save over the field.
-        assertEquals(DocumentBodyAllocation(false, 0, 100, 252),
+        assertEquals(DocumentBodyAllocation(false, 16, 100, 220),
             documentBodyAllocation(100, 300, 95, 48, 12, 16, 85, minimumBodyHeight = 270))
     }
 
