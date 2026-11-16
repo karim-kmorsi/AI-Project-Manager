@@ -88,6 +88,7 @@ class TaskContextRestorationUiTest {
         compose.pressProjectBack()
         open("Unrelated project")
         assertEquals(0f, position(), 1f)
+        list().performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").assert(SemanticsMatcher.expectValue(
             SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").assertExists()
