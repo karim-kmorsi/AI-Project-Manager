@@ -244,7 +244,10 @@ class ThemeUiTest {
         compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains("Keep")
         compose.onLocalizedText("Task status: In progress", "حالة المهام: قيد التنفيذ").assertExists()
         val noMatches = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.tasks_no_matches)
-        compose.onNodeWithText(noMatches).assertExists()
+        // LazyColumn may not compose the empty-result message while scrolled to the filters.
+        // This still fails if the filter logic never produces the expected empty result.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(noMatches))
+        compose.onNodeWithText(noMatches).assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 }
