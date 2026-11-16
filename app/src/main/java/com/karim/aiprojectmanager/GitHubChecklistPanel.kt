@@ -74,7 +74,7 @@ internal fun GitHubChecklistPanel(
                 Text(warning, style = MaterialTheme.typography.bodySmall)
             }
             additions.take(20).forEach { task ->
-                Text("• ${task.title}", style = MaterialTheme.typography.bodySmall)
+                Text("• ${task.title} — ${task.id.removePrefix("github-checklist:")}", style = MaterialTheme.typography.bodySmall)
             }
             if (additions.size > 20) Text(stringResource(R.string.checklist_more, additions.size - 20))
             if (additions.isNotEmpty()) {
