@@ -113,4 +113,15 @@
     <string name="backlog_next_action">الإجراء التالي: %1$s</string>
     <string name="backlog_none">لا يوجد</string>
     <string name="backlog_dependencies">التبعيات: %1$s</string>
+    <string name="checklist_title">قائمة المتابعة من GitHub</string>
+    <string name="checklist_source_note">مهام مقترحة من ملف المتابعة وREADME وIssues الحديثة. علامة الإنجاز في GitHub ليست تحققًا مستقلًا. لن تُستبدل تعديلاتك اليدوية.</string>
+    <string name="checklist_loading">جارٍ التحميل…</string>
+    <string name="checklist_refresh">تحديث المقترحات</string>
+    <string name="checklist_connect">اربط حساب GitHub لعرض المقترحات.</string>
+    <string name="checklist_error">تعذّر جلب القائمة. أعد المحاولة عند توفر GitHub.</string>
+    <string name="checklist_save_error">تعذّر حفظ المهام المقترحة. لم تتغير المهام الحالية.</string>
+    <string name="checklist_found">المهام في المصدر: %1$d، المقترحات الجديدة: %2$d.</string>
+    <string name="checklist_empty">لم نجد قائمة متابعة. أضف PROJECT_CHECKLIST.md إلى المستودع أو أضف المهام يدويًا.</string>
+    <string name="checklist_more">و%1$d مقترحات أخرى…</string>
+    <string name="checklist_apply">إضافة %1$d مهام مقترحة</string>
 </resources>
