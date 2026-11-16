@@ -169,8 +169,9 @@ class AccessibilityLayoutUiTest {
                             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                                 // Use the VNext project's actual compact tab-strip geometry.
                                 // Material ScrollableTabRow can grow differently at 2x font size.
+                                // Simulate the same compact IME-visible tab spacing as ProjectManagerApp.
                                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    .padding(horizontal = 12.dp, vertical = if (imeBottom > 0) 0.dp else 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEach { label ->
                                         Surface(onClick = {}, modifier = Modifier.heightIn(min = 48.dp)) {
