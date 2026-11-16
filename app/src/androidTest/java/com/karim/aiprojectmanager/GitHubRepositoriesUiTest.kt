@@ -85,7 +85,8 @@ class GitHubRepositoriesUiTest {
             clickLabel(R.string.github_repos_sync_compare)
             compose.onNodeWithText(label(R.string.github_repos_sync_conflict)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(label(R.string.github_repos_sync_head)).performScrollTo().assertIsDisplayed()
-            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Sample README"))
+            // README is inside the preview surface, not the repository LazyColumn.
+            // Do not scroll an unrelated list to locate the preview document.
             compose.onNodeWithText("Sample README").assertIsDisplayed()
             compose.runOnIdle { assertEquals(1, snapshotCalls) }
             assertArrayEquals(bytes, fixture.readBytes())
