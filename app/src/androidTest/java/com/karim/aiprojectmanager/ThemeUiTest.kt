@@ -228,16 +228,26 @@ class ThemeUiTest {
         compose.onNodeWithText("Alpha").performClick()
         compose.selectProjectTab(3)
         compose.onLocalizedText("New task", "مهمة جديدة").performTextReplacement("Pending new task")
+        // Choose status before entering a search query so a software keyboard cannot obscure
+        // or dismiss the dropdown. The combined state is still verified after theme change.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("Task status: All statuses") or hasText("حالة المهام: كل الحالات")
+        )
+        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performClick()
+        // A status name may also appear on the task card underneath the popup.
+        // Select the dropdown option by its stable semantic identifier.
+        compose.onNodeWithTag("task_status_option_IN_PROGRESS", useUnmergedTree = true).performClick()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
-        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
-        compose.onNode((hasText("In progress") or hasText("قيد التنفيذ")) and hasAnyAncestor(isPopup())).performClick()
         compose.runOnIdle { f.renderedDark.value = false }
         compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Pending new task")
         compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains("Keep")
         compose.onLocalizedText("Task status: In progress", "حالة المهام: قيد التنفيذ").assertExists()
         val noMatches = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.tasks_no_matches)
-        compose.onNodeWithText(noMatches).assertExists()
+        // LazyColumn may not compose the empty-result message while scrolled to the filters.
+        // This still fails if the filter logic never produces the expected empty result.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(noMatches))
+        compose.onNodeWithText(noMatches).assertIsDisplayed()
         compose.runOnIdle { assertArrayEquals(before, f.file.readBytes()) }
     }
 }
