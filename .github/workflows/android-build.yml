@@ -1,7 +1,7 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview]
+    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview, feature/github-checklist]
   pull_request:
     branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
   workflow_dispatch:
@@ -34,11 +34,15 @@ jobs:
           unzip -q gradle.zip -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Compile APK and Android instrumentation test sources
-        run: gradle --no-daemon :app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest
       - uses: actions/upload-artifact@v4
         with:
           name: ai-project-manager-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-project-manager-vnext-apk
+          path: app/build/outputs/apk/vnext/*.apk
       - name: Enable KVM for emulator
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; else echo 'KVM unavailable'; fi
