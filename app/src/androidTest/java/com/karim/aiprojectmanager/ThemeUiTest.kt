@@ -234,7 +234,9 @@ class ThemeUiTest {
             hasText("Task status: All statuses") or hasText("حالة المهام: كل الحالات")
         )
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performClick()
-        compose.onAllNodes(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).onLast().performClick()
+        // The unmerged tree contains both the label and its clickable menu item.
+        // Select the accessible clickable item, not an order-dependent text node.
+        compose.onNode((hasText("In progress") or hasText("قيد التنفيذ")) and hasClickAction()).performClick()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
         compose.runOnIdle { f.renderedDark.value = false }
