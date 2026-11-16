@@ -1,5 +1,6 @@
 package com.karim.aiprojectmanager
 
+import android.content.res.Resources
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -21,6 +22,7 @@ internal fun AppearanceSettings(
     language: AppLanguage = AppLanguage.ENGLISH,
     onLanguageSelect: (AppLanguage) -> Unit = {}
 ) {
+    val displayedLanguage = language.resolve(Resources.getSystem().configuration.locales[0].language)
     SettingsSectionTitle(R.string.settings_appearance)
     VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp).selectableGroup()) {
@@ -39,15 +41,16 @@ internal fun AppearanceSettings(
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(top = 12.dp)
             )
-            AppLanguage.entries.forEach { option ->
+            listOf(AppLanguage.ARABIC, AppLanguage.ENGLISH).forEach { option ->
                 Row(Modifier.fillMaxWidth().selectable(
-                    selected = language == option,
+                    selected = displayedLanguage == option,
                     role = Role.RadioButton,
                     onClick = { onLanguageSelect(option) }
                 ).heightIn(min = 48.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    RadioButton(selected = language == option, onClick = null)
+                    RadioButton(selected = displayedLanguage == option, onClick = null)
                     Text(stringResource(when (option) {
+                        AppLanguage.SYSTEM -> R.string.language_system
                         AppLanguage.ARABIC -> R.string.language_arabic
                         AppLanguage.ENGLISH -> R.string.language_english
                     }))

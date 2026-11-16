@@ -27,4 +27,35 @@
     <string name="task_action_implemented_unverified">Implemented, unverified</string>
     <string name="task_action_verified">Mark verified</string>
     <string name="task_screen_status_summary">Current task statuses: Not started %1$d | In progress %2$d | Implemented, unverified %3$d | Manually verified %4$d | Other %5$d</string>
+    <string name="task_delete_button">Delete</string>
+    <string name="task_delete_title">Delete task?</string>
+    <string name="task_delete_message">Delete “%1$s”? This cannot be undone.</string>
+    <string name="task_delete_confirm">Delete task</string>
+    <string name="roadmap_proposals_open">Propose tasks from roadmap</string>
+    <string name="roadmap_proposals_title">Review proposed tasks</string>
+    <string name="roadmap_proposals_review">Review, edit, and select tasks before adding them. Nothing is saved until you confirm.</string>
+    <string name="roadmap_proposals_empty">No recognizable task proposals were found. You can still add tasks manually.</string>
+    <string name="roadmap_proposals_save_error">Could not save these tasks. Your existing task data was not changed.</string>
+    <string name="roadmap_proposals_source_line">Roadmap line %1$d</string>
+    <string name="roadmap_proposals_phase">Phase: %1$s</string>
+    <string name="roadmap_proposals_existing">A task with this title already exists.</string>
+    <string name="roadmap_proposals_task_title">Proposed task title</string>
+    <string name="roadmap_proposals_duplicate_title">This title duplicates an existing task or another selected proposal.</string>
+    <string name="roadmap_proposals_confirm">Add selected tasks</string>
+    <plurals name="roadmap_proposals_ambiguous">
+        <item quantity="one">Skipped %1$d ambiguous roadmap entry.</item>
+        <item quantity="other">Skipped %1$d ambiguous roadmap entries.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_completed">
+        <item quantity="one">Skipped %1$d completed entry.</item>
+        <item quantity="other">Skipped %1$d completed entries.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_duplicates">
+        <item quantity="one">Skipped %1$d repeated roadmap entry.</item>
+        <item quantity="other">Skipped %1$d repeated roadmap entries.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_limit">
+        <item quantity="one">Only the first 200 proposals are shown; %1$d more was omitted.</item>
+        <item quantity="other">Only the first 200 proposals are shown; %1$d more were omitted.</item>
+    </plurals>
 </resources>

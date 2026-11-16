@@ -4,6 +4,7 @@
     <string name="dashboard_export">Export JSON</string>
     <string name="dashboard_backup_preview">Preview backup</string>
     <string name="dashboard_create">New project</string>
+    <string name="dashboard_import_github">Import from GitHub</string>
     <string name="dashboard_my_projects">My Projects</string>
     <string name="dashboard_project_count">Projects: %1$d</string>
     <string name="dashboard_search">Search projects</string>

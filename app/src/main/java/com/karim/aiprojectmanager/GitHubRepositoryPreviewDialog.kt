@@ -2,10 +2,13 @@ package com.karim.aiprojectmanager
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,7 +36,7 @@ internal fun GitHubRepositoryPreviewDialog(
     localProjects: List<ProjectItem>?,
     onExpired: () -> Unit,
     onBack: () -> Unit,
-    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
+    onImport: ((GitHubRepository, Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>) -> GitHubImportOutcome)? = null
 ) {
     var preview by remember(repository) { mutableStateOf<GitHubRepositoryPreview?>(null) }
     var error by remember(repository) { mutableStateOf<GitHubReadFailure?>(null) }
@@ -54,6 +57,11 @@ internal fun GitHubRepositoryPreviewDialog(
             if (failure.reason == GitHubReadError.EXPIRED) onExpired() else error = failure
         }
     }
+    val importProposal = localProjects?.let {
+        previewGitHubImport(repository, it, preview?.planningDocuments)
+    }
+    val canRequestImport = importProposal != null && importProposal.planningDocuments != null &&
+        importProposal.candidates.isEmpty() && onImport != null
     Dialog(onDismissRequest = onBack) {
         VNextPreviewSurface() {
             Column(
@@ -68,8 +76,7 @@ internal fun GitHubRepositoryPreviewDialog(
                             Text(stringResource(R.string.github_repos_import_preview))
                         }
                         if (showImport) GitHubImportPreviewContent(
-                            repository, localProjects, onImport != null, importMessage,
-                            onImport = { confirmImport = true; importMessage = 0 }
+                            repository, localProjects, preview, importMessage
                         )
                         val branch = (preview?.branch as? GitHubPreviewSection.Available)?.value
                         if (branch != null && localBaseline != null && localProjects != null) {
@@ -116,26 +123,47 @@ internal fun GitHubRepositoryPreviewDialog(
                         }
                     }
                 }
-                TextButton(onClick = onBack) { Text(stringResource(R.string.github_repos_back)) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onBack, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.github_repos_back))
+                    }
+                    TextButton(
+                        enabled = canRequestImport,
+                        modifier = Modifier.weight(1f),
+                        onClick = { confirmImport = true; importMessage = 0 }
+                    ) { Text(stringResource(R.string.github_repos_import_action)) }
+                }
             }
         }
     }
     if (confirmImport) {
-        val proposal = localProjects?.let { previewGitHubImport(repository, it) }
-        val canImport = proposal != null && proposal.candidates.isEmpty() && onImport != null
+        val proposal = importProposal
+        val canImport = proposal != null && proposal.planningDocuments != null &&
+            proposal.candidates.isEmpty() && onImport != null
         AlertDialog(
             onDismissRequest = { confirmImport = false },
             title = { Text(stringResource(R.string.github_repos_import_confirm_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     when {
                         localProjects == null -> ParagraphText(stringResource(R.string.github_repos_import_unavailable))
                         proposal == null -> ParagraphText(stringResource(R.string.github_repos_import_invalid))
                         else -> {
-                            ParagraphText(proposal.project.name)
-                            ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
-                            ParagraphText(proposal.project.description)
-                            ParagraphText(stringResource(R.string.github_repos_import_empty_fields))
+                            ParagraphText(stringResource(
+                                R.string.github_repos_import_project_name, proposal.project.name
+                            ))
+                            ParagraphText(stringResource(
+                                R.string.github_repos_import_repository_identity,
+                                repository.fullName,
+                                repository.id
+                            ))
+                            GitHubDocumentMappingContent(
+                                proposal.planningDocuments,
+                                showDocumentContents = false
+                            )
                             if (proposal.candidates.isNotEmpty()) {
                                 ParagraphText(stringResource(R.string.github_repos_import_duplicate_blocked))
                                 proposal.candidates.take(10).forEach { candidate ->
@@ -148,7 +176,8 @@ internal fun GitHubRepositoryPreviewDialog(
             },
             confirmButton = {
                 TextButton(enabled = canImport, onClick = {
-                    val outcome = onImport?.invoke(repository) ?: GitHubImportOutcome.FAILED
+                    val outcome = proposal?.planningDocuments?.let { onImport?.invoke(repository, it) }
+                        ?: GitHubImportOutcome.FAILED
                     confirmImport = false
                     when (outcome) {
                         GitHubImportOutcome.IMPORTED -> android.widget.Toast.makeText(
@@ -156,10 +185,14 @@ internal fun GitHubRepositoryPreviewDialog(
                             context.getString(R.string.github_repos_import_success),
                             android.widget.Toast.LENGTH_LONG
                         ).show()
-                        GitHubImportOutcome.DUPLICATE ->
+                        GitHubImportOutcome.DUPLICATE -> {
+                            showImport = true
                             importMessage = R.string.github_repos_import_duplicate_blocked
-                        GitHubImportOutcome.FAILED ->
+                        }
+                        GitHubImportOutcome.FAILED -> {
+                            showImport = true
                             importMessage = R.string.github_repos_import_failed
+                        }
                     }
                 }) { Text(stringResource(R.string.github_repos_import_confirm_action)) }
             },
@@ -224,38 +257,98 @@ private fun GitHubRepositoryPreviewContent(preview: GitHubRepositoryPreview) {
 private fun GitHubImportPreviewContent(
     repository: GitHubRepository,
     projects: List<ProjectItem>?,
-    canRequestImport: Boolean,
-    importMessage: Int,
-    onImport: () -> Unit
+    repositoryPreview: GitHubRepositoryPreview?,
+    importMessage: Int
 ) {
     if (projects == null) {
         ParagraphText(stringResource(R.string.github_repos_import_unavailable))
         return
     }
-    val proposal = previewGitHubImport(repository, projects)
+    val proposal = previewGitHubImport(repository, projects, repositoryPreview?.planningDocuments)
     if (proposal == null) {
         ParagraphText(stringResource(R.string.github_repos_import_invalid))
         return
     }
+    val branchFailure = repositoryPreview?.branch as? GitHubPreviewSection.Unavailable
     VNextPanel {
-    ParagraphText(stringResource(R.string.github_repos_import_read_only))
-    ParagraphText(proposal.project.name)
-    ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
-    ParagraphText(proposal.project.description)
-    ParagraphText(stringResource(R.string.github_repos_import_empty_fields))
-    if (proposal.candidates.isEmpty()) ParagraphText(stringResource(R.string.github_repos_import_none))
-    proposal.candidates.take(10).forEach { candidate ->
-        ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
+        ParagraphText(stringResource(R.string.github_repos_import_read_only))
+        ParagraphText(proposal.project.name)
+        ParagraphText(stringResource(R.string.github_repos_import_id, proposal.project.id))
+        ParagraphText(proposal.project.description)
+        when {
+            proposal.planningDocuments != null -> GitHubDocumentMappingContent(proposal.planningDocuments)
+            branchFailure != null -> ParagraphText(stringResource(branchFailure.reason.messageResource()))
+            else -> ParagraphText(stringResource(R.string.github_repos_import_documents_loading))
+        }
+        if (proposal.candidates.isEmpty()) ParagraphText(stringResource(R.string.github_repos_import_none))
+        proposal.candidates.take(10).forEach { candidate ->
+            ParagraphText(stringResource(R.string.github_repos_import_duplicate, candidate.name))
+        }
+        if (proposal.candidates.size > 10) ParagraphText(stringResource(R.string.github_repos_partial))
+        if (proposal.candidates.isNotEmpty()) {
+            ParagraphText(stringResource(R.string.github_repos_import_duplicate_blocked))
+        }
+        if (importMessage != 0) ParagraphText(stringResource(importMessage))
     }
-    if (proposal.candidates.size > 10) ParagraphText(stringResource(R.string.github_repos_partial))
-    if (proposal.candidates.isNotEmpty()) {
-        ParagraphText(stringResource(R.string.github_repos_import_duplicate_blocked))
+}
+
+@Composable
+private fun GitHubDocumentMappingContent(
+    documents: Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>?,
+    showDocumentContents: Boolean = true
+) {
+    ParagraphText(stringResource(R.string.github_repos_import_readme_mapping))
+    if (documents == null) {
+        ParagraphText(stringResource(R.string.github_repos_import_documents_loading))
+        return
     }
-    if (importMessage != 0) ParagraphText(stringResource(importMessage))
-    TextButton(
-        enabled = canRequestImport && proposal.candidates.isEmpty(),
-        onClick = onImport
-    ) { Text(stringResource(R.string.github_repos_import_action)) }
+    GitHubDocumentMapping(
+        GitHubPlanningFile.BLUEPRINT,
+        documents.getValue(GitHubPlanningFile.BLUEPRINT),
+        R.string.github_repos_import_blueprint_mapping,
+        R.string.github_repos_import_blueprint_absent,
+        showDocumentContents
+    )
+    GitHubDocumentMapping(
+        GitHubPlanningFile.ROADMAP,
+        documents.getValue(GitHubPlanningFile.ROADMAP),
+        R.string.github_repos_import_roadmap_mapping,
+        R.string.github_repos_import_roadmap_absent,
+        showDocumentContents
+    )
+    ParagraphText(stringResource(R.string.github_repos_import_tasks_empty))
+}
+
+@Composable
+private fun GitHubDocumentMapping(
+    file: GitHubPlanningFile,
+    document: GitHubPreviewSection<GitHubPlanningDocument>,
+    mapping: Int,
+    absent: Int,
+    showDocumentContents: Boolean
+) {
+    when (document) {
+        is GitHubPreviewSection.Available -> {
+            ParagraphText(stringResource(mapping))
+            if (showDocumentContents) {
+                val visibleText = document.value.text.take(12_000)
+                ParagraphText(visibleText.ifBlank { stringResource(R.string.github_repos_import_document_empty) })
+                if (document.value.text.length > visibleText.length) {
+                    ParagraphText(stringResource(R.string.github_repos_partial))
+                }
+            }
+        }
+        is GitHubPreviewSection.Unavailable -> when (document.reason) {
+            GitHubReadError.NOT_FOUND -> ParagraphText(stringResource(absent))
+            GitHubReadError.TOO_LARGE -> ParagraphText(
+                stringResource(R.string.github_repos_import_document_too_large, file.fileName)
+            )
+            else -> {
+                ParagraphText(stringResource(mapping))
+                ParagraphText(stringResource(R.string.github_repos_import_document_unavailable, file.fileName))
+                ParagraphText(stringResource(document.reason.messageResource()))
+            }
+        }
     }
 }
 

@@ -19,14 +19,35 @@ The reader materializes supported `ProjectItem`/`TaskItem` fields. As of the 202
 - Reject unsupported or ambiguous versions rather than guessing, dropping fields, or replacing the original file.
 - Any new structured project/task fields need intentional preservation rules and migration tests before rollout; consider lossless extension handling.
 
-## Safe migration and restore transaction (future work, not yet implemented)
+## Current restore transaction and future schema migration
 
-1. Read the existing file with Android `AtomicFile` and validate the *entire* document before any write. Distinguish missing file from corrupt/unsupported file.
-2. Make a separate recoverable snapshot of the exact original bytes, verify it can be read back, and never reuse the live file as the sole backup.
-3. Parse the source format into a candidate representation, retaining required/optional fields, identifiers, statuses, ordering, and original freeform text. Reject duplicate identifiers and invalid structures according to a documented validation policy; do not silently normalize user content.
-4. Serialize the candidate to a separate temporary destination, then parse it again and compare required semantic fields and record counts before committing.
-5. Atomically commit only after validation; preserve the prior snapshot until restore safety is confirmed. On any exception, leave original data recoverable and show an actionable error; never silently substitute an empty project list.
-6. On application restart, re-read and verify the committed data. Add regression cases for failed/corrupt writes, missing optional fields, stale drafts, and unsupported future format.
+The explicit restore flow accepts only the current legacy JSON array; it does
+not migrate or introduce another schema.
+
+1. The selected file is staged in app-private cache, limited to 8 MiB, and fully
+   validated before preview. The final replace-all action requires a separate
+   user confirmation.
+2. Before commit, the candidate hash and the current storage fingerprint must
+   still match the values captured for review. The app rejects stale or changed
+   inputs and pending `AtomicFile` sidecars.
+3. If current storage exists, an exact byte-for-byte recovery snapshot is
+   atomically written and verified before the live write. This snapshot is raw
+   bytes, so an explicitly confirmed restore can recover from a corrupt current
+   file without interpreting or discarding those bytes. A first-run restore
+   with no live file has no prior bytes to snapshot.
+4. The validated candidate is committed through `AtomicFile` while holding the
+   shared project-write mutex, then verified byte-for-byte and reloaded through
+   normal storage validation. Unknown compatible JSON fields, IDs, ordering,
+   statuses, and freeform text in the backup are preserved by restoring its
+   original array bytes.
+5. A failed pre-commit operation does not intentionally modify the live file.
+   A post-commit verification failure is reported and the recovery snapshot is
+   retained; the app does not silently overwrite the committed file again.
+   Recovery snapshots remain in app-private storage and are not currently
+   exposed for export through the UI.
+6. This restore implementation does not add schema versioning, migration,
+   merging, or support for a future root-object format. Such work still
+   requires a separate approved design and compatibility tests.
 
 ## 2026-11-04 stabilization safeguards
 
@@ -37,7 +58,8 @@ Export preserves the validated source bytes in an app-private cache snapshot whi
 ## Existing coverage and remaining gate
 
 - CI build #77 ran 11 Android instrumentation tests successfully, including representative v0.1 load/save/reload tests.
-- Current `ProjectStorage` uses `AtomicFile` and blocks overwriting files it cannot read, but **full schema migration, version rejection, recovery snapshots, and backup import/restore are not implemented**. Validated JSON export and read-only backup preview are implemented; neither applies an import or restores live data.
+- Current `ProjectStorage` uses `AtomicFile` and blocks ordinary writes to files it cannot read. A user-confirmed legacy-array restore can replace such a file only after retaining an exact recovery snapshot. Full schema migration, version rejection, merge/restore of other formats, and user-managed export of recovery snapshots are not implemented. Validated JSON export and restore preview are implemented; restore is replace-all only.
+- VNext 3 adds isolated Android transaction regression sources, including successful replacement, missing storage, corrupt-original preservation, stale inputs, invalid candidates, and write failures. These tests were compiled but not executed for the current release cycle; restore safety remains an open release gate.
 - Tests use isolated synthetic files, **not a copy of data from the user's installed phone**.
 - APK signing/fingerprint compatibility and in-place update remain separate pending Gate 0 checks. Do not uninstall, clear app storage or deploy a differently signed APK to the existing installation.
 

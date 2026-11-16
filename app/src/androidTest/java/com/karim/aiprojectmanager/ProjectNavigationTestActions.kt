@@ -4,12 +4,11 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithTag
 
 internal fun SemanticsNodeInteractionsProvider.selectProjectTab(index: Int) {
     require(index in 0..3) { "Project tab index must be between 0 and 3" }
-    onNodeWithTag("project_tab_$index").performScrollTo().performClick()
+    onNodeWithTag("project_tab_$index").performClick()
 }
 
 internal fun SemanticsNodeInteractionsProvider.selectDocumentTab(name: String) {

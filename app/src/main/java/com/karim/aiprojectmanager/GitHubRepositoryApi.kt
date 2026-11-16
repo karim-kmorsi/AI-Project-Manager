@@ -40,7 +40,7 @@ internal data class GitHubRepositoryPage(
 )
 
 internal enum class GitHubReadError {
-    EXPIRED, FORBIDDEN, NOT_FOUND, EMPTY, RATE_LIMIT, NETWORK, TIMEOUT, INVALID_RESPONSE, HTTP
+    EXPIRED, FORBIDDEN, NOT_FOUND, EMPTY, TOO_LARGE, RATE_LIMIT, NETWORK, TIMEOUT, INVALID_RESPONSE, HTTP
 }
 
 internal class GitHubReadFailure(
@@ -54,6 +54,7 @@ internal fun interface GitHubRepositorySource {
 
 internal class GitHubRepositoryApi(
     private val token: String,
+    private val elapsedRealtime: () -> Long = { SystemClock.elapsedRealtime() },
     private val openConnection: (URL) -> HttpsURLConnection = { it.openConnection() as HttpsURLConnection }
 ) : GitHubRepositorySource, GitHubProjectRefreshSource {
     private val rateLimitedUntil = AtomicLong()
@@ -110,6 +111,21 @@ internal class GitHubRepositoryApi(
         return GitHubReadmePreview(response.body, response.truncated)
     }
 
+    override suspend fun planningDocument(
+        repository: GitHubRepository,
+        document: GitHubPlanningFile,
+        commitSha: String
+    ): GitHubPlanningDocument {
+        val response = get(
+            "${repository.path()}/contents/${document.fileName}?ref=${commitSha.checkedSha()}",
+            accept = "application/vnd.github.raw+json",
+            limit = DOCUMENT_LIMIT,
+            allowTruncation = true
+        )
+        if (response.truncated) throw GitHubReadFailure(GitHubReadError.TOO_LARGE)
+        return GitHubPlanningDocument(response.body)
+    }
+
     override suspend fun tree(repository: GitHubRepository, treeSha: String): GitHubTreePreview = readJson {
         val response = get("${repository.path()}/git/trees/${treeSha.checkedSha()}").json()
         val tree = response.getJSONArray("tree")
@@ -117,7 +133,20 @@ internal class GitHubRepositoryApi(
             val entry = tree.getJSONObject(index)
             GitHubTreeEntry(entry.getString("path"), entry.getString("type") == "tree")
         }
-        GitHubTreePreview(entries, response.getBoolean("truncated") || tree.length() > entries.size)
+        val rootFiles = buildSet {
+            for (index in 0 until tree.length()) {
+                val entry = tree.getJSONObject(index)
+                val path = entry.getString("path")
+                if (entry.getString("type") == "blob" &&
+                    (path == "README.md" || path == "BLUEPRINT.md" || path == "ROADMAP.md")
+                ) add(path)
+            }
+        }
+        GitHubTreePreview(
+            entries,
+            response.getBoolean("truncated") || tree.length() > entries.size,
+            rootFiles
+        )
     }
 
     /**
@@ -280,7 +309,7 @@ internal class GitHubRepositoryApi(
         val caller = currentCoroutineContext()
         return runInterruptible(Dispatchers.IO) {
             try {
-                val remaining = rateLimitedUntil.get() - SystemClock.elapsedRealtime()
+                val remaining = rateLimitedUntil.get() - elapsedRealtime()
                 if (remaining > 0) throw GitHubReadFailure(GitHubReadError.RATE_LIMIT, (remaining + 999) / 1_000)
                 val connection = openConnection(URL("https://api.github.com$path"))
                 try {
@@ -293,7 +322,7 @@ internal class GitHubRepositoryApi(
                     connection.setRequestProperty("Authorization", "Bearer $token")
                     connection.setRequestProperty("User-Agent", "AI-Project-Manager")
                     connection.setRequestProperty("X-GitHub-Api-Version", "2026-03-10")
-                    val deadline = SystemClock.elapsedRealtime() + 15_000L
+                    val deadline = elapsedRealtime() + 15_000L
                     val status = connection.responseCode
                     if (status != 200) throw failure(connection, status, deadline)
                     val response = connection.inputStream.use { stream ->
@@ -301,7 +330,7 @@ internal class GitHubRepositoryApi(
                         var size = 0
                         while (size < bytes.size) {
                             caller.ensureActive()
-                            if (SystemClock.elapsedRealtime() >= deadline) throw SocketTimeoutException()
+                            if (elapsedRealtime() >= deadline) throw SocketTimeoutException()
                             val count = stream.read(bytes, size, bytes.size - size)
                             if (count < 0) break
                             size += count
@@ -315,7 +344,7 @@ internal class GitHubRepositoryApi(
                         )
                     }
                     caller.ensureActive()
-                    if (SystemClock.elapsedRealtime() >= deadline) throw SocketTimeoutException()
+                    if (elapsedRealtime() >= deadline) throw SocketTimeoutException()
                     response
                 } finally {
                     connection.disconnect()
@@ -337,7 +366,7 @@ internal class GitHubRepositoryApi(
             ?.minus(System.currentTimeMillis() / 1_000L)?.coerceAtLeast(0) else null
         if (status == 429 || status == 403 && (retryAfter != null || exhausted || isSecondaryLimit(connection, deadline))) {
             val seconds = (retryAfter ?: reset ?: 60L).coerceIn(1L, Long.MAX_VALUE / 2_000L)
-            rateLimitedUntil.accumulateAndGet(SystemClock.elapsedRealtime() + seconds * 1_000L, ::maxOf)
+            rateLimitedUntil.accumulateAndGet(elapsedRealtime() + seconds * 1_000L, ::maxOf)
             return GitHubReadFailure(GitHubReadError.RATE_LIMIT, seconds)
         }
         return GitHubReadFailure(when (status) {
@@ -353,7 +382,7 @@ internal class GitHubRepositoryApi(
         val errorBody = connection.errorStream?.use { stream ->
             val bytes = ByteArray(4_096)
             var count = 0
-            while (count < bytes.size && SystemClock.elapsedRealtime() < deadline) {
+            while (count < bytes.size && elapsedRealtime() < deadline) {
                 val read = stream.read(bytes, count, bytes.size - count)
                 if (read < 0) break
                 count += read
@@ -385,6 +414,7 @@ internal class GitHubRepositoryApi(
 
     private companion object {
         const val MAX_BYTES = 1024 * 1024
+        const val DOCUMENT_LIMIT = 64 * 1024
         val NEXT_LINK = Regex("""(?:^|,)\s*<[^>]+>\s*;\s*rel\s*=\s*"next"(?:\s*[,;]|\s*$)""")
         val SHA = Regex("(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})")
     }

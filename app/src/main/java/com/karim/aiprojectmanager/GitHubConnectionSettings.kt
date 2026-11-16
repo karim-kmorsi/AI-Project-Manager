@@ -42,16 +42,14 @@ import kotlinx.coroutines.withContext
 
 @Composable
 internal fun GitHubConnectionSettings(
-    signIn: GitHubSignIn,
-    localProjects: List<ProjectItem>?,
-    onImport: ((GitHubRepository) -> GitHubImportOutcome)? = null
+    signIn: GitHubSignIn
 ) {
     val scope = rememberCoroutineScope()
     DisposableEffect(signIn) { onDispose { signIn.cancel() } }
     VNextCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             VNextSectionTitle("GitHub", R.drawable.vnext_link)
-            GitHubSignInControls(signIn, scope, localProjects, onImport)
+            GitHubSignInControls(signIn, scope)
         }
     }
 }
@@ -100,9 +98,7 @@ internal fun GitHubPublicConnectivityProbe() {
 @Composable
 private fun GitHubSignInControls(
     signIn: GitHubSignIn,
-    scope: CoroutineScope,
-    localProjects: List<ProjectItem>?,
-    onImport: ((GitHubRepository) -> GitHubImportOutcome)?
+    scope: CoroutineScope
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -110,7 +106,6 @@ private fun GitHubSignInControls(
     val code = signIn.userCode
     val session = signIn.session
     var browserError by remember(code) { mutableStateOf(false) }
-    var showRepositories by remember(session) { mutableStateOf(false) }
 
     ParagraphText(
         when {
@@ -153,9 +148,6 @@ private fun GitHubSignInControls(
             Text(stringResource(R.string.github_retry_disconnect))
         }
         session != null -> {
-            TextButton(onClick = { showRepositories = true }) {
-                Text(stringResource(R.string.github_repos_browse))
-            }
             TextButton(onClick = { signIn.disconnect(scope) }) { Text(stringResource(R.string.github_disconnect)) }
         }
         else -> {
@@ -171,16 +163,6 @@ private fun GitHubSignInControls(
                 }
             ) { Text(stringResource(R.string.github_connect)) }
         }
-    }
-    if (session != null && showRepositories) {
-        GitHubRepositoriesDialog(
-            source = session.repositoryApi,
-            onExpired = { signIn.expire(session, scope) },
-            onClose = { showRepositories = false },
-            previewSource = session.repositoryApi,
-            localProjects = localProjects,
-            onImport = onImport
-        )
     }
 }
 

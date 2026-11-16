@@ -36,8 +36,32 @@
     <string name="backup_preview_counts">المشاريع: %1$d · المهام: %2$d</string>
     <string name="backup_preview_project_tasks">%1$s — %2$d مهام</string>
     <string name="backup_preview_limit">يُعرض أول 30 مشروعًا فقط.</string>
-    <string name="backup_preview_read_only">معاينة فقط. لن تُستبدل البيانات ولن تُدمج.</string>
+    <string name="backup_preview_confirmation_warning">ستؤدي الاستعادة إلى استبدال جميع المشاريع المحلية. راجع المحتويات وأكد في الشاشة التالية.</string>
+    <string name="backup_restore_review">مراجعة الاستعادة</string>
+    <string name="backup_restore_confirm_title">هل تريد استبدال المشاريع المحلية؟</string>
+    <string name="backup_restore_confirm_message">سيتم استبدال جميع المشاريع المحلية بهذه النسخة الاحتياطية.</string>
+    <string name="backup_restore_safety_copy">قبل الاستبدال، يحفظ التطبيق نسخة استرداد مطابقة لملف المشاريع الحالي. احتفظ بها حتى تتحقق من البيانات المستعادة.</string>
+    <string name="backup_restore_confirm_action">استبدال المشاريع</string>
+    <string name="backup_restore_cancel">إلغاء</string>
+    <string name="backup_restore_in_progress">جارٍ الاستعادة…</string>
+    <string name="backup_restore_failed">تعذّر التحقق من الاستعادة. ستبقى نسخة الاسترداد إن أُنشئت. أعد فتح التطبيق أو أعد المحاولة بعد مراجعة بيانات المشاريع الحالية.</string>
     <string name="generic_close">إغلاق</string>
+    <plurals name="backup_restore_project_count">
+        <item quantity="zero">تحتوي النسخة على صفر من المشاريع.</item>
+        <item quantity="one">تحتوي النسخة على مشروع واحد.</item>
+        <item quantity="two">تحتوي النسخة على مشروعين.</item>
+        <item quantity="few">تحتوي النسخة على %1$d مشاريع.</item>
+        <item quantity="many">تحتوي النسخة على %1$d مشروعًا.</item>
+        <item quantity="other">تحتوي النسخة على %1$d مشروع.</item>
+    </plurals>
+    <plurals name="backup_restore_task_count">
+        <item quantity="zero">تحتوي النسخة على صفر من المهام.</item>
+        <item quantity="one">تحتوي النسخة على مهمة واحدة.</item>
+        <item quantity="two">تحتوي النسخة على مهمتين.</item>
+        <item quantity="few">تحتوي النسخة على %1$d مهام.</item>
+        <item quantity="many">تحتوي النسخة على %1$d مهمة.</item>
+        <item quantity="other">تحتوي النسخة على %1$d مهمة.</item>
+    </plurals>
     <string name="backup_read_error">ملف النسخة الاحتياطية غير صالح أو تعذرت قراءته. لم تتغير بياناتك.</string>
     <string name="backup_picker_error">تعذّر فتح منتقي الملفات. لم تتغير بياناتك.</string>
     <string name="export_complete">تم تصدير النسخة الاحتياطية</string>
@@ -54,6 +78,7 @@
     <string name="appearance_save_error">تعذّر حفظ المظهر %1$s. بقي المظهر السابق؛ أعد المحاولة.</string>
     <string name="appearance_retry">إعادة محاولة حفظ المظهر</string>
     <string name="appearance_language">اللغة</string>
+    <string name="language_system">اتباع لغة الجهاز</string>
     <string name="language_arabic">العربية</string>
     <string name="language_english">English</string>
     <string name="language_save_error">تعذّر حفظ تفضيل اللغة.</string>
@@ -124,4 +149,7 @@
     <string name="checklist_empty">لم نجد قائمة متابعة. أضف PROJECT_CHECKLIST.md إلى المستودع أو أضف المهام يدويًا.</string>
     <string name="checklist_more">و%1$d مقترحات أخرى…</string>
     <string name="checklist_apply">إضافة %1$d مهام مقترحة</string>
+    <string name="startup_loading">جارٍ تحميل مشاريعك…</string>
+    <string name="startup_failed">تعذّر تحميل التطبيق بأمان. لم تُستبدل مشاريعك. أعد المحاولة؛ وإذا استمرت المشكلة فاحتفظ ببياناتك واطلب المساعدة لاستردادها.</string>
+    <string name="startup_retry">إعادة المحاولة</string>
 </resources>
