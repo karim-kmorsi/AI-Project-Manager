@@ -391,7 +391,7 @@ fun ProjectManagerApp(
                         update(active.copy(roadmap = it))
                     } }
                     3 -> taskScreenStates.SaveableStateProvider(active.id) {
-                        TaskScreen(active, onReloadTitle = { taskId ->
+                        TaskScreen(active, repositoryApi = githubSignIn.session?.repositoryApi, onReloadTitle = { taskId ->
                             val loaded = storage.load()
                             loaded.find { it.id == active.id }?.tasks?.find { it.id == taskId }
                                 ?: throw IOException("Task no longer exists; pending input retained")
@@ -673,6 +673,7 @@ private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm
 @Composable
 private fun TaskScreen(
     project: ProjectItem,
+    repositoryApi: GitHubRepositoryApi? = null,
     onReloadTitle: (String) -> ProjectItem,
     onEditTitle: (String, String, EditorSnapshot) -> Boolean,
     update: (ProjectItem) -> Boolean
@@ -770,6 +771,11 @@ private fun TaskScreen(
         }
         Spacer(Modifier.height(12.dp))
         } }
+            if (project.id.startsWith("github:")) {
+                item {
+                    GitHubChecklistPanel(project, repositoryApi, update)
+                }
+            }
             item {
                 OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_search)) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
