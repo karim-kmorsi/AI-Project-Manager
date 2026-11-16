@@ -68,6 +68,14 @@ class ActivityRecreationUiTest {
         compose.onNodeWithText(compose.activity.getString(R.string.editor_save_error)).assertExists()
         compose.runOnIdle { assertArrayEquals(bytes, file.readBytes()) }
         compose.activityRule.scenario.recreate()
+        // VNext3 startup refuses to read data while an AtomicFile .new sidecar
+        // exists; verify safe failure instead of bypassing the recovery gate.
+        compose.onLocalizedText("Retry", "إعادة المحاولة").assertIsDisplayed()
+        compose.runOnIdle {
+            assertArrayEquals(bytes, file.readBytes())
+            assertTrue(blocked.deleteRecursively())
+        }
+        compose.onLocalizedText("Retry", "إعادة المحاولة").performClick()
         compose.onDocumentContent().assertTextContains("Failed then retained")
         compose.selectDocumentTab(nextTab)
         compose.onUnsavedChanges().assertExists()
@@ -78,7 +86,7 @@ class ActivityRecreationUiTest {
         compose.runOnIdle {
             assertArrayEquals(bytes, file.readBytes())
             assertEquals("Failed then retained", DraftStorage(File(file.parentFile, "recovery-drafts")).load("active", document)?.text)
-            assertTrue(blocked.deleteRecursively())
+            assertFalse("The test blocker was cleared before startup retry", blocked.exists())
         }
         compose.onLocalizedText("Save", "حفظ").performClick()
         compose.onLocalizedText("Saved", "تم الحفظ").assertExists()
