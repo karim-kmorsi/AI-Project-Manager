@@ -1,5 +1,10 @@
 package com.karim.aiprojectmanager
 
+internal data class GitHubChecklistFetchResult(
+    val preview: GitHubChecklistPreview,
+    val warnings: List<String>
+)
+
 internal data class GitHubChecklistEntry(val key: String, val title: String, val checked: Boolean)
 internal data class GitHubChecklistPreview(val entries: List<GitHubChecklistEntry>) {
     val checkedCount: Int get() = entries.count { it.checked }
