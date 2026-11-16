@@ -230,7 +230,10 @@ class ThemeUiTest {
         compose.onLocalizedText("New task", "مهمة جديدة").performTextReplacement("Pending new task")
         // Choose status before entering a search query so a software keyboard cannot obscure
         // or dismiss the dropdown. The combined state is still verified after theme change.
-        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("Task status: All statuses") or hasText("حالة المهام: كل الحالات")
+        )
+        compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performClick()
         compose.onNode(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).performClick()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
