@@ -345,8 +345,11 @@ fun ProjectManagerApp(
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (!compactProject) VNextProjectHero(active)
+                // Preserve the 48dp touch targets but reclaim tab-strip spacing when
+                // a large-font keyboard leaves the document editor short of a text line.
+                val tightTabs = density.fontScale > 1.3f && WindowInsets.ime.getBottom(density) > 0
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                    .padding(horizontal = 12.dp, vertical = if (tightTabs) 0.dp else 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
