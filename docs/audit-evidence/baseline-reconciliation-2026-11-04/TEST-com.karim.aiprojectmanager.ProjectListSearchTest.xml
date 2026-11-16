@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="com.karim.aiprojectmanager.ProjectListSearchTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-04T15:03:38.313Z" time="0.006">
+  <testcase name="matchesNameOrDescriptionIgnoringCaseAndOuterSpaces" classname="com.karim.aiprojectmanager.ProjectListSearchTest" time="0.006" />
+  <testcase name="blankQueryKeepsAllProjectsInOrder" classname="com.karim.aiprojectmanager.ProjectListSearchTest" time="0.0" />
+  <testcase name="noMatchDoesNotMutateSavedProjects" classname="com.karim.aiprojectmanager.ProjectListSearchTest" time="0.0" />
+  </testsuite>

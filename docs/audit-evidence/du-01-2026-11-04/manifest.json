@@ -1,0 +1,474 @@
+{
+  "test_id": "DU-01",
+  "test_date": "2026-11-04",
+  "tested_branch": "codex/baseline-reconciliation-v0-2",
+  "tested_commit": "fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c",
+  "verdict": "PASS",
+  "scope": "Local Downloads real CreateDocument export plus separately authorized OpenDocument preview/close/cancellation. Not one uninterrupted run; prior INCONCLUSIVE attempts retained separately.",
+  "release_status": "NOT Ready for Release",
+  "emulator": {
+    "serial": "emulator-5554",
+    "avd": "REDMAGIC_10_Pro_Test",
+    "android": "15",
+    "api": 35
+  },
+  "apk": {
+    "application_id": "com.karim.aiprojectmanager",
+    "activity": "com.karim.aiprojectmanager/.MainActivity",
+    "sha256": "14f95b59bc12a99f7194bc54b8f03c76512b9e6324f35cbf562b06447c7e2acd",
+    "public_certificate_sha256": "d0e3ac3b24d6fa7b592072df7ed61e25afe3c9f44d9af93fa656c18bb6699bf6",
+    "identity_evidence": [
+      "identity/apk-environment.json",
+      "identity/installed-certificate.txt"
+    ],
+    "limitation": "APK binary omitted; identity values preserve previously recorded checks, not a new build or device check."
+  },
+  "fixture": {
+    "project": "DU-01-039c63f3f692",
+    "task": "DU-01 disposable task",
+    "status": "NOT_STARTED",
+    "projects": 1,
+    "tasks": 1,
+    "export_name": "DU-01-filename-54b3msf4.json",
+    "json_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "real_create_document",
+      "result": "PASS",
+      "evidence": [
+        "export/01-picker-initial.png",
+        "export/04-before-save.xml",
+        "export/actions.txt"
+      ]
+    },
+    {
+      "id": "unique_filename_before_save",
+      "result": "PASS",
+      "evidence": [
+        "export/04-before-save.png",
+        "export/04-before-save.xml",
+        "export/result.json"
+      ]
+    },
+    {
+      "id": "export_valid_and_exact_source_bytes",
+      "result": "PASS",
+      "evidence": [
+        "integrity/source-before.json",
+        "integrity/exported.json",
+        "export/result.json"
+      ]
+    },
+    {
+      "id": "real_open_document_exact_selection",
+      "result": "PASS",
+      "evidence": [
+        "preview-cancellation/02-open-document.png",
+        "preview-cancellation/picker-component.txt",
+        "preview-cancellation/actions.txt"
+      ]
+    },
+    {
+      "id": "preview_name_counts_no_replace_merge",
+      "result": "PASS",
+      "evidence": [
+        "preview-cancellation/03-read-only-preview.png",
+        "preview-cancellation/03-read-only-preview.xml"
+      ]
+    },
+    {
+      "id": "application_close_and_responsiveness",
+      "result": "PASS",
+      "evidence": [
+        "preview-cancellation/04-preview-closed.xml",
+        "preview-cancellation/05-cancel-picker.xml",
+        "preview-cancellation/actions.txt"
+      ]
+    },
+    {
+      "id": "system_back_without_selection_no_late_preview",
+      "result": "PASS",
+      "evidence": [
+        "preview-cancellation/05-cancel-picker.xml",
+        "preview-cancellation/07-cancel-observed.png",
+        "preview-cancellation/07-cancel-observed.xml",
+        "preview-cancellation/actions.txt",
+        "preview-cancellation/result.json"
+      ]
+    },
+    {
+      "id": "project_task_accessible_and_final_integrity",
+      "result": "PASS",
+      "evidence": [
+        "preview-cancellation/08-project-accessible.xml",
+        "integrity/source-before.json",
+        "integrity/source-after.json",
+        "integrity/private-files-before.txt",
+        "integrity/private-files-after.txt",
+        "integrity/downloads-final.txt"
+      ]
+    },
+    {
+      "id": "no_relevant_app_error_observed",
+      "result": "PASS",
+      "evidence": [
+        "export/result.json",
+        "preview-cancellation/result.json",
+        "diagnostics/export-diagnostics.txt",
+        "diagnostics/preview-cancellation-diagnostics.txt"
+      ]
+    }
+  ],
+  "history": [
+    {
+      "result": "INCONCLUSIVE",
+      "evidence": "history/initial-setup-inconclusive.json",
+      "interpretation": "Stopped with zero tasks; later controlled Add persisted one task. Prior IME timing unproven; no application save defect reproduced."
+    },
+    {
+      "result": "INCONCLUSIVE",
+      "evidence": "history/filename-entry-inconclusive.json",
+      "interpretation": "Default-name export from unchecked input batch; exact closure trigger unresolved. Later checked interaction succeeded."
+    }
+  ],
+  "diagnostic_limits": [
+    "DocumentsUI resource-ID, provider-query cancellation, PackageConfigPersister and input-channel disposal diagnostics remain unexplained without demonstrated functional failure.",
+    "No relevant app crash/ANR, permission denial or document-read exception was observed in the completed final phase. This is the recorded observation, not a guarantee derived from filtered excerpts.",
+    "Raw logs remain unchanged outside the repository and are not included; excerpts are not complete logs."
+  ],
+  "remaining_gates": [
+    "System picker/provider process death and recreation.",
+    "Other/cloud providers, URI-grant failures, unavailable/hostile providers and large files.",
+    "Broader visual/RTL/accessibility, keyboard/background/restart behavior and scale.",
+    "Stable release signing/version policy and non-destructive physical-device update/data continuity.",
+    "Existing lint warnings and unexplained system diagnostics."
+  ],
+  "privacy_review": {
+    "included": "Synthetic fixture data, public debug certificate, reviewed system/app screenshots and selected normalized diagnostic messages. Emulator model/serial and test times intentionally retained.",
+    "excluded": [
+      "APK binaries",
+      "raw logcat",
+      "clipboard-content overlays",
+      "PID files",
+      "broad activity dumps",
+      "unrelated account/package logs"
+    ],
+    "source_labels": "Phase plus artifact basename only; no absolute temporary or workstation paths.",
+    "originals": "All five original evidence directories must remain byte-for-byte unchanged; this task creates only curated copies.",
+    "transformation_policy": "Original source SHA-256 and preserved SHA-256 are recorded per file; selected diagnostic excerpts do not claim completeness."
+  },
+  "files": [
+    {
+      "path": "export/01-picker-initial.png",
+      "bytes": 18885,
+      "sha256": "49447b93a8c9f86bce6e58f627b15914eb69676a1fcdea36cc8d5842a0370c4c",
+      "source": {
+        "phase": "export",
+        "artifact": "01-picker-initial.png",
+        "sha256": "49447b93a8c9f86bce6e58f627b15914eb69676a1fcdea36cc8d5842a0370c4c"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "export/04-before-save.png",
+      "bytes": 26912,
+      "sha256": "22de44335087395b9a255d377b6473a144ad49c586f150ee80d70e27c9d321f4",
+      "source": {
+        "phase": "export",
+        "artifact": "04-before-save.png",
+        "sha256": "22de44335087395b9a255d377b6473a144ad49c586f150ee80d70e27c9d321f4"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "export/04-before-save.xml",
+      "bytes": 19637,
+      "sha256": "417110f909a959e6002ce874cdbd911f1843c3f72fcde21bc85954dca646d3ef",
+      "source": {
+        "phase": "export",
+        "artifact": "04-before-save.xml",
+        "sha256": "417110f909a959e6002ce874cdbd911f1843c3f72fcde21bc85954dca646d3ef"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "export/actions.txt",
+      "bytes": 371,
+      "sha256": "95314e09567e688e57fba98844559494e876adcc587df6db400e06ecb2c6b30f",
+      "source": {
+        "phase": "export",
+        "artifact": "actions.txt",
+        "sha256": "95314e09567e688e57fba98844559494e876adcc587df6db400e06ecb2c6b30f"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "export/result.json",
+      "bytes": 1363,
+      "sha256": "4d2f54fd833632e165eb92ed9f3eefaaa63781dcbdff2c24c4774508945b9630",
+      "source": {
+        "phase": "export",
+        "artifact": "result.json",
+        "sha256": "4d2f54fd833632e165eb92ed9f3eefaaa63781dcbdff2c24c4774508945b9630"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/02-open-document.png",
+      "bytes": 21480,
+      "sha256": "c3dd2e46de5417a61a1be5e2e53eeded4326a5cdba32912f2abb1a3d746306a0",
+      "source": {
+        "phase": "final",
+        "artifact": "02-open-document.png",
+        "sha256": "c3dd2e46de5417a61a1be5e2e53eeded4326a5cdba32912f2abb1a3d746306a0"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/03-read-only-preview.png",
+      "bytes": 30226,
+      "sha256": "e37abe8b18417e16f0a7b1384e70b41dca608a1ef6b578caf6f552714705c9f6",
+      "source": {
+        "phase": "final",
+        "artifact": "03-read-only-preview.png",
+        "sha256": "e37abe8b18417e16f0a7b1384e70b41dca608a1ef6b578caf6f552714705c9f6"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/03-read-only-preview.xml",
+      "bytes": 5292,
+      "sha256": "d452832e4e4e5d7cf09275bf2c6d4d7a76ce9dd75c0f46736545ea2ac75b40dc",
+      "source": {
+        "phase": "final",
+        "artifact": "03-read-only-preview.xml",
+        "sha256": "d452832e4e4e5d7cf09275bf2c6d4d7a76ce9dd75c0f46736545ea2ac75b40dc"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/04-preview-closed.xml",
+      "bytes": 8611,
+      "sha256": "b2cc3d6b6d0e1741ed57ae19224020c6d93f421f93540f3fcf4e281f97bf48ba",
+      "source": {
+        "phase": "final",
+        "artifact": "04-preview-closed.xml",
+        "sha256": "b2cc3d6b6d0e1741ed57ae19224020c6d93f421f93540f3fcf4e281f97bf48ba"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/05-cancel-picker.xml",
+      "bytes": 26026,
+      "sha256": "043862a9617cf8cd147a72e551a9a49fd5d646d15c68c9ec33ee4720151818e9",
+      "source": {
+        "phase": "final",
+        "artifact": "05-cancel-picker.xml",
+        "sha256": "043862a9617cf8cd147a72e551a9a49fd5d646d15c68c9ec33ee4720151818e9"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/07-cancel-observed.png",
+      "bytes": 25599,
+      "sha256": "af46478ea858e2f6ddae2548d84de917831f4ab965a1f79a1ffdf65ec76d363d",
+      "source": {
+        "phase": "final",
+        "artifact": "07-cancel-observed.png",
+        "sha256": "af46478ea858e2f6ddae2548d84de917831f4ab965a1f79a1ffdf65ec76d363d"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/07-cancel-observed.xml",
+      "bytes": 8611,
+      "sha256": "b2cc3d6b6d0e1741ed57ae19224020c6d93f421f93540f3fcf4e281f97bf48ba",
+      "source": {
+        "phase": "final",
+        "artifact": "07-cancel-observed.xml",
+        "sha256": "b2cc3d6b6d0e1741ed57ae19224020c6d93f421f93540f3fcf4e281f97bf48ba"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/08-project-accessible.xml",
+      "bytes": 10529,
+      "sha256": "9c1ca85e1a5b983ee3c65d0b2814ddb6fbe9c6c1a969e0b08fec4ba49d90e842",
+      "source": {
+        "phase": "final",
+        "artifact": "08-project-accessible.xml",
+        "sha256": "9c1ca85e1a5b983ee3c65d0b2814ddb6fbe9c6c1a969e0b08fec4ba49d90e842"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/actions.txt",
+      "bytes": 610,
+      "sha256": "65bb45f3dd157d8f7b90e1e0abea56128cbfa3bd6ff223a717b0daef27a2091b",
+      "source": {
+        "phase": "final",
+        "artifact": "actions.txt",
+        "sha256": "65bb45f3dd157d8f7b90e1e0abea56128cbfa3bd6ff223a717b0daef27a2091b"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "preview-cancellation/picker-component.txt",
+      "bytes": 75,
+      "sha256": "b469a3ad2a109fa03368e26b8402fc8d79eaf69b63a3fb3cc4b9b6b5547f659c",
+      "source": {
+        "phase": "final",
+        "artifact": "02-picker-component.txt",
+        "sha256": "1a35fb48a941d1aa55f04e52f6f6c9d71b7970588d352ea558907c6dc23fa39e"
+      },
+      "transformation": "Retain actual foreground component; omit transient ActivityRecord handle, user/task numbers and wrapper text."
+    },
+    {
+      "path": "preview-cancellation/result.json",
+      "bytes": 2955,
+      "sha256": "ab29519eb3f5fe848ed2eaa7df03ad8dede9a82dc639287947785266c736d2fc",
+      "source": {
+        "phase": "final",
+        "artifact": "result.json",
+        "sha256": "5137814d8912a9e60a112d7f6f9ea1b9426214438f1f5890ad6c82059d7fc20c"
+      },
+      "transformation": "Replace temporary source-directory path with bundle-relative export/result.json; all result fields otherwise retained."
+    },
+    {
+      "path": "integrity/source-before.json",
+      "bytes": 323,
+      "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+      "source": {
+        "phase": "final",
+        "artifact": "source-before.json",
+        "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "integrity/exported.json",
+      "bytes": 323,
+      "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+      "source": {
+        "phase": "final",
+        "artifact": "exported.json",
+        "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "integrity/source-after.json",
+      "bytes": 323,
+      "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+      "source": {
+        "phase": "final",
+        "artifact": "source-after.json",
+        "sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "integrity/private-files-before.txt",
+      "bytes": 43,
+      "sha256": "1cc85b96f421dedd16c20f0c52a0511bb2acf06ddf984e26edbd548139de4111",
+      "source": {
+        "phase": "final",
+        "artifact": "private-files-before.txt",
+        "sha256": "1cc85b96f421dedd16c20f0c52a0511bb2acf06ddf984e26edbd548139de4111"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "integrity/private-files-after.txt",
+      "bytes": 43,
+      "sha256": "1cc85b96f421dedd16c20f0c52a0511bb2acf06ddf984e26edbd548139de4111",
+      "source": {
+        "phase": "final",
+        "artifact": "private-files-after.txt",
+        "sha256": "1cc85b96f421dedd16c20f0c52a0511bb2acf06ddf984e26edbd548139de4111"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "integrity/downloads-final.txt",
+      "bytes": 60,
+      "sha256": "9288574f9f67f92623a6a148d3e87ff21c2efe1d86946f1f0f7f5c9837b5e9cf",
+      "source": {
+        "phase": "final",
+        "artifact": "downloads-final.txt",
+        "sha256": "9288574f9f67f92623a6a148d3e87ff21c2efe1d86946f1f0f7f5c9837b5e9cf"
+      },
+      "transformation": "Exact copy; privacy-reviewed synthetic fixture/system UI only."
+    },
+    {
+      "path": "identity/installed-certificate.txt",
+      "bytes": 307,
+      "sha256": "7e28824e85353b9a4342444a9e73a32061aa1bf9f4e33ff10805d254e341aeb0",
+      "source": {
+        "phase": "identity",
+        "artifact": "installed-certificate.txt",
+        "sha256": "7e28824e85353b9a4342444a9e73a32061aa1bf9f4e33ff10805d254e341aeb0"
+      },
+      "transformation": "Exact public debug-certificate text; no private key or signing material."
+    },
+    {
+      "path": "identity/apk-environment.json",
+      "bytes": 422,
+      "sha256": "c03583ec5309379310fa7c0fcc16ff04beccc2ac6419b3122b495ce14f1d8247",
+      "source": {
+        "phase": "identity",
+        "artifact": "metadata.json",
+        "sha256": "fd19d8384213e7bb5bf617fcc8cba6015980b7c45e06eff75de3559e30389596"
+      },
+      "transformation": "Omit intended export_name from the earlier INCONCLUSIVE attempt; retain tested commit, APK hash, package, emulator and source hash."
+    },
+    {
+      "path": "history/initial-setup-inconclusive.json",
+      "bytes": 1171,
+      "sha256": "46a528a98e345a32b833d50faa5473d627334c73a03518f5dc1c2052ee8c14f6",
+      "source": {
+        "phase": "initial",
+        "artifact": "result.json",
+        "sha256": "46a528a98e345a32b833d50faa5473d627334c73a03518f5dc1c2052ee8c14f6"
+      },
+      "transformation": "Exact historical INCONCLUSIVE result; not evidence of an application defect."
+    },
+    {
+      "path": "history/filename-entry-inconclusive.json",
+      "bytes": 1537,
+      "sha256": "91ea78425747dab5cf68bfb754c7c03602931bd856d5f36f6290c0bc3a6c69f4",
+      "source": {
+        "phase": "identity",
+        "artifact": "result.json",
+        "sha256": "91ea78425747dab5cf68bfb754c7c03602931bd856d5f36f6290c0bc3a6c69f4"
+      },
+      "transformation": "Exact historical INCONCLUSIVE result; not relabelled PASS or a proven application defect."
+    },
+    {
+      "path": "diagnostics/export-diagnostics.txt",
+      "bytes": 1308,
+      "sha256": "2308da62011c0b0359f5d61fbd9501ab87dd8fea31f7002480338cee19bacc64",
+      "source": {
+        "phase": "export",
+        "artifact": "logcat.txt",
+        "sha256": "e548da9539b3fd7afde788b27cd9544a9e3d010bec18994f68c18840e9a97e1a"
+      },
+      "transformation": "Select only DocumentsUI resource/cancellation, application-related PackageConfigPersister and input-channel disposal diagnostics; omit unrelated logs, PIDs/TIDs, user numbers and transient handles; preserve timestamp, severity and message text otherwise."
+    },
+    {
+      "path": "diagnostics/preview-cancellation-diagnostics.txt",
+      "bytes": 2271,
+      "sha256": "1f92978f95495fd69243b96a5cb12cd802e621547c9248430a132b9e5b54c327",
+      "source": {
+        "phase": "final",
+        "artifact": "logcat.txt",
+        "sha256": "31c9eba497880b2fae6730e2d14878b2b972bb2ca2dd718cda482e2f5d7469b7"
+      },
+      "transformation": "Select only DocumentsUI resource/cancellation, application-related PackageConfigPersister and input-channel disposal diagnostics; omit unrelated logs, PIDs/TIDs, user numbers and transient handles; preserve timestamp, severity and message text otherwise."
+    }
+  ],
+  "payload_files": 28,
+  "payload_bytes": 215313,
+  "manifest_integrity": "Per-file checksums cover payloads; this manifest intentionally has no self-referential checksum."
+}

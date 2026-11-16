@@ -1,0 +1,114 @@
+# Full UI/UX VNext continuation
+
+Request: `/home/karim/.codex/attachments/a4c9c47a-d088-478b-b6dd-66d478d7c838/Pasted text.txt`.
+Branch `feature/github-snapshot-preview`; starting HEAD `f77c66d1ed6681920ad1747b1327dc5e17dba782`. Preserve all uncommitted work. No commits, phone installs or storage/GitHub logic changes.
+
+## Current checkpoint — 2026-11-12
+Starting checkpoint `e7f198f800e19bc8d008297f03f172f0e3aa1a39` verified on `feature/github-snapshot-preview`; tracked tree was clean. Existing untracked Package 01/01B reports and audit evidence were preserved. No commits, pushes, device installs, or storage/GitHub logic changes.
+
+Completed during this continuation:
+- Reworked Overview panels around saved description, manual task progress, pending task details, GitHub account connection state, and actual project/task/document presence. No dates/version/repository link or independent verification was invented.
+- Applied the VNext panel treatment to Blueprint/Roadmap editor status and recovery controls, and to the text editor. Added informational Markdown/line/word counts only.
+- Added current task count, manual progress, and status summary to the Tasks header; task creation, search, filters, and status actions remain on existing paths.
+- Refined Settings export and read-only backup preview actions, and grouped the existing local Backlog preview.
+- GitHub discovery/preview already used the shared VNext card/dialog surfaces; existing dialog, recovery, export and backup safety behavior was retained.
+
+Changed source files: `app/src/main/java/com/karim/aiprojectmanager/ProjectOverviewScreen.kt`, `MainActivity.kt`, and `SettingsScreen.kt`.
+
+Reference files: 01_Approved_Original_Logo.png, 02_Dashboard_Reference.png, 03_Overview_Reference.png, 04_Blueprint_Reference.png, 05_Roadmap_Reference.png, 06_Tasks_Reference.png.
+
+## Next exact action
+Run a UI-only layout review of Overview, Blueprint, Roadmap, Tasks and Settings against the six approved references, then fix any clipping or hierarchy issues found. Continue reference review of GitHub, dialogs, recovery, backup and export before final validation. Do not run connected Android UI tests or screenshot reviews unless the owner later authorizes them.
+
+## Validation and limitations
+For this continuation, `:app:compileDebugKotlin` passed twice with JDK 17. No unit tests, Android UI tests, screenshots or connected-device work were run. Earlier Stage 2 results above remain historical and do not validate this continuation. No known compilation blocker. Logo and 14 launcher resources remain unchanged. UI/UX VNext is still incomplete and **NOT Ready for Release**.
+
+## Physical visual acceptance — 2026-11-12
+
+Owner explicitly authorized a physical-device acceptance run using only REDMAGIC 10 Pro serial `FY2433810B9D`, with an isolated application ID. Built and installed `com.karim.aiprojectmanager.vnext` beside the original `com.karim.aiprojectmanager`; both package paths were confirmed. Original package/data were left untouched. The isolated app contains synthetic review data only. No signing config, storage format, GitHub auth logic, main branch, or commit was changed.
+
+Screens opened and inspected on the device: Dashboard (English and Arabic), Create project dialog, Project Overview (English and Arabic), project edit dialog (English), Blueprint (Arabic), Roadmap (Arabic), Tasks (English and Arabic, including create/status/edit), Settings and Advanced Settings (Arabic), GitHub settings/public API probe, export picker/result, read-only backup preview, and Backlog preview. Navigation back and visible task/status/export/preview actions were exercised without destructive operations. Recovery/conflict/error state was not forced. Authenticated GitHub repository discovery and preview could not be opened: the local build has no GitHub App Client ID and the connect action is disabled. No live login was attempted.
+
+Safe UI corrections made during acceptance: explicit on-surface colors for shared section/project headings and the Tasks empty state; `ParagraphText` can opt out of row-wide fill to keep progress and editor counts horizontal; English/Arabic project tab, Overview, project edit, and Tasks labels/status summaries use resources. These fixes are in the modified files listed by `git status`; they are part of the review branch's uncommitted work. No tests were run. `:app:assembleVnext` passed after the final source changes; `git diff --check` passed. The 101 JVM tests and Android instrumentation suite were not rerun.
+
+Evidence and findings are recorded in [the physical acceptance report](UI_UX_VNEXT_PHYSICAL_ACCEPTANCE_2026-11-12.md). Actual device screenshots are under `docs/audit-evidence/ui-vnext-physical-2026-11-12/`. Overall result: **FAIL — CORRECTIONS REQUIRED** for approved-reference mismatch and incomplete GitHub/recovery visual evidence. Do not treat this as release approval.
+
+## Next exact action
+After owner review of the physical acceptance report, correct the prioritized reference mismatches and arrange a separately configured GitHub build plus safe recovery fixtures for the remaining visual checks. Then repeat only the affected physical screens and obtain owner acceptance. No implementation corrections were started beyond safe UI fixes identified during this explicitly authorized automatic-fix review.
+
+## Validation and limitations
+`:app:assembleVnext` passed after the final source changes, with the isolated `.vnext` package. No JVM or Android tests were run. Physical review used synthetic isolated data on the explicitly authorized device; the original installed package remained present. The six approved reference images were inspected. Authenticated GitHub discovery, conflict/error recovery, process-death recovery, and additional locale/font/device variants remain unverified. Original logo and launcher assets remain unchanged. UI/UX VNext is still incomplete and **NOT Ready for Release**.
+
+## Correction phase 1 — 2026-11-12
+
+Owner-authorized visual, localization, and usability corrections were applied on the same branch at baseline `4894fc50c3d26f8e6082dbcdbad7751d68ac7a6f`. The working tree contains only this uncommitted work; no commit or push was made.
+
+Completed: enlarged and repositioned the original dashboard/project header logo treatment without changing logo artwork; switched project sections to compact, icon-and-label horizontal navigation with active blue state and RTL/LTR ordering; corrected dashboard/header alignment and editor save placement; localized visible UI strings in Arabic and English across project screens, settings, dialogs, recovery/backup/export messages and GitHub status/auth UI; added Copy Code with localized feedback to existing GitHub device authorization. User-created project and task text was preserved. Existing GitHub auth implementation and storage were unchanged.
+
+Physical validation used only REDMAGIC 10 Pro serial `FY2433810B9D`, with isolated package `com.karim.aiprojectmanager.vnext` and synthetic review content. Dashboard, Overview, Blueprint, Roadmap, Tasks, Settings, create/edit dialogs, and GitHub device authorization controls were opened and visually checked in English/Arabic where available. Auth code copy and authorization-page opening worked; no code was submitted and no account login occurred. Recovery/error states were not forced. The app-specific Arabic override was cleared afterward; the test app now inherits the system English locale. The original `com.karim.aiprojectmanager` package and its data remained untouched.
+
+Final Arabic checks confirm the Blueprint Save control remains at physical right and the Tasks warning is fully localized with no raw `VERIFIED` status. Final evidence is in `docs/audit-evidence/ui-vnext-correction-2026-11-12/` (see the phase 1 report for the screenshot index).
+
+Build: `:app:assembleVnext` succeeded with the required public GitHub App Client ID supplied ephemerally from the existing public Actions variable. The APK package ID was verified before installation. Focused `GitHubDeviceAuthTest` (15 tests), `GitHubConnectionSettingsTest` (3 tests), and combined `:app:testVnextUnitTest` passed. `git diff --check` and locale XML parsing passed. The previous 101-test suite and Android instrumentation suite were not rerun. No production readiness claim is made.
+
+### Remaining work / exact next action
+
+Owner review the correction report and screenshot evidence, then authorize any further visual corrections or final validation scope. Authenticated repository discovery remains unverified because no account authorization was performed; recovery/error/process-death states and broader device/font/accessibility variants also remain unverified. Keep UI/UX VNext **NOT Ready for Release** until the separate release gates are accepted.
+
+## Phase 1B — 2026-11-12
+
+Starting point matched requested baseline `6e8c14b10414c49acc7651a34391dfc0c03fb025` on `feature/github-snapshot-preview`; worktree was clean. Added a two-option Arabic/English selector under Settings → Appearance, a persisted app-local preference with English default and immediate recreated locale context, and a compact normal-width Tasks input/Add row with narrow/enlarged-text fallback. Device language and project data format remain unchanged.
+
+Build `:app:testVnextUnitTest :app:assembleVnext` passed (103 tests, no failures/errors/skips). APK identity was verified as `com.karim.aiprojectmanager.vnext`. Manual REDMAGIC 10 Pro checks verified English↔Arabic switching, RTL/LTR, persistence through restart/update, and unchanged synthetic project file hash. Original package remains installed/untouched. Six approved reference images were inspected; the report records all five screen comparisons as PARTIAL MATCH because the references show richer unsupported project artwork, filtering, metadata, toolbar actions, and textured gradients.
+
+Detailed record: [Phase 1B report](UI_UX_VNEXT_PHASE1B_REPORT_2026-11-12.md). Screenshot evidence is under `docs/audit-evidence/ui-vnext-correction-2026-11-12/`. Remaining work: owner review and separately scoped visual refinement for currently supported actions, plus the existing GitHub authenticated, recovery, accessibility, and broader device validation gates. The report recommendation is NEEDS CORRECTION; UI/UX VNext remains **NOT Ready for Release**.
+
+## GitHub session Phase 2A — 2026-11-13
+
+Starting branch and HEAD verified as `feature/github-snapshot-preview` at
+`7c0388fb18d05ae5e986099ff9af2a1c20031235`. The existing `app/build.gradle.kts` local
+modification was preserved. Work remains uncommitted.
+
+### Completed
+
+- Added Keystore AES-256-GCM encrypted GitHub credential storage in VNext `noBackupFilesDir`,
+  unique IV per encryption, atomic writes, safe handling of corrupt data and missing/invalidated
+  keys, and transient storage failure retention.
+- Added session save, startup `/user` verification before showing connected identity, differentiated
+  unauthorized response from transient HTTP/network errors, and disconnect credential deletion.
+- Added localized restore/retry/disconnect status and actions. Backup/device-transfer exclusions
+  were already configured and remain in place.
+- Corrected Client ID guard behavior: empty ID allows Debug build; VNext fails clearly. Existing
+  local Gradle property and Actions variable are retained.
+- Fixed VNext test launch configuration and English-locale test labels.
+- Added `docs/GITHUB_SESSION_PHASE2A_REPORT_2026-11-13.md` and the safe device screenshot
+  `docs/audit-evidence/github-session-phase2a-2026-11-13/vnext-home-before-owner-auth.png` and
+  `vnext-settings-before-owner-auth.png`. VNext is left at Settings with Connect visible.
+
+### Validation and device state
+
+- `:app:testVnextUnitTest`: 112 passed, no failures/errors/skips.
+- `:app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest`: passed with the locally
+  configured Client ID. Empty-ID guard check: Debug passed; VNext failed with the expected message.
+- Focused REDMAGIC 10 Pro VNext instrumentation: 12 passed across encrypted session persistence,
+  HTTP classification and sign-in UI. Synthetic test credentials only.
+- Verified VNext APK ID `com.karim.aiprojectmanager.vnext`; installed/launched only that package.
+  Original `com.karim.aiprojectmanager` remained installed at its prior package path. No clear-data
+  or uninstall command was used. `git diff --check` passed.
+- No real GitHub login or authorization was attempted. Therefore actual account restoration across
+  app/process restart, authenticated repository access, and real disconnect persistence are NOT
+  TESTED. No credential is included in logs, screenshots, or reports.
+
+### Remaining work / exact next action
+
+Owner must complete GitHub device authorization in VNext Settings → GitHub on the REDMAGIC. Do
+not paste the code into chat. After owner confirmation, verify the connected account, app relaunch,
+process termination/relaunch, repository browsing, disconnect, and disconnected state after restart
+using only `com.karim.aiprojectmanager.vnext`. If owner authorization cannot be completed, record
+these steps as NOT TESTED and keep the result NEEDS CORRECTION / INCOMPLETE VERIFICATION.
+
+### Build status and blocker
+
+Debug, VNext and VNext Android test APK builds passed; VNext without Client ID fails intentionally.
+No compilation blocker. The only blocker to completing physical authentication verification is
+owner participation in GitHub's device authorization. The project remains **NOT Ready for Release**.

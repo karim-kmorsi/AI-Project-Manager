@@ -1,0 +1,5 @@
+Open export via observed UI button.
+Tap observed filename field at (107, 592); no Back/Enter.
+After focus confirmed: MOVE_END, then 29 DEL events. No Ctrl+A, Back or Enter.
+Entered unique filename; captured hierarchy and screenshot before any Save.
+Verified destination absent; tapped observed SAVE once. Retrieved new file and verified bytes; original export unchanged.

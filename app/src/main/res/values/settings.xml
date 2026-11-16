@@ -1,0 +1,12 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_connections">Connections</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_data_backup">Data and backup</string>
+    <string name="settings_advanced">Advanced</string>
+    <string name="settings_diagnostics">Diagnostics</string>
+    <string name="settings_public_probe_description">Tests the public GitHub API. Repository synchronization is unavailable.</string>
+    <string name="settings_backup_loss">Projects are stored on this device. Uninstalling the app or losing its data may erase them. Export JSON manually to keep an external copy.</string>
+    <string name="settings_backup_preview_warning">Backup preview is read-only. It cannot import, merge, or replace projects.</string>
+    <string name="settings_backup_transfer_warning">Android backup and device transfer are configured to exclude app data. Behavior varies by device and recovery is not guaranteed.</string>
+</resources>

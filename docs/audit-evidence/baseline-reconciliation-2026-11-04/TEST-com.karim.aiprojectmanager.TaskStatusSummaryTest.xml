@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="com.karim.aiprojectmanager.TaskStatusSummaryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-04T15:03:38.320Z" time="0.009">
+  <testcase name="unknownStatusIsReportedNotSilentlyDiscarded" classname="com.karim.aiprojectmanager.TaskStatusSummaryTest" time="0.008" />
+  <testcase name="emptyProjectShowsZeroForEveryStatus" classname="com.karim.aiprojectmanager.TaskStatusSummaryTest" time="0.0" />
+  <testcase name="countsCurrentStatusesWithoutChangingTasks" classname="com.karim.aiprojectmanager.TaskStatusSummaryTest" time="0.001" />
+  </testsuite>

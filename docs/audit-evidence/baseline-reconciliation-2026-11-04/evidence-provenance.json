@@ -1,0 +1,69 @@
+{
+  "baseline_commit": "8824a110afbd2e936e6a14ee5464d0e929b59976",
+  "branch": "codex/baseline-reconciliation-v0-2",
+  "evidence_scope": "Existing artifacts inspected and preserved; no builds, tests or device operations rerun during documentation work.",
+  "reported_environment": {
+    "emulator": "emulator-5554 / REDMAGIC_10_Pro_Test",
+    "android": "15 / API 35",
+    "display": "320 x 640, 160 dpi"
+  },
+  "assembly": "Previously reported successful; standalone build transcript not preserved.",
+  "records": [
+    {
+      "source": "Original Step 11 instrumentation runner output (instrumentation.log)",
+      "source_sha256": "13bda565ee6eccf701c4b9dc5fc431f1cbb0531821734f8d6c1833abd65133bc",
+      "preserved_file": "instrumentation.log.gz",
+      "preserved_sha256": "b3579b5017e51fab066687679aa16b7df4f6148b3f5e8cfb5d5789c1e539c6de",
+      "preservation": "Lossless gzip of original instrumentation output; no results changed."
+    },
+    {
+      "source": "Original Step 11 status-event-derived results (instrumentation-results.xml)",
+      "source_sha256": "6be1690a74999beeff81916403bfa49c6124df9245ef084475e50ecddb8f564c",
+      "preserved_file": "instrumentation-results.xml",
+      "preserved_sha256": "6be1690a74999beeff81916403bfa49c6124df9245ef084475e50ecddb8f564c",
+      "preservation": "Exact copy of existing XML parsed from instrumentation status events; per-test timing unavailable."
+    },
+    {
+      "source": "app/build/test-results/testDebugUnitTest/TEST-com.karim.aiprojectmanager.ContextualTipsTest.xml",
+      "source_sha256": "f690da893bfa13c0d5665570cc97e9c06524ba1d869956c9ed7cb4982055288f",
+      "preserved_file": "TEST-com.karim.aiprojectmanager.ContextualTipsTest.xml",
+      "preserved_sha256": "8bc255d16968ac8e03d5ce746cc46c6eb7b3e745c2046eefa8b68212e5babb4c",
+      "preservation": "Existing test report with hostname and properties/output sections removed; cases, counts, timings and timestamps retained."
+    },
+    {
+      "source": "app/build/test-results/testDebugUnitTest/TEST-com.karim.aiprojectmanager.NextStepGuidanceTest.xml",
+      "source_sha256": "05d2b4467ab7e8f767f644b62d993f460262ac934b6557db8988664fbef449b0",
+      "preserved_file": "TEST-com.karim.aiprojectmanager.NextStepGuidanceTest.xml",
+      "preserved_sha256": "3b282fe606d20fc54871a577a0966306568191afe2b5c2835181d74cfc3b3ff7",
+      "preservation": "Existing test report with hostname and properties/output sections removed; cases, counts, timings and timestamps retained."
+    },
+    {
+      "source": "app/build/test-results/testDebugUnitTest/TEST-com.karim.aiprojectmanager.PendingTaskDetailsTest.xml",
+      "source_sha256": "8136027be8ddff6ca3b0654e58f99f6702b13519798fb6b3126ee0d860a4d534",
+      "preserved_file": "TEST-com.karim.aiprojectmanager.PendingTaskDetailsTest.xml",
+      "preserved_sha256": "5921ff0d7ab85dfefa5436feb764fefd18afcf1a7864bd3982e6923b879fb885",
+      "preservation": "Existing test report with hostname and properties/output sections removed; cases, counts, timings and timestamps retained."
+    },
+    {
+      "source": "app/build/test-results/testDebugUnitTest/TEST-com.karim.aiprojectmanager.ProjectListSearchTest.xml",
+      "source_sha256": "7acb9b10693d85e2ef849c0397482bc00b5ab7ecef170a76a27d233ece9b22cb",
+      "preserved_file": "TEST-com.karim.aiprojectmanager.ProjectListSearchTest.xml",
+      "preserved_sha256": "b5737cb1ff1a2176286b854341542d2fbf1dbef8bdcec045ecaa2ff66f358454",
+      "preservation": "Existing test report with hostname and properties/output sections removed; cases, counts, timings and timestamps retained."
+    },
+    {
+      "source": "app/build/test-results/testDebugUnitTest/TEST-com.karim.aiprojectmanager.TaskStatusSummaryTest.xml",
+      "source_sha256": "43e6565336b136eaacf111458eebaa67c98163bb0f47139d83f11ef36aacab54",
+      "preserved_file": "TEST-com.karim.aiprojectmanager.TaskStatusSummaryTest.xml",
+      "preserved_sha256": "6ecfc728f7231daaf6b029593927afc1dde4d0acad6dc1a7f9105124430086b5",
+      "preservation": "Existing test report with hostname and properties/output sections removed; cases, counts, timings and timestamps retained."
+    },
+    {
+      "source": "app/build/reports/lint-results-debug.xml",
+      "source_sha256": "24e6271419b30c9cb096ef7123dd4b77f3431f69be9961c4485b676dc3568029",
+      "preserved_file": "lint-results-debug.xml",
+      "preserved_sha256": "6e71ad7f8412d0687eeb959d665972294ecbf7dad88c0b186e9b4e831caef8f7",
+      "preservation": "Existing lint report with workspace paths made repository-relative; issue findings retained."
+    }
+  ]
+}

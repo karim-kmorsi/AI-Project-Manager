@@ -1,0 +1,12 @@
+<resources>
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_connections">الاتصالات</string>
+    <string name="settings_appearance">المظهر</string>
+    <string name="settings_data_backup">التخزين والنسخ الاحتياطي</string>
+    <string name="settings_advanced">خيارات متقدمة</string>
+    <string name="settings_diagnostics">التشخيص</string>
+    <string name="settings_public_probe_description">يختبر واجهة GitHub العامة. لا تتوفر مزامنة المستودعات.</string>
+    <string name="settings_backup_loss">تُحفظ المشاريع على هذا الجهاز. قد يؤدي إلغاء تثبيت التطبيق أو فقدان بياناته إلى فقدانها. صدّر JSON يدويًا للاحتفاظ بنسخة خارجية.</string>
+    <string name="settings_backup_preview_warning">معاينة النسخة الاحتياطية للقراءة فقط. لا تستورد المشاريع أو تدمجها أو تستبدلها.</string>
+    <string name="settings_backup_transfer_warning">إعدادات Android تستبعد بيانات التطبيق من النسخ الاحتياطي والنقل بين الأجهزة. قد يختلف السلوك حسب الجهاز، ولا تُضمن الاستعادة.</string>
+</resources>

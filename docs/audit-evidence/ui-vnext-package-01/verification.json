@@ -1,0 +1,57 @@
+{
+  "startingHead": "f77c66d1ed6681920ad1747b1327dc5e17dba782",
+  "endingHead": "f77c66d1ed6681920ad1747b1327dc5e17dba782",
+  "branch": "feature/github-snapshot-preview",
+  "launcherUnchanged": true,
+  "launcherSha256": {
+    "app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png": "353ffa551911373ea38b029151b78f9c44eb2b819b6c6f9d75b85b9d29dd92d6",
+    "app/src/main/res/mipmap-xxhdpi/ic_launcher.png": "2606bbd13002ba231f7dbe9598e8f901ba6b2dbf2cc37b8d186ce0f10f6abb64",
+    "app/src/main/res/mipmap-hdpi/ic_launcher_round.png": "f889fbfd47833c5e04bfc15447de76e96bbc64c8eccce41e11eda1aaed40ad21",
+    "app/src/main/res/mipmap-hdpi/ic_launcher.png": "c6dc64849325e54b5ec3080c526be2284a2ab8517d4e540750dac13f6a255595",
+    "app/src/main/res/drawable-nodpi/ic_launcher_foreground.png": "01d2210e63c2da1c477ed49847851440999e797e2e4e37f66f1eca56e42b3919",
+    "app/src/main/res/drawable-nodpi/ic_launcher_background.png": "2dd2d25481b696b2634c87231f163b303453722066189cd96a8cdb58bcc09693",
+    "app/src/main/res/mipmap-xhdpi/ic_launcher_round.png": "2b28d46b7416b914f805fa08bf152bf469992d8ea1307cf60c2e04a7b69a8696",
+    "app/src/main/res/mipmap-xhdpi/ic_launcher.png": "3d118091d81cbe4056d467117d64f11935705afb5442bd27d887fb93188bd54a",
+    "app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png": "4241c8030b62af61b1e37b942998d438eb5ad007a24738ef2bc62b17fc5c4ffb",
+    "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": "2bed58b761b2c8c800767d61ffd00cdd8fcd4cc90a94799219c0205f34888c2b",
+    "app/src/main/res/mipmap-mdpi/ic_launcher_round.png": "78cd76376f2818d2c7f02bf6d993716369ecb3799e131059489a3b276918a191",
+    "app/src/main/res/mipmap-mdpi/ic_launcher.png": "fe1cb5b4cedeae142dbb3f3cd581bb03d5c9433faa0bb54db7343ad8af0ae78d",
+    "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml": "1c832bf194d8eecd439a92bcced0df144c9f566b934b3d7865e983d8ee8dbdeb",
+    "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml": "1c832bf194d8eecd439a92bcced0df144c9f566b934b3d7865e983d8ee8dbdeb"
+  },
+  "approvedOriginalSha256": "bd02155d91085e214fda5069ef47daef37e0ac6c010f625f192d1cbca480e7ea",
+  "hostTests": {
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "android": {
+    "broadRun": {
+      "tests": 91,
+      "passed": 86,
+      "failed": 5,
+      "skipped": 0
+    },
+    "finalDashboardRerun": {
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "distinctPassingAfterCorrections": 91,
+    "note": "Broad failures were test-only screenshot setup on lazy items; final rerun supersedes them. Production sources unchanged between these runs."
+  },
+  "emulator": {
+    "name": "AI_PM_VNext_Disposable",
+    "serial": "emulator-5582",
+    "api": 35,
+    "pixels": "1080x1920",
+    "density": 480,
+    "adbServerPort": 5038
+  },
+  "apkSha256": "b4a57de1f39152a1a5911e307e1a2d40a38ca722597c5309aabee9f49073580c",
+  "apkCertificateSha256": "301a9e4f477d0e53116caaa7bb8856afce8fd721aa0e4897d4b8ce7139e6e65f",
+  "physicalDeviceTesting": "not performed",
+  "releaseStatus": "NOT Ready for Release"
+}

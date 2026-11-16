@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="DocumentResultUiTest preview race before fix" tests="2" failures="2" errors="0" skipped="0" time="2.019">
+  <properties>
+    <property name="source" value="Parsed from actual adb am instrument -w -r status events; no per-test timing captured" />
+    <property name="device" value="emulator-5560 Android 15 API 35; 320x640 density 160" />
+  </properties>
+  <testcase classname="com.karim.aiprojectmanager.DocumentResultUiTest" name="olderPreviewCannotReopenAfterLaterPickerCancellation">
+    <failure type="java.lang.AssertionError">java.lang.AssertionError: Failed: assertDoesNotExist.
+Reason: Did not expect any node but found '1' node that satisfies: (Text + InputText + EditableText contains 'معاينة نسخة احتياطية' (ignoreCase: false))
+Node found:
+Node #50 at (l=24.0, t=24.0, r=220.0, b=66.0)px
+Text = '[معاينة نسخة احتياطية]'
+Actions = [ClearTextSubstitution, GetTextLayoutResult, SetTextSubstitution, ShowTextSubstitution]
+Has 4 siblings
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExist(SemanticsNodeInteraction.kt:101)
+	at com.karim.aiprojectmanager.DocumentResultUiTest.olderPreviewCannotReopenAfterLaterPickerCancellation(DocumentResultUiTest.kt:182)
+</failure>
+  </testcase>
+  <testcase classname="com.karim.aiprojectmanager.DocumentResultUiTest" name="olderPreviewCannotReplaceNewerSelection">
+    <failure type="java.lang.AssertionError">java.lang.AssertionError: Failed: assertExists.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Newer backup — 1 مهمة' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.assertExists(SemanticsNodeInteraction.kt:125)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.assertExists$default(SemanticsNodeInteraction.kt:124)
+	at com.karim.aiprojectmanager.DocumentResultUiTest.olderPreviewCannotReplaceNewerSelection(DocumentResultUiTest.kt:194)
+</failure>
+  </testcase>
+</testsuite>

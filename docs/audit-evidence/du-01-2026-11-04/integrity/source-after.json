@@ -1,0 +1,16 @@
+[
+  {
+    "id": "c1d56290-1dae-4687-b66a-0e7971ce7af9",
+    "name": "DU-01-039c63f3f692",
+    "description": "",
+    "blueprint": "",
+    "roadmap": "",
+    "tasks": [
+      {
+        "id": "d21dad11-6210-48ea-b5fc-d78a16efadc5",
+        "title": "DU-01 disposable task",
+        "status": "NOT_STARTED"
+      }
+    ]
+  }
+]

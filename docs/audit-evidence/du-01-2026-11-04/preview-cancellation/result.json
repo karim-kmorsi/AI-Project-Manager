@@ -1,0 +1,55 @@
+{
+  "project": "AI Project Manager",
+  "branch": "codex/baseline-reconciliation-v0-2",
+  "commit": "fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c",
+  "emulator": "emulator-5554 / REDMAGIC_10_Pro_Test / API 35",
+  "application_id": "com.karim.aiprojectmanager",
+  "fixture": {
+    "project": "DU-01-039c63f3f692",
+    "task": "DU-01 disposable task",
+    "status": "NOT_STARTED",
+    "projects": 1,
+    "tasks": 1
+  },
+  "verdict": "PASS",
+  "scope": "DU-01 evidence spans prior controlled real CreateDocument export and this final OpenDocument preview/close/cancel execution. Earlier inconclusive automation attempts remain historical; not a claim of one uninterrupted run.",
+  "prior_CreateDocument_evidence": "export/result.json",
+  "steps": {
+    "baseline_fixture_and_export_integrity": "PASS",
+    "prior_real_CreateDocument_evidence_available": "PASS",
+    "actual_OpenDocument_in_Downloads": "PASS",
+    "exact_export_selection": "PASS",
+    "preview_project_name_and_one_project_one_task": "PASS",
+    "explicit_no_replace_or_merge_statement": "PASS",
+    "application_Close_button": "PASS",
+    "responsive_MainActivity": "PASS",
+    "real_picker_reopened_and_system_Back_without_selection": "PASS",
+    "no_preview_or_error_after_five_second_observation": "PASS",
+    "existing_project_and_task_accessible": "PASS",
+    "final_source_exact_byte_equality": "PASS",
+    "private_files_and_Downloads_inventory": "PASS",
+    "no_relevant_app_crash_permission_or_document_read_errors": "PASS"
+  },
+  "hashes": {
+    "source_before": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+    "exported": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+    "source_after": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd"
+  },
+  "observations": [
+    "Actual foreground picker component com.google.android.documentsui/com.android.documentsui.picker.PickActivity verified.",
+    "No restore/import/merge action invoked.",
+    "Source, export, and final source bytes identical; private files list unchanged; Downloads retains exactly the two prior exports."
+  ],
+  "changes": "No source, build, install, GitHub, CI, signing, schema, project or task changes; no cleanup performed.",
+  "remaining_risks": [
+    "Process death and recreation during system picker/provider operations not exercised.",
+    "Other providers, URI grants/error cases and large files not covered.",
+    "Broader visual/RTL/accessibility, scale, stable signing and physical-device update continuity remain open."
+  ],
+  "release_status": "NOT Ready for Release",
+  "system_diagnostics": [
+    "DocumentsUI logged: No package ID ff found for resource ID 0xffffffff.",
+    "System PackageConfigPersister and input-channel disposal warnings also appeared.",
+    "No functional failure, app crash/ANR, permission denial, or document-read exception observed in this run. These system diagnostics were not independently root-caused."
+  ]
+}

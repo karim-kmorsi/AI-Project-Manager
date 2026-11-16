@@ -1,0 +1,27 @@
+<resources>
+    <string name="dashboard_app_name" translatable="false">AI Project Manager</string>
+    <string name="dashboard_more">More options</string>
+    <string name="dashboard_export">Export JSON</string>
+    <string name="dashboard_backup_preview">Preview backup</string>
+    <string name="dashboard_create">New project</string>
+    <string name="dashboard_my_projects">My Projects</string>
+    <string name="dashboard_project_count">Projects: %1$d</string>
+    <string name="dashboard_search">Search projects</string>
+    <string name="dashboard_manual_count">Marked verified (manual): %1$s</string>
+    <string name="dashboard_empty_title">No projects yet</string>
+    <string name="dashboard_empty_detail">Create a project to keep its plan and tasks together on this device.</string>
+    <string name="dashboard_no_matches_title">No matching projects</string>
+    <string name="dashboard_no_matches_detail">Try another project name or description.</string>
+    <string name="dashboard_read_error_title">Projects could not be loaded</string>
+    <string name="dashboard_read_error">Your data has not changed. Resolve the storage problem, then retry.</string>
+    <string name="dashboard_retry">Retry</string>
+    <string name="dashboard_write_error_title">Could not save</string>
+    <string name="dashboard_write_error">The project changes were not saved. Please retry.</string>
+    <string name="dashboard_close">Close</string>
+    <string name="dashboard_create_title">Create project</string>
+    <string name="dashboard_create_confirm">Create</string>
+    <string name="dashboard_create_cancel">Cancel</string>
+    <string name="dashboard_project_name">Project name</string>
+    <string name="dashboard_project_description">Short description</string>
+    <string name="dashboard_creation_error">The project could not be saved. Changes were not applied; please retry.</string>
+</resources>

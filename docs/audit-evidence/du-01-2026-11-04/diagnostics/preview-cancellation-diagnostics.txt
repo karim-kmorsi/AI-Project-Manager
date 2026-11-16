@@ -1,0 +1,22 @@
+Selected diagnostic excerpts only; not a complete log or independent proof of error absence.
+PID/TID, user numbers and transient input-channel handles omitted.
+
+11-04 22:30:28.425 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:30:28.431 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:30:28.437 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:30:28.814 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:30:28.994 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:30:29.231 W PackageConfigPersister: App-specific configuration not found for packageName: com.google.android.documentsui
+11-04 22:30:43.768 W PackageConfigPersister: App-specific configuration not found for packageName: com.karim.aiprojectmanager
+11-04 22:30:43.795 W PackageConfigPersister: App-specific configuration not found for packageName: com.karim.aiprojectmanager
+11-04 22:30:43.809 W InputManager-JNI: Input channel object [transient handle omitted] was disposed without first being removed with the input manager!
+11-04 22:31:02.412 W InputManager-JNI: Input channel object [transient handle omitted] was disposed without first being removed with the input manager!
+11-04 22:31:02.485 W PackageConfigPersister: App-specific configuration not found for packageName: com.karim.aiprojectmanager
+11-04 22:31:04.591 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:31:04.599 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:31:05.029 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:31:05.033 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:31:05.436 E oid.documentsui: No package ID ff found for resource ID 0xffffffff.
+11-04 22:31:05.466 W PackageConfigPersister: App-specific configuration not found for packageName: com.google.android.documentsui
+11-04 22:31:19.192 W PackageConfigPersister: App-specific configuration not found for packageName: com.karim.aiprojectmanager
+11-04 22:31:19.253 W InputManager-JNI: Input channel object [transient handle omitted] was disposed without first being removed with the input manager!

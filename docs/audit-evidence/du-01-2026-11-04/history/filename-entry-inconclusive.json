@@ -1,0 +1,26 @@
+{
+  "result": "INCONCLUSIVE",
+  "branch": "codex/baseline-reconciliation-v0-2",
+  "commit": "fe6df94ae6ade1142c07a4bee5e2f030ad1ba14c",
+  "emulator": "emulator-5554 / REDMAGIC_10_Pro_Test / API 35",
+  "fixture": "DU-01-039c63f3f692 / DU-01 disposable task / NOT_STARTED",
+  "source_before_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "source_at_stop_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "observed_default_export_sha256": "46db5571af94b15cf4784c230e3ef9cc1fc47d872332e5c7a94f9675a0bdbefd",
+  "observed_export_equals_source": true,
+  "steps": {
+    "fixture_and_certificate": "PASS",
+    "source_matches_prior_diagnosis": "PASS",
+    "actual_system_CreateDocument_Downloads": "PASS",
+    "unique_filename_save": "FAIL",
+    "default_filename_export_readback": "PASS",
+    "read_only_preview": "NOT EXECUTED",
+    "preview_close": "NOT EXECUTED",
+    "picker_cancellation": "NOT EXECUTED",
+    "source_preserved_at_stop": "PASS"
+  },
+  "stop_reason": "Unexpected return from DocumentsUI to MainActivity during filename-entry automation. Expected unique name not present. Logs identify creation of default-name ai-project-manager-backup.json. No retry attempted.",
+  "diagnosis": "Automation interaction did not achieve requested unique-name save; exact cause unproven. Default-name export byte equality does not establish full DU-01 UI acceptance.",
+  "crash_or_permission_markers": 0,
+  "cleanup": "None. Existing fixture and observed default export retained."
+}
