@@ -8,7 +8,7 @@ internal data class GitHubChecklistPreview(val entries: List<GitHubChecklistEntr
 /** A checked repository box is a claim, not independent verification. */
 internal fun parseGitHubChecklist(markdown: String, sourcePath: String = "PROJECT_CHECKLIST.md"): GitHubChecklistPreview {
     val entries = mutableListOf<GitHubChecklistEntry>()
-    val pattern = Regex("""^\\s*(?:[-*+] |\\d+[.)] )\\[([ xX])]\\s+(.+?)\\s*$""")
+    val pattern = Regex("""^\s*(?:[-*+] |\d+[.)] )\[([ xX])]\s+(.+?)\s*$""")
     var fenced = false
     var fenceChar = ' '
     var fenceLength = 0
