@@ -345,8 +345,11 @@ fun ProjectManagerApp(
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (!compactProject) VNextProjectHero(active)
+                // Preserve the 48dp touch targets but reclaim tab-strip spacing when
+                // a large-font keyboard leaves the document editor short of a text line.
+                val tightTabs = density.fontScale > 1.3f && WindowInsets.ime.getBottom(density) > 0
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                    .padding(horizontal = 12.dp, vertical = if (tightTabs) 0.dp else 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
@@ -391,7 +394,7 @@ fun ProjectManagerApp(
                         update(active.copy(roadmap = it))
                     } }
                     3 -> taskScreenStates.SaveableStateProvider(active.id) {
-                        TaskScreen(active, onReloadTitle = { taskId ->
+                        TaskScreen(active, repositoryApi = githubSignIn.session?.repositoryApi, onReloadTitle = { taskId ->
                             val loaded = storage.load()
                             loaded.find { it.id == active.id }?.tasks?.find { it.id == taskId }
                                 ?: throw IOException("Task no longer exists; pending input retained")
@@ -673,6 +676,7 @@ private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm
 @Composable
 private fun TaskScreen(
     project: ProjectItem,
+    repositoryApi: GitHubRepositoryApi? = null,
     onReloadTitle: (String) -> ProjectItem,
     onEditTitle: (String, String, EditorSnapshot) -> Boolean,
     update: (ProjectItem) -> Boolean
@@ -770,6 +774,11 @@ private fun TaskScreen(
         }
         Spacer(Modifier.height(12.dp))
         } }
+            if (project.id.startsWith("github:")) {
+                item {
+                    GitHubChecklistPanel(project, repositoryApi, update)
+                }
+            }
             item {
                 OutlinedTextField(searchQuery, { searchQuery = it }, textStyle = contentTextStyle(), label = { Text(stringResource(R.string.task_screen_search)) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
@@ -791,7 +800,9 @@ private fun TaskScreen(
                     }
                     DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
                         statusOptions.forEach { (status, label) ->
-                            DropdownMenuItem(text = { Text(label) }, onClick = {
+                            DropdownMenuItem(
+                                modifier = Modifier.testTag("task_status_option_${status ?: "ALL"}"),
+                                text = { Text(label) }, onClick = {
                                 selectedStatus = status
                                 statusMenuExpanded = false
                             })

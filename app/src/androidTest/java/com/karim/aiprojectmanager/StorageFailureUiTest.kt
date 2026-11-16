@@ -99,8 +99,25 @@ class StorageFailureUiTest {
         compose.onLocalizedText("Close", "إغلاق").performClick()
         compose.onLocalizedText("Not started", "لم تبدأ").assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete(); storage.save(original) }
-        compose.onLocalizedText("Add", "إضافة").performClick()
-        compose.runOnIdle { assertEquals(listOf("Existing", "Retain task"), storage.load().single().tasks.map { it.title }) }
+        compose.runOnIdle { assertEquals("Storage fixture must be restored before retry", original, storage.load()) }
+        // The preceding status action scrolled the lazy task list past the add form.
+        // Bring the original form on-screen before retrying rather than tapping it offscreen.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("New task") or hasText("مهمة جديدة")
+        )
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Retain task")
+        compose.onLocalizedText("Add", "إضافة").assertIsDisplayed().performClick()
+        // Successful submission clears the text field; verify persisted data instead.
+        compose.onLocalizedText("New task", "مهمة جديدة").assert(
+            SemanticsMatcher.expectValue(
+                androidx.compose.ui.semantics.SemanticsProperties.EditableText,
+                androidx.compose.ui.text.AnnotatedString("")
+            )
+        )
+        compose.runOnIdle {
+            val actual = storage.load().single().tasks.map { it.title }
+            assertEquals("Retry did not persist task; check UI error dialog and fixture state", listOf("Existing", "Retain task"), actual)
+        }
     }
     @Test fun selectedTabAndUnsubmittedTaskSurviveSavedStateRestoration() = fixture { _, storage ->
         storage.save(listOf(ProjectItem("p", "Task project", "")))

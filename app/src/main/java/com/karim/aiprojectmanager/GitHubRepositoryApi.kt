@@ -120,6 +120,50 @@ internal class GitHubRepositoryApi(
         GitHubTreePreview(entries, response.getBoolean("truncated") || tree.length() > entries.size)
     }
 
+    /**
+     * Read the repository checklist at a commit-pinned revision. A missing dedicated
+     * file falls back to Markdown checkboxes in README; issues are additional evidence.
+     * No GitHub write operation is performed.
+     */
+    internal suspend fun checklist(repositoryId: Long): GitHubChecklistFetchResult {
+        val repository = repositoryById(repositoryId)
+        val sha = branch(repository).commitSha
+        val warnings = mutableListOf<String>()
+        val dedicated = try {
+            val response = get(
+                "${repository.path()}/contents/PROJECT_CHECKLIST.md?ref=$sha",
+                accept = "application/vnd.github.raw+json", limit = 128 * 1024
+            )
+            parseGitHubChecklist(response.body)
+        } catch (error: GitHubReadFailure) {
+            if (error.reason != GitHubReadError.NOT_FOUND) throw error
+            warnings.add("PROJECT_CHECKLIST.md not found; checking README")
+            null
+        }
+        val markdown = if (dedicated != null) dedicated else {
+            try {
+                parseGitHubChecklist(readme(repository, sha).text, "README.md")
+            } catch (error: GitHubReadFailure) {
+                if (error.reason != GitHubReadError.NOT_FOUND && error.reason != GitHubReadError.EMPTY) throw error
+                warnings.add("README unavailable")
+                GitHubChecklistPreview(emptyList())
+            }
+        }
+        val entries = markdown.entries.toMutableList()
+        try {
+            val issues = issueSnapshot(repository)
+            for (issue in issues.open) {
+                entries.add(GitHubChecklistEntry("issue:${issue.id}", issue.title, false))
+            }
+            for (issue in issues.closed) {
+                entries.add(GitHubChecklistEntry("issue:${issue.id}", issue.title, true))
+            }
+        } catch (error: GitHubReadFailure) {
+            warnings.add("Issues could not be read: ${error.reason}")
+        }
+        return GitHubChecklistFetchResult(GitHubChecklistPreview(entries), warnings)
+    }
+
     override suspend fun snapshot(repository: GitHubRepository): GitHubRemoteSnapshot = readJson {
         val current = get(repository.path()).json().repository()
         if (current.id != repository.id) throw GitHubReadFailure(GitHubReadError.INVALID_RESPONSE)

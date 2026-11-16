@@ -113,4 +113,15 @@
     <string name="backlog_next_action">Next action: %1$s</string>
     <string name="backlog_none">None</string>
     <string name="backlog_dependencies">Dependencies: %1$s</string>
+    <string name="checklist_title">GitHub checklist</string>
+    <string name="checklist_source_note">Suggested tasks from the repository checklist, README and recent Issues. GitHub checkboxes are not verified completion. Existing local edits are preserved.</string>
+    <string name="checklist_loading">Loading…</string>
+    <string name="checklist_refresh">Refresh suggestions</string>
+    <string name="checklist_connect">Connect GitHub to load suggestions.</string>
+    <string name="checklist_error">Could not load checklist. Retry when GitHub is available.</string>
+    <string name="checklist_save_error">Could not save suggested tasks. Your existing tasks were not changed.</string>
+    <string name="checklist_found">Found %1$d source tasks; %2$d new suggestions.</string>
+    <string name="checklist_empty">No checklist found. Add PROJECT_CHECKLIST.md to the repository or create tasks manually.</string>
+    <string name="checklist_more">And %1$d more suggestions…</string>
+    <string name="checklist_apply">Add %1$d suggested tasks</string>
 </resources>

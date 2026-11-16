@@ -37,7 +37,8 @@ class TaskTitleUiTest {
     private fun openFirstTaskEditor() {
         compose.onNodeWithText("Task project").performClick()
         compose.selectProjectTab(3)
-        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performScrollTo().performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Edit title") or hasText("تعديل العنوان"))
+        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performClick()
     }
 
     @Test fun savingChangesOnlyTitleAndPreservesStoredExtensionsAndAssociation() = fixture { file, storage ->
@@ -70,7 +71,8 @@ class TaskTitleUiTest {
         compose.onLocalizedText("Cancel", "إلغاء").performClick()
         compose.onDiscardChanges().performClick()
         compose.onNodeWithText("Original task").assertExists()
-        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performScrollTo().performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Edit title") or hasText("تعديل العنوان"))
+        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performClick()
         compose.onLocalizedText("Task title", "عنوان المهمة").assertTextContains("Original task")
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }

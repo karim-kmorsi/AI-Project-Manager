@@ -1,10 +1,14 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview]
+    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview, feature/github-checklist, fix/ci-instrumentation-43829368707]
   pull_request:
-    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
+    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety, feature/github-snapshot-preview]
   workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -34,11 +38,17 @@ jobs:
           unzip -q gradle.zip -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Compile APK and Android instrumentation test sources
-        run: gradle --no-daemon :app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleVnext :app:assembleVnextAndroidTest
       - uses: actions/upload-artifact@v4
+        continue-on-error: true # Storage quota must not block emulator acceptance.
         with:
           name: ai-project-manager-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true # Storage quota must not block emulator acceptance.
+        with:
+          name: ai-project-manager-vnext-apk
+          path: app/build/outputs/apk/vnext/*.apk
       - name: Enable KVM for emulator
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; else echo 'KVM unavailable'; fi
@@ -54,6 +64,7 @@ jobs:
           script: gradle --no-daemon :app:connectedVnextAndroidTest
       - name: Upload Android instrumentation reports
         if: always()
+        continue-on-error: true # Preserve test result even when artifact storage is full.
         uses: actions/upload-artifact@v4
         with:
           name: android-instrumentation-reports

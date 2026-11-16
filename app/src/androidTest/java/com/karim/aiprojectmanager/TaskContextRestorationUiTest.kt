@@ -42,7 +42,7 @@ class TaskContextRestorationUiTest {
         compose.selectProjectTab(3)
     }
     private fun select(query: String, label: String) {
-        list().performScrollToIndex(0)
+        list().performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement(query)
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
         val englishLabel = when (label) {
@@ -55,7 +55,7 @@ class TaskContextRestorationUiTest {
     private fun position() = list().fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
     private fun assertContext(query: String, status: String, scroll: Float) {
         assertEquals("Restore scroll before scrolling to inspect controls", scroll, position(), 1f)
-        list().performScrollToIndex(0)
+        list().performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains(query)
         val englishStatus = if (status == "قيد التنفيذ") "In progress" else "Not started"
         compose.onLocalizedText("Task status: $englishStatus", "حالة المهام: $status").assertExists()
@@ -88,6 +88,7 @@ class TaskContextRestorationUiTest {
         compose.pressProjectBack()
         open("Unrelated project")
         assertEquals(0f, position(), 1f)
+        list().performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").assert(SemanticsMatcher.expectValue(
             SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").assertExists()
