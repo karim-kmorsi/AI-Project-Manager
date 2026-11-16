@@ -80,13 +80,13 @@ internal fun GitHubChecklistPanel(
             if (additions.isNotEmpty()) {
                 TextButton(onClick = {
                     // Recalculate against the latest project state at click time.
-                    val toAdd = proposeGitHubChecklistTasks(project.tasks, data.preview)
+                    val toAdd = proposeGitHubChecklistTasks(project.tasks, data.preview).take(20)
                     if (toAdd.isNotEmpty()) {
                         if (update(project.copy(tasks = project.tasks + toAdd))) {
                             saveError = false
                         } else saveError = true
                     }
-                }) { Text(stringResource(R.string.checklist_apply, additions.size)) }
+                }) { Text(stringResource(R.string.checklist_apply, minOf(additions.size, 20))) }
             }
         }
     }
