@@ -100,9 +100,13 @@ class StorageFailureUiTest {
         compose.onLocalizedText("Not started", "لم تبدأ").assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete(); storage.save(original) }
         compose.runOnIdle { assertEquals("Storage fixture must be restored before retry", original, storage.load()) }
+        // The preceding status action scrolled the lazy task list past the add form.
+        // Bring the original form on-screen before retrying rather than tapping it offscreen.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasText("New task") or hasText("مهمة جديدة")
+        )
         compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Retain task")
-        compose.onLocalizedText("Add", "إضافة").performClick()
-        compose.onRoot(useUnmergedTree = true).printToLog("TaskRetryDiagnostics")
+        compose.onLocalizedText("Add", "إضافة").assertIsDisplayed().performClick()
         compose.onNodeWithText("Retain task").assertExists()
         compose.runOnIdle {
             val actual = storage.load().single().tasks.map { it.title }
