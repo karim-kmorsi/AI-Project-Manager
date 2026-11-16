@@ -61,6 +61,14 @@ class LayoutSizingTest {
             documentBodyAllocation(328, 170, 95, 48, 12, 16, 112))
     }
 
+    @Test fun compactEditorReservesFullBodyWhenGuidanceNeedsMoreHeight() {
+        assertEquals(DocumentBodyAllocation(true, 0, 221, 300),
+            documentBodyAllocation(328, 300, 95, 48, 12, 16, 85, minimumBodyHeight = 270))
+        // Without enough horizontal space, never place Save over the field.
+        assertEquals(DocumentBodyAllocation(false, 0, 100, 252),
+            documentBodyAllocation(100, 300, 95, 48, 12, 16, 85, minimumBodyHeight = 270))
+    }
+
     @Test fun insufficientWidthDoesNotAllocateANegativeEditor() {
         assertEquals(DocumentBodyAllocation(false, 0, 100, 68),
             documentBodyAllocation(100, 128, 95, 60, 12, 16, 112))
