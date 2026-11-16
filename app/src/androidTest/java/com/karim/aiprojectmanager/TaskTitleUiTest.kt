@@ -38,7 +38,7 @@ class TaskTitleUiTest {
         compose.onNodeWithText("Task project").performClick()
         compose.selectProjectTab(3)
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Edit title") or hasText("تعديل العنوان"))
-        compose.onNode(hasText("Edit title") or hasText("تعديل العنوان")).performClick()
+        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performClick()
     }
 
     @Test fun savingChangesOnlyTitleAndPreservesStoredExtensionsAndAssociation() = fixture { file, storage ->
@@ -72,7 +72,7 @@ class TaskTitleUiTest {
         compose.onDiscardChanges().performClick()
         compose.onNodeWithText("Original task").assertExists()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Edit title") or hasText("تعديل العنوان"))
-        compose.onNode(hasText("Edit title") or hasText("تعديل العنوان")).performClick()
+        compose.onAllNodes(hasText("Edit title") or hasText("تعديل العنوان"))[0].performClick()
         compose.onLocalizedText("Task title", "عنوان المهمة").assertTextContains("Original task")
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
