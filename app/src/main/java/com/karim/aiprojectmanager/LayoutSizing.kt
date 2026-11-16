@@ -24,12 +24,13 @@ internal data class DocumentBodyAllocation(
 /** Preserve normal spacing; reclaim padding, then share a row only when height demands it. */
 internal fun documentBodyAllocation(
     width: Int, height: Int, actionWidth: Int, actionHeight: Int,
-    gap: Int, padding: Int, minimumLine: Int
+    gap: Int, padding: Int, minimumLine: Int, minimumBodyHeight: Int = minimumLine
 ): DocumentBodyAllocation {
     require(listOf(width, height, actionWidth, actionHeight, gap, padding).all { it >= 0 })
-    require(minimumLine > 0)
+    require(minimumLine > 0 && minimumBodyHeight >= minimumLine)
     val remaining = height.toLong() - actionHeight
-    val side = remaining < minimumLine && width.toLong() - actionWidth - gap > 0
+    // A compact editor may need its complete height for both guidance and an editable line.
+    val side = remaining < minimumBodyHeight && width.toLong() - actionWidth - gap > 0
     val vertical = if (!side && remaining - 2L * padding >= minimumLine) padding else 0
     return DocumentBodyAllocation(side, vertical,
         if (side) width - actionWidth - gap else width,
