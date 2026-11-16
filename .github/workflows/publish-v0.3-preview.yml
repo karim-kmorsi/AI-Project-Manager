@@ -1,0 +1,66 @@
+name: Publish v0.3.0 VNext preview APK
+on:
+  workflow_run:
+    workflows: [Android debug build]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish-preview:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Verify requested version and exact source
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          grep -q 'versionName = "0.3.0"' app/build.gradle.kts
+          grep -q 'versionCode = 6' app/build.gradle.kts
+          grep -q 'applicationIdSuffix = ".vnext"' app/build.gradle.kts
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-project-manager-vnext-apk
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: distribution
+      - name: Publish separately installable preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t apks < <(find distribution -type f -name '*.apk')
+          test "${#apks[@]}" -eq 1
+          mkdir -p release
+          cp "${apks[0]}" release/AI-Project-Manager-v0.3.0-vnext-preview.apk
+          sha256sum release/*.apk | tee release/SHA256SUMS.txt
+          if gh release view v0.3.0 >/dev/null 2>&1; then
+            echo "Release v0.3.0 already exists; no overwrite performed"
+            exit 0
+          fi
+          cat > release-notes.md <<'NOTES'
+          AI Project Manager v0.3.0 — VNext preview build.
+
+          This is a DEBUG-SIGNED, separately installable VNext APK
+          (package com.karim.aiprojectmanager.vnext), NOT a signed production release.
+          It includes the VNext3 startup screen, language options, management and
+          backup/restore improvements integrated with current main fixes.
+
+          Automated Android CI passed before publication. Certain dedicated
+          device-specific acceptance scenarios remain outside standard CI.
+          Back up all important app data before any install or restore.
+          Do not uninstall an existing app to overcome signing mismatches.
+          This prerelease is intended for owner validation.
+          NOTES
+          gh release create v0.3.0 release/AI-Project-Manager-v0.3.0-vnext-preview.apk release/SHA256SUMS.txt --target "$SOURCE_SHA" --prerelease --title "AI Project Manager v0.3.0 (VNext preview)" --notes-file release-notes.md
