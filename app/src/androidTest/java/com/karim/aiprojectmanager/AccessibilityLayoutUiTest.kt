@@ -1,6 +1,8 @@
 package com.karim.aiprojectmanager
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -165,9 +167,20 @@ class AccessibilityLayoutUiTest {
                                 }, actions = {}, windowInsets = WindowInsets(top = statusTop))
                             }) { padding ->
                             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
-                                ScrollableTabRow(selectedTabIndex = 1) {
-                                    listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEachIndexed { i, label ->
-                                        Tab(selected = i == 1, onClick = {}, text = { Text(label) })
+                                // Use the VNext project's actual compact tab-strip geometry.
+                                // Material ScrollableTabRow can grow differently at 2x font size.
+                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    listOf("نظرة عامة", "Blueprint", "Roadmap", "المهام").forEach { label ->
+                                        Surface(onClick = {}, modifier = Modifier.heightIn(min = 48.dp)) {
+                                            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                Box(Modifier.size(18.dp))
+                                                Text(label, maxLines = 1)
+                                            }
+                                        }
                                     }
                                 }
                                 ScrollableDocumentBody(
