@@ -208,7 +208,7 @@ class AccessibilityLayoutUiTest {
             assertTrue("Save must fit horizontally", bounds.left >= root.left && bounds.right <= root.right)
             compose.onNodeWithText("رجوع").assertIsDisplayed().assertHasClickAction()
             val fieldBounds = field.assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-            assertTrue("Visible field must fit a text line, label and padding",
+            assertTrue("Visible field must fit a text line, label and padding: actual=${fieldBounds.height}, minimum=$minimumFieldHeight, root=${root.height}, keyboard=$keyboardHeight, field=$fieldBounds",
                 fieldBounds.height >= minimumFieldHeight - 1f)
             assertTrue("Visible field must be above the IME", fieldBounds.bottom <= root.bottom - keyboardHeight + 1f)
             assertTrue("Save must not cover the input", bounds.right <= fieldBounds.left || bounds.left >= fieldBounds.right ||
