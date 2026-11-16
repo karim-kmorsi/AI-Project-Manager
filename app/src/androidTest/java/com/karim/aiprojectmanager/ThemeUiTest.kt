@@ -231,7 +231,8 @@ class ThemeUiTest {
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
-        compose.onNodeWithText("In progress").assertExists().performClick()
+        compose.onRoot(useUnmergedTree = true).printToLog("StatusMenuDiagnostics")
+        compose.onNode(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).performClick()
         compose.runOnIdle { f.renderedDark.value = false }
         compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Pending new task")
         compose.onLocalizedText("Search tasks", "بحث في المهام").assertTextContains("Keep")
