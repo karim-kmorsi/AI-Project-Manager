@@ -800,7 +800,9 @@ private fun TaskScreen(
                     }
                     DropdownMenu(expanded = statusMenuExpanded, onDismissRequest = { statusMenuExpanded = false }) {
                         statusOptions.forEach { (status, label) ->
-                            DropdownMenuItem(text = { Text(label) }, onClick = {
+                            DropdownMenuItem(
+                                modifier = Modifier.testTag("task_status_option_${status ?: "ALL"}"),
+                                text = { Text(label) }, onClick = {
                                 selectedStatus = status
                                 statusMenuExpanded = false
                             })
