@@ -3,8 +3,12 @@ on:
   push:
     branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview, feature/github-checklist]
   pull_request:
-    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety]
+    branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety, feature/github-snapshot-preview]
   workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
