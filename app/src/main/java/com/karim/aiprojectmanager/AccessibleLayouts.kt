@@ -159,12 +159,8 @@ internal fun ScrollableDocumentBody(
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val save = children[0].measure(Constraints(maxWidth = width, maxHeight = height))
-        // At large font sizes with the keyboard shown, putting Save above the editor
-        // can leave less than one visible input line. Move it alongside the scrollable
-        // body when there is room horizontally, retaining full-height access to guidance.
         val allocation = documentBodyAllocation(width, height, save.width, save.height,
-            12.dp.roundToPx(), 16.dp.roundToPx(), minimumLine,
-            minimumBodyHeight = maxOf(minimumLine, readableMinimum * 2))
+            12.dp.roundToPx(), 16.dp.roundToPx(), minimumLine)
         val body = children[1].measure(Constraints.fixed(allocation.bodyWidth, allocation.bodyHeight))
         layout(width, height) {
             save.place(width - save.width, allocation.verticalPadding)
