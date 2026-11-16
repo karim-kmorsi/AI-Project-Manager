@@ -230,6 +230,8 @@ class ThemeUiTest {
         compose.onLocalizedText("New task", "مهمة جديدة").performTextReplacement("Pending new task")
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
+        // Close the IME before opening the dropdown: its popup must be inspected in a stable viewport.
+        compose.onLocalizedText("Search tasks", "بحث في المهام").performImeAction()
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performScrollTo().performClick()
         compose.onRoot(useUnmergedTree = true).printToLog("StatusMenuDiagnostics")
         compose.onNode(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).performClick()
