@@ -99,7 +99,10 @@ class StorageFailureUiTest {
         compose.onLocalizedText("Close", "إغلاق").performClick()
         compose.onLocalizedText("Not started", "لم تبدأ").assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete(); storage.save(original) }
+        compose.runOnIdle { assertEquals("Storage fixture must be restored before retry", original, storage.load()) }
+        compose.onLocalizedText("New task", "مهمة جديدة").assertTextContains("Retain task")
         compose.onLocalizedText("Add", "إضافة").performClick()
+        compose.onRoot(useUnmergedTree = true).printToLog("TaskRetryDiagnostics")
         compose.runOnIdle { assertEquals(listOf("Existing", "Retain task"), storage.load().single().tasks.map { it.title }) }
     }
     @Test fun selectedTabAndUnsubmittedTaskSurviveSavedStateRestoration() = fixture { _, storage ->
