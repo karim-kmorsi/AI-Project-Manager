@@ -234,7 +234,7 @@ class ThemeUiTest {
             hasText("Task status: All statuses") or hasText("حالة المهام: كل الحالات")
         )
         compose.onLocalizedText("Task status: All statuses", "حالة المهام: كل الحالات").performClick()
-        compose.onNode(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).performClick()
+        compose.onAllNodes(hasText("In progress") or hasText("قيد التنفيذ"), useUnmergedTree = true).onLast().performClick()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Search tasks") or hasText("بحث في المهام"))
         compose.onLocalizedText("Search tasks", "بحث في المهام").performTextReplacement("Keep")
         compose.runOnIdle { f.renderedDark.value = false }
