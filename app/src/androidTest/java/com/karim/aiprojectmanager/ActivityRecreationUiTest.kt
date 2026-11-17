@@ -70,7 +70,7 @@ class ActivityRecreationUiTest {
         compose.activityRule.scenario.recreate()
         // VNext3 startup refuses to read data while an AtomicFile .new sidecar
         // exists; verify safe failure instead of bypassing the recovery gate.
-        compose.onLocalizedText("Retry", "إعادة المحاولة").assertIsDisplayed()
+        compose.onLocalizedText("Retry", "إعادة المحاولة").performScrollTo().assertIsDisplayed()
         compose.runOnIdle {
             assertArrayEquals(bytes, file.readBytes())
             assertTrue(blocked.deleteRecursively())
