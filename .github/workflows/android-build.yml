@@ -61,7 +61,7 @@ jobs:
           emulator-boot-timeout: 1800
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: gradle --no-daemon :app:connectedVnextAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.karim.aiprojectmanager.TaskListControlsUiTest#narrowLargeFontActionsStayWithinCardAndRemainUsable -Pandroid.testInstrumentationRunnerArguments.timeout_msec=60000
+          script: timeout 180s gradle --no-daemon :app:connectedVnextAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.karim.aiprojectmanager.TaskListControlsUiTest#narrowLargeFontActionsStayWithinCardAndRemainUsable -Pandroid.testInstrumentationRunnerArguments.timeout_msec=60000
       - name: Upload Android instrumentation reports
         if: always()
         continue-on-error: true # Preserve test result even when artifact storage is full.

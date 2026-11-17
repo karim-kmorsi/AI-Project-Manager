@@ -46,6 +46,7 @@ class TaskListControlsUiTest {
         storage.save(listOf(ProjectItem("p", "Empty project", "")))
         compose.setContent { MaterialTheme { ProjectManagerApp(storage) } }
         compose.onNodeWithText("Empty project").performClick()
+        android.util.Log.i("TaskFontDiag", "before-tab")
         compose.selectProjectTab(3)
         taskText(text(R.string.tasks_empty)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.tasks_no_matches)).assertDoesNotExist()
@@ -86,17 +87,20 @@ class TaskListControlsUiTest {
         compose.runOnIdle { assertArrayEquals(before, file.readBytes()) }
     }
 
-    @Test fun narrowLargeFontActionsStayWithinCardAndRemainUsable() = fixture { _, storage ->
+    @Test(timeout = 120_000) fun narrowLargeFontActionsStayWithinCardAndRemainUsable() = fixture { _, storage ->
         val title = "A long task title with Arabic العربية and enough words to wrap across several lines"
         storage.save(listOf(ProjectItem("p", "Layout project", "", tasks = listOf(TaskItem("t", title)))))
+        android.util.Log.i("TaskFontDiag", "before-content")
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, 2f)) {
                 MaterialTheme { Box(Modifier.width(240.dp)) { ProjectManagerApp(storage) } }
             }
         }
+        android.util.Log.i("TaskFontDiag", "before-project")
         taskText("Layout project").assertIsDisplayed().performClick()
         compose.selectProjectTab(3)
+        android.util.Log.i("TaskFontDiag", "before-title")
         taskText(title).assertIsDisplayed()
         val labelsAndStatuses = listOf(
             Triple("In progress", "قيد التنفيذ", "IN_PROGRESS"),
@@ -104,11 +108,13 @@ class TaskListControlsUiTest {
             Triple("Mark verified", "تم التحقق", "VERIFIED")
         )
         for ((english, arabic, status) in labelsAndStatuses) {
+            android.util.Log.i("TaskFontDiag", "before-action-$status")
             val action = taskText(english, arabic)
             action.assertIsDisplayed()
             val bounds = action.getUnclippedBoundsInRoot()
             assertTrue("Action has positive width", bounds.right > bounds.left)
             assertTrue("Action does not overflow narrow content", bounds.left >= 0.dp && bounds.right <= 240.dp)
+            android.util.Log.i("TaskFontDiag", "before-click-$status")
             action.performClick()
             compose.runOnIdle {
                 assertEquals(status, storage.load().single().tasks.single().status)
