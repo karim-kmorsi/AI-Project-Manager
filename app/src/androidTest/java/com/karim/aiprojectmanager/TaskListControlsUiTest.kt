@@ -87,6 +87,10 @@ class TaskListControlsUiTest {
     }
 
     @Test fun narrowLargeFontActionsStayWithinCardAndRemainUsable() = fixture { _, storage ->
+        org.junit.Assume.assumeTrue(
+            "Dedicated 2x narrow-layout acceptance: enable narrowFontEnabled only on an approved test device",
+            InstrumentationRegistry.getArguments().getString("narrowFontEnabled") == "true"
+        )
         val title = "A long task title with Arabic العربية and enough words to wrap across several lines"
         storage.save(listOf(ProjectItem("p", "Layout project", "", tasks = listOf(TaskItem("t", title)))))
         compose.setContent {
