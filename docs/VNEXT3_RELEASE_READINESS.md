@@ -1,5 +1,10 @@
 # VNext 3 Release Readiness
 
+> Current status (2026-11-17): see [v0.3.0 local candidate evidence and limits](releases/v0.3.0/LOCAL_CANDIDATE.md).
+> The checkpoint below is historical; its old version numbers and unexecuted-test
+> statements do not describe the current candidate. Historical requirements are
+> retained, and deferred/physical-device/production-signing gates are not waived.
+
 Updated: 2026-11-14 (Asia/Kathmandu)  
 Branch: `feature/vnext3`  
 Starting commit: `a9afb300b9efe8b3aea86ffd257998e5ee463959`  

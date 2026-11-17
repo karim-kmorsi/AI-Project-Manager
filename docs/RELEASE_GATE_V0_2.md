@@ -1,5 +1,10 @@
 # AI Project Manager — v0.2 release gate
 
+> Current status (2026-11-17): see [v0.3.0 local candidate evidence and limits](releases/v0.3.0/LOCAL_CANDIDATE.md).
+> The checkpoint below is historical; its old version numbers and unexecuted-test
+> statements do not describe the current candidate. Historical requirements are
+> retained, and deferred/physical-device/production-signing gates are not waived.
+
 Updated: 2026-11-06
 Branch: `codex/baseline-reconciliation-v0-2`
 Status: In development; not ready for release.

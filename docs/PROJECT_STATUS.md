@@ -1,8 +1,18 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-16 (Asia/Kathmandu).
-Current authorized cycle: VNext 3 on `feature/vnext3`, starting HEAD `a9afb30`.
-Release status: **NOT Ready for Release**.
+Updated: 2026-11-17 (Asia/Kathmandu).
+Current branch: `main`; acceptance source baseline `d1fba747`.
+Current package: **v0.3.0 local candidate, code 7**, isolated `.vnext` identity.
+Status: **local packaging complete with limits; not an approved production release**.
+
+See [the current candidate report](releases/v0.3.0/LOCAL_CANDIDATE.md) for APK
+identity, real acceptance evidence, deferred tests and signing/update restrictions.
+CI attempt 2 at the baseline passed 226 Android cases, skipped 6 and failed none;
+these counts were read from its JUnit XML, not inferred from console progress.
+Local upgrade and real DocumentsUI acceptance passed on disposable API 35 users.
+No physical-phone install, new signing key, push, tag or Release is authorized by
+this record. Existing checkpoints below retain their original dates/scope; their
+version/branch and compiled-only statements are historical, not the latest status.
 
 ## Version 0.2.0 configuration — 2026-11-16
 

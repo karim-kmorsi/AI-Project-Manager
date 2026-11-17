@@ -2,13 +2,19 @@
 
 AI Project Manager is an Android productivity app for managing multi-project work, tasks, roadmap planning, and GitHub-backed project context in one place.
 
-## Stable release
+## Current local candidate — v0.3.0
 
-- Version: 0.2.0
-- Build: 5
-- Package: com.karim.aiprojectmanager
-- Status: released locally and visually accepted on the REDMAGIC 10 Pro physical device
-- Approved splash footer: "AI Project Manager v0.2.0" / "© Karim S.K. Morsi 2026"
+- Version: **0.3.0**, versionCode **7**, build variant `localCandidate`.
+- Package: `com.karim.aiprojectmanager.vnext` (separate from the original app).
+- Non-debuggable APK, without Debug-only test activities/providers.
+- Signed with the existing **Android Debug certificate**. This is an owner-test
+  candidate, **not an approved production signing configuration**.
+- Local packaging is complete with documented limits. REDMAGIC 10 Pro installation
+  and compatibility with its actual installed signer have **not** been verified.
+- Current evidence, artifact identity, deferred checks and installation rules:
+  [v0.3.0 local candidate report](docs/releases/v0.3.0/LOCAL_CANDIDATE.md).
+
+The historical v0.2.0/build 5 record below is not acceptance of this new candidate.
 
 ## Implemented functionality
 
@@ -20,23 +26,34 @@ AI Project Manager is an Android productivity app for managing multi-project wor
 
 ## Repository and release notes
 
-- Current branch: feature/vnext3
-- Current scope and release restrictions: [v0.2 release gate](docs/RELEASE_GATE_V0_2.md)
+- Current branch: `main`
+- Current candidate: [v0.3.0 evidence and limits](docs/releases/v0.3.0/LOCAL_CANDIDATE.md)
+- Historical requirements: [v0.2 release gate](docs/RELEASE_GATE_V0_2.md)
 - Current implementation and verification notes: [Project status](docs/PROJECT_STATUS.md)
 - Current priorities and deferred work: [Reconstructed roadmap](docs/ROADMAP.md)
 - Contributor safety instructions: [Reconstructed AGENTS.md](AGENTS.md)
 
 ## Build and installation
 
-1. Install Android SDK and JDK 17.
-2. Ensure local.properties points to the installed Android SDK.
-3. Build the release artifact:
+Use the existing JDK 17, Android SDK and cached Gradle 8.13. Supply the existing
+GitHub App Client ID as the `githubAppClientId` Gradle property for the process
+only (for example, `ORG_GRADLE_PROJECT_githubAppClientId` in its environment).
+Do not commit that machine configuration or use a placeholder for this candidate.
 
 ```bash
-./gradlew --offline --no-daemon --console=plain :app:assembleRelease
+./gradlew --offline --no-daemon :app:assembleLocalCandidate :app:lintLocalCandidate
 ```
 
-4. Use the signed release APK for the approved physical device installation. Do not treat this as a full production guarantee without the formal device and signing checks noted in the project status documentation.
+This variant requires the existing local signing key and refuses to create a
+replacement when it is missing. Its output is
+`app/build/outputs/apk/localCandidate/app-localCandidate.apk`. The verified
+candidate is retained separately under `/home/karim/Backups/AI-Project-Manager/`;
+see the candidate report before rebuilding or installing.
+
+Do not assume `assembleRelease` creates a signed APK. Do not install Debug over
+the original app. A same-package update requires the actual installed certificate
+to match and a compatible version code; never uninstall or clear data to bypass
+an Android signature/version rejection. Phone installation requires owner approval.
 
 ## GitHub integration
 
@@ -60,13 +77,10 @@ The app includes GitHub connection and import logic for project context and repo
 
 ## Verification status
 
-Verified locally in this workspace:
-
-- `./gradlew --no-daemon --console=plain :app:testDebugUnitTest` completed successfully.
-- Release-oriented build and repository checks were performed only where required for the approved release workflow.
-
-Unverified without separate device or signing acceptance work:
-
-- Full physical-device compatibility beyond the approved installation
-- Full production readiness claims
-- Complete automated coverage of all release gates
+- CI at `d1fba747`, run `44120662731` attempt 2: **226 Android tests passed,
+  6 skipped, 0 failed/errors**, verified from the original JUnit XML.
+- Isolated local upgrade and real DocumentsUI export/restore acceptance passed.
+- Current candidate packaging, signature, metadata and targeted runtime checks
+  are recorded in the [candidate report](docs/releases/v0.3.0/LOCAL_CANDIDATE.md).
+- Skipped tests remain deferred; physical-device upgrade, production signing and
+  unrestricted production-readiness claims are not established.

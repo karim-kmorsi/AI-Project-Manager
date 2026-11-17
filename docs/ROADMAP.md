@@ -2,17 +2,15 @@
 
 Created 2026-11-06 (Asia/Kathmandu), with owner authorization.
 This is a newly authored current roadmap, **not a recovered historical original**.
-No previous `docs/ROADMAP.md` was available. Application status: **NOT Ready for Release**.
+No previous `docs/ROADMAP.md` was available. Application status: **local candidate complete with limits; production approval open**.
 
 ## Authority and continuing baseline
 
-Continue development on `codex/baseline-reconciliation-v0-2`; this reconstruction starts at
-`c70a72f2593a5e9b3394bedd81f121de06ff4b14`. No branch merge/deletion is required.
-[Release gate](RELEASE_GATE_V0_2.md) defines reduced v0.2 scope and outstanding acceptance.
-[Project status](PROJECT_STATUS.md) records implementation/evidence by commit.
-[Broader approved plan](V0_2_APPROVED_PLAN.md) retains historical requirements and phase order;
-specific later development authorizations do not close Gate 0 or waive release criteria.
-[JSON compatibility policy](JSON_SCHEMA_AND_MIGRATION_POLICY.md) remains binding.
+Continue on owner-authorized `main`, with acceptance source baseline `d1fba747`.
+The [v0.3.0 candidate report](releases/v0.3.0/LOCAL_CANDIDATE.md) is the current
+packaging/acceptance record. Earlier branch and v0.2 checkpoints are historical.
+The [JSON compatibility policy](JSON_SCHEMA_AND_MIGRATION_POLICY.md) remains in
+force. Local packaging does not approve production signing or a phone update.
 
 ## Implemented locally
 
@@ -20,15 +18,15 @@ specific later development authorizations do not close Gate 0 or waive release c
 - Blueprint/Roadmap editors, Save/autosave/recovery and dirty-navigation protections.
 - Task creation/title editing, existing manual statuses, title search and status filters.
 - Offline next-step guidance, contextual/setup tips, status counts and pending-task details.
-- Existing-format JSON export and validated read-only backup preview; atomic/legacy-safe writes.
+- Existing-format JSON export, validated preview and explicitly confirmed replace-all restore; atomic/legacy-safe writes.
 - Explicit platform backup/transfer exclusions, immutable saved editor baselines, approved icon.
-- Settings/storage disclosure; private SYSTEM/LIGHT/DARK theme preference and approved palettes.
+- Settings/storage disclosure, Light/Dark themes, Arabic/English selection and automatic language fallback.
 - Content-aware RTL/LTR paragraphs/inputs and display-only bidi isolation for numeric ratios.
 
-Implementation is not blanket acceptance. In-app language selection/full English translation
-remain missing. Current feature evidence and its limits are in project status.
+Implementation is not blanket acceptance. Language selection, restore and read-only GitHub
+discovery/import are implemented; current evidence and limits are in the candidate report.
 
-## Owner-approved stabilization batch — next in dependency order
+## Historical stabilization batch — completed checkpoint
 
 1. **Documentation recovery:** reconstruct this roadmap and AGENTS.md, reconcile current status,
    README and stale release-gate statements while preserving historical requirements/evidence.
@@ -58,13 +56,11 @@ These are open gates, not assertions that implemented features are absent.
 
 ## Deferred development — requires separate scope approval
 
-- Arabic/English/follow-device language selection, persisted independently of project JSON, and
-  full UI/accessibility translation (broader plan Phase 2). Theme implementation has already landed;
-  its original implementation deferral is superseded, while acceptance remains open.
-- Real restore/import/merge UI: dormant engines need further crash/concurrency safety work.
+- Broader locale/accessibility/device acceptance beyond the implemented language/theme controls.
+- Merge and other backup formats; the legacy-array replace-all restore is already implemented.
 - Archive/unarchive, richer task metadata, structured milestones, decisions and event history.
 - Broader cross-project/archived/decision search and evidence-based verification workflows.
-- GitHub linkage/import/synchronization, AI/remote execution or other post-v0.2 capabilities.
+- Bidirectional GitHub synchronization, AI/remote execution and other separately approved capabilities.
 
 Do not infer a Room conversion, new JSON schema, feature authorization or release approval from
 historical plans. Select the next batch with the owner after reviewing current evidence.

@@ -59,8 +59,8 @@ Export preserves the validated source bytes in an app-private cache snapshot whi
 
 - CI build #77 ran 11 Android instrumentation tests successfully, including representative v0.1 load/save/reload tests.
 - Current `ProjectStorage` uses `AtomicFile` and blocks ordinary writes to files it cannot read. A user-confirmed legacy-array restore can replace such a file only after retaining an exact recovery snapshot. Full schema migration, version rejection, merge/restore of other formats, and user-managed export of recovery snapshots are not implemented. Validated JSON export and restore preview are implemented; restore is replace-all only.
-- VNext 3 adds isolated Android transaction regression sources, including successful replacement, missing storage, corrupt-original preservation, stale inputs, invalid candidates, and write failures. These tests were compiled but not executed for the current release cycle; restore safety remains an open release gate.
+- Current v0.3.0 evidence supersedes the earlier compiled-only checkpoint: the standard CI suite passed with six explicit skips, and isolated real DocumentsUI export/restore acceptance passed. See [the candidate report](releases/v0.3.0/LOCAL_CANDIDATE.md). Actual crash/power-loss and physical-device acceptance are not established.
 - Tests use isolated synthetic files, **not a copy of data from the user's installed phone**.
-- APK signing/fingerprint compatibility and in-place update remain separate pending Gate 0 checks. Do not uninstall, clear app storage or deploy a differently signed APK to the existing installation.
+- Same-certificate local `.vnext` upgrades were accepted on disposable emulator users. The actual phone signer and production upgrade path remain unverified. Do not uninstall, clear app storage or deploy a differently signed APK to an existing installation.
 
 Gate 0 stays **open** until the remaining conditions are tested and reviewed.

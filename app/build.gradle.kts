@@ -39,6 +39,15 @@ android {
             versionNameSuffix = "-dev.1"
             matchingFallbacks += listOf("debug")
         }
+        // Owner-distributed candidate: same isolated identity/signer, without Debug test hosts.
+        // This is not a production signing configuration.
+        create("localCandidate") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".vnext"
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
     // VNext instrumentation targets its isolated package while reusing Debug-only test hosts.
     sourceSets.getByName("vnext") {
@@ -60,6 +69,9 @@ androidComponents {
     onVariants(selector().withBuildType("vnext")) { variant ->
         variant.outputs.forEach { output -> output.versionCode.set(6) }
     }
+    onVariants(selector().withBuildType("localCandidate")) { variant ->
+        variant.outputs.forEach { output -> output.versionCode.set(7) }
+    }
 }
 
 // Validate only tasks for the isolated build type; ordinary Debug/Release remain independent.
@@ -72,9 +84,23 @@ val verifyVnextGitHubAppClientId = tasks.register("verifyVnextGitHubAppClientId"
         }
     }
 }
+val verifyLocalCandidateInputs = tasks.register("verifyLocalCandidateInputs") {
+    doLast {
+        if (!githubAppClientIdConfigured || githubAppClientId.equals("SyntheticBuildFixture", ignoreCase = true)) {
+            throw GradleException("Local candidate requires the existing genuine GitHub App client ID.")
+        }
+        val existingKey = android.signingConfigs.getByName("debug").storeFile
+        if (existingKey == null || !existingKey.isFile) {
+            throw GradleException("Existing local signing key is missing; do not generate a replacement.")
+        }
+    }
+}
 tasks.configureEach {
     if (name.contains("Vnext") && name != "verifyVnextGitHubAppClientId") {
         dependsOn(verifyVnextGitHubAppClientId)
+    }
+    if (name.contains("LocalCandidate") && name != "verifyLocalCandidateInputs") {
+        dependsOn(verifyLocalCandidateInputs)
     }
 }
 

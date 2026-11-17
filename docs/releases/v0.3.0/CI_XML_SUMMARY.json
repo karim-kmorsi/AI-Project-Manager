@@ -1,0 +1,22 @@
+{
+  "artifact": 14347583782,
+  "zip_sha256": "c799fec9b2a1d484945c869d18009a5b8f6ce9737edd6a72af22ef200dcb1cbd",
+  "reports": [
+    {
+      "file": "outputs/androidTest-results/connected/vnext/TEST-emulator-5554 - 15-_app-.xml",
+      "cases": 232,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 6,
+      "passed": 226,
+      "skipped_cases": [
+        "com.karim.aiprojectmanager.CaretVisibilityUiTest#roadmapCaretVisibleLtr",
+        "com.karim.aiprojectmanager.CaretVisibilityUiTest#roadmapCaretVisibleRtl",
+        "com.karim.aiprojectmanager.CaretVisibilityUiTest#blueprintCaretVisibleLtr",
+        "com.karim.aiprojectmanager.CaretVisibilityUiTest#blueprintCaretVisibleRtl",
+        "com.karim.aiprojectmanager.RealDocumentsUiRecreationTest#productionActivityRecreatesBeforeRealDocumentSelection",
+        "com.karim.aiprojectmanager.TaskListControlsUiTest#narrowLargeFontActionsStayWithinCardAndRemainUsable"
+      ]
+    }
+  ]
+}
