@@ -28,6 +28,26 @@ class GitHubPreparationTest {
         assertNull(previewGitHubImport(repository.copy(fullName = "owner/repo?query=1"), emptyList()))
     }
 
+    @Test fun mapsAvailableDocumentsWithoutReplacingRepositoryMetadataOrLocalProjects() {
+        val local = listOf(ProjectItem("local", "Personal", "Keep this", blueprint = "Local draft"))
+        val documents = mapOf(
+            GitHubPlanningFile.BLUEPRINT to GitHubPreviewSection.Available(
+                GitHubPlanningDocument("Imported blueprint")
+            ),
+            GitHubPlanningFile.ROADMAP to GitHubPreviewSection.Unavailable(GitHubReadError.NOT_FOUND)
+        )
+
+        val proposal = requireNotNull(previewGitHubImport(repository, local, documents))
+
+        assertEquals("About\n\nhttps://github.com/owner/repo", proposal.project.description)
+        assertEquals("Imported blueprint", proposal.project.blueprint)
+        assertEquals("", proposal.project.roadmap)
+        assertTrue(proposal.project.tasks.isEmpty())
+        assertEquals("Keep this", local.single().description)
+        assertEquals("Local draft", local.single().blueprint)
+        assertEquals(documents, proposal.planningDocuments)
+    }
+
     @Test fun detectsRemoteChangesAndConflictsWithLocalEdits() {
         val local = ProjectItem("github:24", "Project", "Notes", roadmap = "Local roadmap")
         val changed = local.copy(roadmap = "Edited roadmap")

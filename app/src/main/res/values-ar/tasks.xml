@@ -27,4 +27,51 @@
     <string name="task_action_implemented_unverified">كود غير متحقق</string>
     <string name="task_action_verified">تم التحقق</string>
     <string name="task_screen_status_summary">حالات المهام الحالية: لم تبدأ %1$d | قيد التنفيذ %2$d | منفذة دون تحقق %3$d | موسومة كمتحقق منها %4$d | حالات أخرى %5$d</string>
+    <string name="task_delete_button">حذف</string>
+    <string name="task_delete_title">هل تريد حذف المهمة؟</string>
+    <string name="task_delete_message">حذف «%1$s»؟ لا يمكن التراجع عن ذلك.</string>
+    <string name="task_delete_confirm">حذف المهمة</string>
+    <string name="roadmap_proposals_open">اقتراح مهام من خارطة الطريق</string>
+    <string name="roadmap_proposals_title">مراجعة المهام المقترحة</string>
+    <string name="roadmap_proposals_review">راجع المهام وعدّلها وحدد ما تريد إضافته. لن يُحفظ شيء حتى تؤكد.</string>
+    <string name="roadmap_proposals_empty">لم يتم العثور على مقترحات مهام واضحة. يمكنك إضافة المهام يدويًا.</string>
+    <string name="roadmap_proposals_save_error">تعذّر حفظ هذه المهام. لم تتغير بيانات المهام الحالية.</string>
+    <string name="roadmap_proposals_source_line">السطر %1$d في خارطة الطريق</string>
+    <string name="roadmap_proposals_phase">المرحلة: %1$s</string>
+    <string name="roadmap_proposals_existing">توجد مهمة بهذا العنوان بالفعل.</string>
+    <string name="roadmap_proposals_task_title">عنوان المهمة المقترحة</string>
+    <string name="roadmap_proposals_duplicate_title">هذا العنوان مكرر لمهمة موجودة أو لمقترح آخر محدد.</string>
+    <string name="roadmap_proposals_confirm">إضافة المهام المحددة</string>
+    <plurals name="roadmap_proposals_ambiguous">
+        <item quantity="zero">لم يتم تخطي أي عنصر غير واضح.</item>
+        <item quantity="one">تم تخطي عنصر واحد غير واضح.</item>
+        <item quantity="two">تم تخطي عنصرين غير واضحين.</item>
+        <item quantity="few">تم تخطي %1$d عناصر غير واضحة.</item>
+        <item quantity="many">تم تخطي %1$d عنصرًا غير واضح.</item>
+        <item quantity="other">تم تخطي %1$d عنصر غير واضح.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_completed">
+        <item quantity="zero">لم يتم تخطي أي عنصر مكتمل.</item>
+        <item quantity="one">تم تخطي عنصر مكتمل واحد.</item>
+        <item quantity="two">تم تخطي عنصرين مكتملين.</item>
+        <item quantity="few">تم تخطي %1$d عناصر مكتملة.</item>
+        <item quantity="many">تم تخطي %1$d عنصرًا مكتملًا.</item>
+        <item quantity="other">تم تخطي %1$d عنصر مكتمل.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_duplicates">
+        <item quantity="zero">لم يتم تخطي عناصر مكررة.</item>
+        <item quantity="one">تم تخطي عنصر مكرر واحد.</item>
+        <item quantity="two">تم تخطي عنصرين مكررين.</item>
+        <item quantity="few">تم تخطي %1$d عناصر مكررة.</item>
+        <item quantity="many">تم تخطي %1$d عنصرًا مكررًا.</item>
+        <item quantity="other">تم تخطي %1$d عنصر مكرر.</item>
+    </plurals>
+    <plurals name="roadmap_proposals_limit">
+        <item quantity="zero">لا توجد مقترحات إضافية.</item>
+        <item quantity="one">تُعرض أول 200 مقترح فقط؛ تم استبعاد مقترح إضافي واحد.</item>
+        <item quantity="two">تُعرض أول 200 مقترح فقط؛ تم استبعاد مقترحين إضافيين.</item>
+        <item quantity="few">تُعرض أول 200 مقترح فقط؛ تم استبعاد %1$d مقترحات إضافية.</item>
+        <item quantity="many">تُعرض أول 200 مقترح فقط؛ تم استبعاد %1$d مقترحًا إضافيًا.</item>
+        <item quantity="other">تُعرض أول 200 مقترح فقط؛ تم استبعاد %1$d مقترح إضافي.</item>
+    </plurals>
 </resources>

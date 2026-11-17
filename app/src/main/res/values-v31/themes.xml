@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AIProjectManager" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#01091C</item>
+        <item name="android:statusBarColor">#01091C</item>
+        <item name="android:navigationBarColor">#01091C</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">#0B5ED7</item>
+        <item name="android:windowSplashScreenBackground">#01091C</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

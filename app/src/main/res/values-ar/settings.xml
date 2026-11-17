@@ -7,6 +7,6 @@
     <string name="settings_diagnostics">التشخيص</string>
     <string name="settings_public_probe_description">يختبر واجهة GitHub العامة. لا تتوفر مزامنة المستودعات.</string>
     <string name="settings_backup_loss">تُحفظ المشاريع على هذا الجهاز. قد يؤدي إلغاء تثبيت التطبيق أو فقدان بياناته إلى فقدانها. صدّر JSON يدويًا للاحتفاظ بنسخة خارجية.</string>
-    <string name="settings_backup_preview_warning">معاينة النسخة الاحتياطية للقراءة فقط. لا تستورد المشاريع أو تدمجها أو تستبدلها.</string>
+    <string name="settings_backup_preview_warning">معاينة النسخة الاحتياطية للقراءة فقط. تتطلب الاستعادة تأكيدًا منفصلًا وتستبدل جميع المشاريع المحلية.</string>
     <string name="settings_backup_transfer_warning">إعدادات Android تستبعد بيانات التطبيق من النسخ الاحتياطي والنقل بين الأجهزة. قد يختلف السلوك حسب الجهاز، ولا تُضمن الاستعادة.</string>
 </resources>

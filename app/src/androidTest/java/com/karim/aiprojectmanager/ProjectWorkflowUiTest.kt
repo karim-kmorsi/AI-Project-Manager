@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -75,7 +76,7 @@ class ProjectWorkflowUiTest {
         storage.save(listOf(active, untouched))
         compose.setContent { ProjectManagerApp(storage) }
         compose.onNodeWithText("Task project").performClick()
-        // ScrollableTabRow can place the Tasks tab off screen on narrow CI displays.
+        for (index in 0..3) compose.onNodeWithTag("project_tab_$index").assertIsDisplayed()
         compose.selectProjectTab(3)
         compose.onLocalizedText("Add", "إضافة").assertIsNotEnabled()
         compose.onLocalizedText("New task", "مهمة جديدة").performTextInput("   ")

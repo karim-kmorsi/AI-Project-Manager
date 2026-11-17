@@ -3,6 +3,7 @@
     <string name="dashboard_export">تصدير JSON</string>
     <string name="dashboard_backup_preview">معاينة نسخة</string>
     <string name="dashboard_create">مشروع جديد</string>
+    <string name="dashboard_import_github">استيراد من GitHub</string>
     <string name="dashboard_my_projects">مشاريعي</string>
     <string name="dashboard_project_count">عدد المشاريع: %1$d</string>
     <string name="dashboard_search">بحث في المشاريع</string>

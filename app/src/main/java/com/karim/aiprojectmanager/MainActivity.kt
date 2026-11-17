@@ -6,11 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,10 +22,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +44,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 
 data class TaskItem(val id: String, val title: String, val status: String = "NOT_STARTED")
@@ -52,25 +56,39 @@ data class ProjectItem(
 )
 
 open class MainActivity : ComponentActivity() {
+    private val languagePreferences by lazy { AppLanguagePreferences(this) }
     private val themePreferences by lazy { ThemePreferences({ AndroidAppPreferences.open(applicationContext) }) }
+    private var startupCompleted = false
     private lateinit var storage: ProjectStorage
     private var pendingExportToken: String? = null
     private var exportPreparing = false
     private val exportStore by lazy { PendingExport(File(cacheDir, "pending-exports")) }
     private var restorePreviewState by mutableStateOf<RestorePreview.Summary?>(null)
     private var restorePreviewError by mutableStateOf<String?>(null)
+    private var restoreCandidateState by mutableStateOf<RestoreCandidate.Staged?>(null)
     private var restorePreviewJob: Job? = null
     private val restorePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         restorePreviewJob?.cancel()
+        restoreCandidateState?.file?.delete()
+        restoreCandidateState = null
         restorePreviewState = null
         restorePreviewError = null
         restorePreviewJob = if (uri != null) lifecycleScope.launch {
+            val candidateFile = File(cacheDir, "restore-candidate-${UUID.randomUUID()}.json")
             try {
-                restorePreviewState = withContext(Dispatchers.IO) {
-                    RestoreCandidate.inspectSelection(contentResolver, uri)
+                val staged = withContext(Dispatchers.IO) {
+                    val summary = RestoreCandidate.stageSelection(contentResolver, uri, candidateFile)
+                    RestoreCandidate.Staged(
+                        candidateFile,
+                        summary,
+                        RestoreTransaction.fingerprint(storage.file)
+                    )
                 }
+                restoreCandidateState = staged
+                restorePreviewState = staged.summary
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) {
+                candidateFile.delete()
                 restorePreviewError = getString(R.string.backup_read_error)
             }
         } else null
@@ -99,26 +117,75 @@ open class MainActivity : ComponentActivity() {
         }
     }
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("startupCompleted", startupCompleted)
         outState.putString("pendingExportToken", pendingExportToken)
         super.onSaveInstanceState(outState)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        startupCompleted = savedInstanceState?.getBoolean("startupCompleted") ?: false
         pendingExportToken = savedInstanceState?.getString("pendingExportToken")
         storage = ProjectStorage(File(filesDir, "projects.json"))
         setContent {
             val appearance by themePreferences.state.collectAsState()
-            LaunchedEffect(Unit) { themePreferences.load() }
-            val dark = appearance.mode.isDark()
+            var showStartup by rememberSaveable { mutableStateOf(!startupCompleted) }
+            var visibleNanos by rememberSaveable { mutableLongStateOf(0L) }
+            var startupAttempt by remember { mutableIntStateOf(0) }
+            val startupLoader = remember {
+                StartupLoader {
+                    if (themePreferences.state.value.error != null) themePreferences.retry()
+                    else themePreferences.load()
+                    if (themePreferences.state.value.error != null) throw IOException("Appearance unavailable")
+                    storage.load(readOnly = true)
+                }
+            }
+            val startup by startupLoader.state.collectAsState()
+            LaunchedEffect(startupAttempt) {
+                startupLoader.load()
+            }
+            val ready by rememberUpdatedState(startup.projects != null && !startup.failed)
+            if (showStartup) {
+                val clock = remember { StartupClock(visibleNanos) }
+                DisposableEffect(clock) {
+                    clock.setResumed(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+                    val observer = LifecycleEventObserver { _, event ->
+                        when (event) {
+                            Lifecycle.Event.ON_RESUME -> clock.setResumed(true)
+                            Lifecycle.Event.ON_PAUSE -> clock.setResumed(false)
+                            else -> Unit
+                        }
+                    }
+                    lifecycle.addObserver(observer)
+                    onDispose { lifecycle.removeObserver(observer) }
+                }
+                LaunchedEffect(clock) {
+                    while (showStartup) {
+                        withFrameNanos { frame ->
+                            clock.onFrame(frame)
+                            visibleNanos = clock.visibleNanos
+                            if (clock.canDismiss(ready)) {
+                                startupCompleted = true
+                                showStartup = false
+                            }
+                        }
+                    }
+                }
+            }
+            val startupVisible = showStartup || startup.projects == null
+            BackHandler(enabled = startupVisible) { /* Keep startup gated; Home can background the app. */ }
+            val dark = if (startupVisible) true else appearance.mode.isDark()
             AppTheme(dark) {
                 SideEffect { updateWindowAppearance(this@MainActivity, dark) }
-                ProjectManagerApp(storage, appearanceSettings = {
+                if (startupVisible) {
+                    StartupSplash(loading = startup.loading, failed = startup.failed,
+                        onRetry = { startupAttempt++ })
+                } else ProjectManagerApp(storage, initialProjects = startup.projects, appearanceSettings = {
                     AppearanceSettings(appearance,
                         onSelect = { mode -> lifecycleScope.launch { themePreferences.select(mode) } },
                         onRetry = { lifecycleScope.launch { themePreferences.retry() } },
-                        language = AppLanguagePreferences(this@MainActivity).current(),
+                        language = languagePreferences.current(),
                         onLanguageSelect = { language ->
-                            val preferences = AppLanguagePreferences(this@MainActivity)
+                            val preferences = languagePreferences
                             if (preferences.current() != language) {
                                 if (preferences.select(language)) recreate()
                                 else notifyUser(getString(R.string.language_save_error))
@@ -127,12 +194,20 @@ open class MainActivity : ComponentActivity() {
                 }, onRestorePreview = {
             // An older provider read must not publish into a newer picker/preview request.
             restorePreviewJob?.cancel()
+            restoreCandidateState?.file?.delete()
+            restoreCandidateState = null
             restorePreviewState = null
             restorePreviewError = null
             try { restorePicker.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
             catch (_: Exception) { restorePreviewError = getString(R.string.backup_picker_error) }
         }, restorePreview = restorePreviewState, restoreError = restorePreviewError,
-        onDismissPreview = { restorePreviewState = null; restorePreviewError = null }, onExport = {
+        restoreCandidate = restoreCandidateState,
+        onDismissPreview = {
+            restoreCandidateState?.file?.delete()
+            restoreCandidateState = null
+            restorePreviewState = null
+            restorePreviewError = null
+        }, onExport = {
             if (pendingExportToken == null && !exportPreparing) {
                 exportPreparing = true
                 lifecycleScope.launch {
@@ -153,13 +228,19 @@ open class MainActivity : ComponentActivity() {
     }
 }
 
-class ProjectStorage(private val file: File) {
-    fun load(): List<ProjectItem> = synchronized(ProjectWriteLock.monitor) {
+class ProjectStorage(internal val file: File) {
+    fun load(readOnly: Boolean = false): List<ProjectItem> = synchronized(ProjectWriteLock.monitor) {
+        if (readOnly && (File(file.path + ".new").exists() || File(file.path + ".bak").exists())) {
+            throw IOException("Interrupted project write requires recovery; startup leaves all bytes untouched")
+        }
         if (!file.exists() && !File(file.path + ".bak").exists()) {
             if (File(file.path + ".new").exists()) throw IOException("Interrupted initial write; recovery required")
             return emptyList()
         }
-        val array = try { JSONArray(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }) } catch (e: Exception) {
+        val array = try {
+            val input = if (readOnly) file.inputStream() else AtomicFile(file).openRead()
+            JSONArray(input.bufferedReader(Charsets.UTF_8).use { it.readText() })
+        } catch (e: Exception) {
             throw IOException("Cannot read saved projects; writes are blocked until recovery", e)
         }
         LocalBackup.validateArray(array)
@@ -234,19 +315,25 @@ fun ProjectManagerApp(
     onRestorePreview: () -> Unit = {},
     restorePreview: RestorePreview.Summary? = null,
     restoreError: String? = null,
+    restoreCandidate: RestoreCandidate.Staged? = null,
     onDismissPreview: () -> Unit = {},
-    appearanceSettings: @Composable () -> Unit = {}
+    appearanceSettings: @Composable () -> Unit = {},
+    initialProjects: List<ProjectItem>? = null
 ) {
     var loadError by remember { mutableStateOf(false) }
     val projects = remember {
         mutableStateListOf<ProjectItem>().apply {
-            try { addAll(storage.load()) } catch (_: Exception) { loadError = true }
+            try { addAll(initialProjects ?: storage.load()) } catch (_: Exception) { loadError = true }
         }
     }
     var writeError by remember { mutableStateOf(false) }
     var activeId by rememberSaveable { mutableStateOf<String?>(null) }
     var showNew by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showRestoreConfirmation by rememberSaveable { mutableStateOf(false) }
+    var restoreInProgress by remember { mutableStateOf(false) }
+    var restoreFailure by remember { mutableStateOf(false) }
+    var showRepositories by remember { mutableStateOf(false) }
     val applicationContext = LocalContext.current.applicationContext
     val githubSnapshotStore = remember(applicationContext) {
         GitHubProjectSnapshotStore(GitHubSnapshotPreferences.open(applicationContext))
@@ -256,6 +343,10 @@ fun ProjectManagerApp(
     }
     val githubScope = rememberCoroutineScope()
     LaunchedEffect(githubSignIn) { githubSignIn.restore(githubScope) }
+    LaunchedEffect(restoreCandidate?.file?.path) {
+        restoreFailure = false
+        showRestoreConfirmation = false
+    }
     var projectSearchQuery by rememberSaveable { mutableStateOf("") }
     val projectListState = rememberLazyListState()
     val taskScreenStates = rememberSaveableStateHolder()
@@ -270,6 +361,26 @@ fun ProjectManagerApp(
             projects[index] = item
         }
     }
+    fun importGitHubProject(
+        repository: GitHubRepository,
+        planningDocuments: Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>
+    ): GitHubImportOutcome {
+        if (loadError) return GitHubImportOutcome.FAILED
+        val current = projects.toList()
+        val proposal = previewGitHubImport(repository, current, planningDocuments)
+            ?: return GitHubImportOutcome.FAILED
+        if (proposal.candidates.isNotEmpty()) return GitHubImportOutcome.DUPLICATE
+        return try {
+            persistProjectChange(storage, current, current + proposal.project)
+            projects.add(proposal.project)
+            activeId = proposal.project.id
+            showSettings = false
+            showRepositories = false
+            GitHubImportOutcome.IMPORTED
+        } catch (_: Exception) {
+            GitHubImportOutcome.FAILED
+        }
+    }
     val active = projects.find { it.id == activeId }
     val settingsVisible = active == null && showSettings
     // Respect unsaved document edits when the system Back gesture/button is used.
@@ -280,6 +391,7 @@ fun ProjectManagerApp(
     BackHandler(enabled = settingsVisible) { showSettings = false }
 
     val density = LocalDensity.current
+    val dialogBodyMaxHeight = computeDialogBodyMaxHeight()
     val compactProject = density.fontScale > 1.3f || LocalConfiguration.current.screenHeightDp < 480 ||
         WindowInsets.ime.getBottom(density) > 0
     Scaffold(modifier = Modifier.background(vnextBackdrop()), containerColor = androidx.compose.ui.graphics.Color.Transparent, topBar = {
@@ -296,35 +408,19 @@ fun ProjectManagerApp(
                 }) { Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.project_back)) }
             })
     }, bottomBar = {
-        if (active == null && !loadError && !settingsVisible) DashboardCreateBar {
-            writeError = false; showNew = true
-        }
+        if (active == null && !loadError && !settingsVisible) DashboardHomeActionBar(
+            onImport = {
+                if (githubSignIn.session != null) showRepositories = true else showSettings = true
+            },
+            onCreate = {
+                writeError = false
+                showNew = true
+            }
+        )
     }) { padding ->
         if (settingsVisible) {
             SettingsScreen(
                 Modifier.padding(padding), onExport, onRestorePreview, githubSignIn,
-                localProjects = projects.takeUnless { loadError },
-                onGitHubImport = { repository ->
-                    if (loadError) {
-                        GitHubImportOutcome.FAILED
-                    } else {
-                        val current = projects.toList()
-                        val proposal = previewGitHubImport(repository, current)
-                        when {
-                            proposal == null -> GitHubImportOutcome.FAILED
-                            proposal.candidates.isNotEmpty() -> GitHubImportOutcome.DUPLICATE
-                            else -> try {
-                                persistProjectChange(storage, current, current + proposal.project)
-                                projects.add(proposal.project)
-                                activeId = proposal.project.id
-                                showSettings = false
-                                GitHubImportOutcome.IMPORTED
-                            } catch (_: Exception) {
-                                GitHubImportOutcome.FAILED
-                            }
-                        }
-                    }
-                },
                 appearanceSettings = appearanceSettings
             )
         } else if (loadError) {
@@ -345,34 +441,40 @@ fun ProjectManagerApp(
             var tab by rememberSaveable(active.id) { mutableIntStateOf(0) }
             Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
                 if (!compactProject) VNextProjectHero(active)
-                // Preserve the 48dp touch targets but reclaim tab-strip spacing when
-                // a large-font keyboard leaves the document editor short of a text line.
                 val tightTabs = density.fontScale > 1.3f && WindowInsets.ime.getBottom(density) > 0
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = if (tightTabs) 0.dp else 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    listOf(R.string.project_tab_overview, R.string.project_tab_blueprint,
-                        R.string.project_tab_roadmap, R.string.project_tab_tasks).forEachIndexed { index, label ->
-                        val selected = index == tab
-                        Surface(onClick = {
-                            if (!selected && editorDirty) warnOnExit = true else tab = index
-                        }, modifier = Modifier.testTag("project_tab_$index").heightIn(min = 48.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            color = if (selected) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer,
-                            border = androidx.compose.foundation.BorderStroke(1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
-                            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically) {
-                                VNextIcon(listOf(R.drawable.vnext_info, R.drawable.vnext_layers,
-                                    R.drawable.vnext_route, R.drawable.vnext_check)[index],
-                                    modifier = Modifier.size(18.dp),
-                                    tint = if (selected) androidx.compose.ui.graphics.Color.White
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(stringResource(label), style = MaterialTheme.typography.labelLarge,
-                                    color = if (selected) androidx.compose.ui.graphics.Color.White
-                                    else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (tightTabs) 0.dp else 4.dp)) {
+                    val columns = if (maxWidth < 400.dp || density.fontScale > 1.15f) 2 else 4
+                    val tabs = listOf(
+                        R.string.project_tab_overview to R.drawable.vnext_info,
+                        R.string.project_tab_blueprint to R.drawable.vnext_layers,
+                        R.string.project_tab_roadmap to R.drawable.vnext_route,
+                        R.string.project_tab_tasks to R.drawable.vnext_check
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        tabs.chunked(columns).forEachIndexed { rowIndex, rowTabs ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                rowTabs.forEachIndexed { columnIndex, (label, icon) ->
+                                    val index = rowIndex * columns + columnIndex
+                                    val selected = index == tab
+                                    Surface(onClick = {
+                                        if (!selected && editorDirty) warnOnExit = true else tab = index
+                                    }, modifier = Modifier.weight(1f).testTag("project_tab_$index").heightIn(min = 48.dp),
+                                        shape = RoundedCornerShape(24.dp),
+                                        color = if (selected) FilledActionBlue else MaterialTheme.colorScheme.surfaceContainer,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp,
+                                            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+                                        Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically) {
+                                            VNextIcon(icon, modifier = Modifier.size(18.dp),
+                                                tint = if (selected) androidx.compose.ui.graphics.Color.White
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(label), style = MaterialTheme.typography.labelLarge,
+                                                color = if (selected) androidx.compose.ui.graphics.Color.White
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -417,11 +519,28 @@ fun ProjectManagerApp(
             }
         }
     }
+    val repositorySession = githubSignIn.session
+    LaunchedEffect(showRepositories, repositorySession) {
+        if (showRepositories && repositorySession == null) showRepositories = false
+    }
+    if (showRepositories && repositorySession != null) {
+        GitHubRepositoriesDialog(
+            source = repositorySession.repositoryApi,
+            onExpired = {
+                showRepositories = false
+                githubSignIn.expire(repositorySession, githubScope)
+            },
+            onClose = { showRepositories = false },
+            previewSource = repositorySession.repositoryApi,
+            localProjects = projects.takeUnless { loadError },
+            onImport = ::importGitHubProject
+        )
+    }
     if (restorePreview != null || restoreError != null) {
         VNextDialog(onDismissRequest = onDismissPreview,
             title = { ParagraphText(stringResource(if (restoreError != null) R.string.backup_preview_error_title else R.string.backup_preview_title)) },
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState()),
+                Column(Modifier.heightIn(max = dialogBodyMaxHeight).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (restoreError != null) ParagraphText(restoreError)
                     else if (restorePreview != null) {
@@ -430,10 +549,97 @@ fun ProjectManagerApp(
                             ParagraphText(stringResource(R.string.backup_preview_project_tasks, project.name, project.taskCount))
                         }
                         if (restorePreview.projects.size > 30) ParagraphText(stringResource(R.string.backup_preview_limit))
-                        ParagraphText(stringResource(R.string.backup_preview_read_only), style = MaterialTheme.typography.bodySmall)
+                        ParagraphText(stringResource(R.string.backup_preview_confirmation_warning), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-            }, confirmButton = { TextButton(onClick = onDismissPreview) { Text(stringResource(R.string.generic_close)) } })
+            }, confirmButton = {
+                if (restoreCandidate != null) TextButton(onClick = { showRestoreConfirmation = true }) {
+                    Text(stringResource(R.string.backup_restore_review))
+                } else TextButton(onClick = onDismissPreview) { Text(stringResource(R.string.generic_close)) }
+            }, dismissButton = if (restoreCandidate != null) ({
+                TextButton(onClick = onDismissPreview) { Text(stringResource(R.string.generic_close)) }
+            }) else null)
+    }
+    if (showRestoreConfirmation && restoreCandidate != null) {
+        VNextDialog(onDismissRequest = {
+            if (!restoreInProgress) showRestoreConfirmation = false
+        },
+            title = { ParagraphText(stringResource(R.string.backup_restore_confirm_title)) },
+            text = {
+                Column(Modifier.heightIn(max = dialogBodyMaxHeight).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ParagraphText(stringResource(R.string.backup_restore_confirm_message))
+                    ParagraphText(pluralStringResource(
+                        R.plurals.backup_restore_project_count,
+                        restoreCandidate.summary.projects.size,
+                        restoreCandidate.summary.projects.size
+                    ))
+                    ParagraphText(pluralStringResource(
+                        R.plurals.backup_restore_task_count,
+                        restoreCandidate.summary.totalTasks,
+                        restoreCandidate.summary.totalTasks
+                    ))
+                    ParagraphText(stringResource(R.string.backup_restore_safety_copy))
+                    if (restoreFailure) ParagraphText(
+                        stringResource(R.string.backup_restore_failed),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = !restoreInProgress, onClick = {
+                    restoreInProgress = true
+                    restoreFailure = false
+                    val candidate = restoreCandidate
+                    githubScope.launch {
+                        try {
+                            val restored = withContext(Dispatchers.IO) {
+                                val snapshot = File(
+                                    File(applicationContext.filesDir, "restore-recovery"),
+                                    "projects-${System.currentTimeMillis()}-${UUID.randomUUID()}.json"
+                                )
+                                RestoreTransaction.replace(
+                                    target = storage.file,
+                                    candidate = candidate.file,
+                                    snapshot = snapshot,
+                                    authorized = true,
+                                    expectedTargetSha256 = candidate.targetFingerprint,
+                                    expectedCandidateSha256 = candidate.summary.sha256
+                                )
+                                storage.load()
+                            }
+                            projects.clear()
+                            projects.addAll(restored)
+                            loadError = false
+                            activeId = null
+                            showSettings = false
+                            showRestoreConfirmation = false
+                            onDismissPreview()
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            restoreFailure = true
+                            try {
+                                val current = withContext(Dispatchers.IO) { storage.load() }
+                                projects.clear()
+                                projects.addAll(current)
+                                loadError = false
+                            } catch (_: Exception) {
+                                loadError = true
+                            }
+                        } finally {
+                            restoreInProgress = false
+                        }
+                    }
+                }) {
+                    Text(stringResource(if (restoreInProgress) R.string.backup_restore_in_progress else R.string.backup_restore_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !restoreInProgress, onClick = { showRestoreConfirmation = false }) {
+                    Text(stringResource(R.string.backup_restore_cancel))
+                }
+            })
     }
     if (writeError && !showNew) {
         VNextDialog(onDismissRequest = { writeError = false }, title = { ParagraphText(stringResource(if (active == null) R.string.dashboard_write_error_title else R.string.project_save_failed_title)) },
@@ -672,6 +878,12 @@ private fun ConfirmDiscardEdits(reload: Boolean, onCancel: () -> Unit, onConfirm
         dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.unsaved_continue_editing)) } })
 }
 
+@Composable
+private fun computeDialogBodyMaxHeight() =
+    (with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } - 200.dp)
+        .coerceAtLeast(160.dp)
+        .coerceAtMost(440.dp)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TaskScreen(
@@ -682,12 +894,22 @@ private fun TaskScreen(
     update: (ProjectItem) -> Boolean
 ) {
     var editingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
+    var deletingTaskId by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var searchQuery by rememberSaveable(project.id) { mutableStateOf("") }
     var selectedStatus by rememberSaveable(project.id) { mutableStateOf<String?>(null) }
     var statusMenuExpanded by remember(project.id) { mutableStateOf(false) }
+    var showRoadmapProposals by rememberSaveable(project.id) { mutableStateOf(false) }
     val visibleTasks = filterTasksByQuery(project.tasks, searchQuery, selectedStatus)
     val taskListState = rememberLazyListState()
+    val taskScreenScope = rememberCoroutineScope()
+    val dialogBodyMaxHeight = computeDialogBodyMaxHeight()
     var newTask by rememberSaveable(project.id) { mutableStateOf("") }
+    var roadmapAnalysis by remember(project.id) { mutableStateOf<RoadmapTaskAnalysis?>(null) }
+    LaunchedEffect(showRoadmapProposals, project.id, project.roadmap, project.tasks) {
+        roadmapAnalysis = if (showRoadmapProposals) {
+            withContext(Dispatchers.Default) { analyzeRoadmapTasks(project.roadmap, project.tasks) }
+        } else null
+    }
     val editingTask = project.tasks.find { it.id == editingTaskId }
     if (editingTask != null) {
         key(project.id, editingTask.id) {
@@ -729,6 +951,135 @@ private fun TaskScreen(
                 })
         }
     }
+    val deletingTask = project.tasks.find { it.id == deletingTaskId }
+    if (deletingTask != null) {
+        VNextDialog(onDismissRequest = { deletingTaskId = null },
+            title = { ParagraphText(stringResource(R.string.task_delete_title)) },
+            text = { ParagraphText(stringResource(R.string.task_delete_message, deletingTask.title)) },
+            confirmButton = { TextButton(onClick = {
+                update(deletedTask(project, deletingTask.id))
+                deletingTaskId = null
+            }) { Text(stringResource(R.string.task_delete_confirm)) } },
+            dismissButton = { TextButton(onClick = { deletingTaskId = null }) {
+                Text(stringResource(R.string.task_edit_cancel))
+            } })
+    }
+    val currentRoadmapAnalysis = roadmapAnalysis
+    if (showRoadmapProposals && currentRoadmapAnalysis != null) {
+        val proposalStateKey = roadmapReviewSnapshot(project)
+        var titles by rememberSaveable(proposalStateKey) {
+            mutableStateOf(currentRoadmapAnalysis.proposals.map { it.title })
+        }
+        var selected by rememberSaveable(proposalStateKey) {
+            mutableStateOf(currentRoadmapAnalysis.proposals.map { !it.alreadyExists })
+        }
+        var saveError by rememberSaveable(proposalStateKey) { mutableStateOf(false) }
+        val selectedIndexes = selected.indices.filter { selected[it] }
+        val conflicts = duplicateRoadmapTaskProposalIndexes(
+            selectedIndexes.map { titles[it] },
+            project.tasks.map { it.title }
+        ).mapTo(HashSet()) { selectedIndexes[it] }
+        val canConfirm = selectedIndexes.isNotEmpty() && conflicts.isEmpty()
+        VNextDialog(onDismissRequest = { showRoadmapProposals = false },
+            title = { ParagraphText(stringResource(R.string.roadmap_proposals_title)) },
+            text = {
+                LazyColumn(Modifier.heightIn(max = dialogBodyMaxHeight), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        ParagraphText(stringResource(R.string.roadmap_proposals_review))
+                        if (currentRoadmapAnalysis.ignoredAmbiguousEntries > 0) ParagraphText(
+                            pluralStringResource(R.plurals.roadmap_proposals_ambiguous,
+                                currentRoadmapAnalysis.ignoredAmbiguousEntries, currentRoadmapAnalysis.ignoredAmbiguousEntries),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        if (currentRoadmapAnalysis.ignoredCompletedEntries > 0) ParagraphText(
+                            pluralStringResource(R.plurals.roadmap_proposals_completed,
+                                currentRoadmapAnalysis.ignoredCompletedEntries, currentRoadmapAnalysis.ignoredCompletedEntries),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        if (currentRoadmapAnalysis.duplicateEntries > 0) ParagraphText(
+                            pluralStringResource(R.plurals.roadmap_proposals_duplicates,
+                                currentRoadmapAnalysis.duplicateEntries, currentRoadmapAnalysis.duplicateEntries),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        if (currentRoadmapAnalysis.notShownEntries > 0) ParagraphText(
+                            pluralStringResource(R.plurals.roadmap_proposals_limit,
+                                currentRoadmapAnalysis.notShownEntries, currentRoadmapAnalysis.notShownEntries),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        if (currentRoadmapAnalysis.proposals.isEmpty()) ParagraphText(
+                            stringResource(R.string.roadmap_proposals_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (saveError) ParagraphText(
+                            stringResource(R.string.roadmap_proposals_save_error),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    itemsIndexed(currentRoadmapAnalysis.proposals, key = { _, proposal -> proposal.sourceLine }) { index, proposal ->
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = selected[index],
+                                    onCheckedChange = { checked ->
+                                        selected = selected.toMutableList().apply { set(index, checked) }
+                                    }
+                                )
+                                Column(Modifier.weight(1f)) {
+                                    ParagraphText(stringResource(R.string.roadmap_proposals_source_line, proposal.sourceLine),
+                                        style = MaterialTheme.typography.bodySmall)
+                                    proposal.phase?.let {
+                                        ParagraphText(stringResource(R.string.roadmap_proposals_phase, it),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    if (proposal.alreadyExists && titles[index] == proposal.title) ParagraphText(
+                                        stringResource(R.string.roadmap_proposals_existing),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                            OutlinedTextField(
+                                value = titles[index],
+                                onValueChange = { value ->
+                                    titles = titles.toMutableList().apply { set(index, value) }
+                                    saveError = false
+                                },
+                                label = { Text(stringResource(R.string.roadmap_proposals_task_title)) },
+                                textStyle = contentTextStyle(),
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = false
+                            )
+                            if (index in conflicts) ParagraphText(
+                                stringResource(R.string.roadmap_proposals_duplicate_title),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val additions = selectedIndexes.map { index ->
+                        TaskItem(UUID.randomUUID().toString(), titles[index].trim())
+                    }
+                    if (additions.isNotEmpty() && update(project.copy(tasks = project.tasks + additions))) {
+                        searchQuery = ""
+                        selectedStatus = null
+                        showRoadmapProposals = false
+                        saveError = false
+                        taskScreenScope.launch {
+                            taskListState.animateScrollToItem(project.tasks.size + additions.size + 2)
+                        }
+                    } else saveError = true
+                }, enabled = canConfirm) { Text(stringResource(R.string.roadmap_proposals_confirm)) }
+            },
+            dismissButton = { TextButton(onClick = { showRoadmapProposals = false }) {
+                Text(stringResource(R.string.task_edit_cancel))
+            } })
+    }
     LazyColumn(Modifier.fillMaxSize().imePadding().padding(horizontal = 16.dp), state = taskListState,
         contentPadding = PaddingValues(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { VNextPanel {
@@ -744,6 +1095,14 @@ private fun TaskScreen(
             statusCounts["IMPLEMENTED_UNVERIFIED"] ?: 0, statusCounts["VERIFIED"] ?: 0, otherStatusCount),
             style = ProjectTextStyles.metadata,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (project.roadmap.isNotBlank()) SecondaryActionButton(
+            onClick = { showRoadmapProposals = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            VNextIcon(R.drawable.vnext_route)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.roadmap_proposals_open))
+        }
         Spacer(Modifier.height(8.dp))
         val addTask: () -> Unit = {
             if (update(project.copy(tasks = project.tasks + TaskItem(UUID.randomUUID().toString(), newTask.trim())))) {
@@ -825,8 +1184,20 @@ private fun TaskScreen(
                             ParagraphText(task.title, Modifier.weight(1f), fontWeight = FontWeight.Bold)
                         }
                         VNextStatusPill(localizedTaskStatus(task.status))
-                        TextButton(onClick = { editingTaskId = task.id }) { Text(stringResource(R.string.task_edit_button)) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { editingTaskId = task.id }) {
+                                Text(stringResource(R.string.task_edit_button))
+                            }
+                            TextButton(onClick = { deletingTaskId = task.id }) {
+                                Text(stringResource(R.string.task_delete_button))
+                            }
+                        }
                         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = {
+                                update(project.copy(tasks = project.tasks.map {
+                                    if (it.id == task.id) it.copy(status = "NOT_STARTED") else it
+                                }))
+                            }) { Text(stringResource(R.string.task_status_not_started)) }
                             TextButton(onClick = {
                                 update(project.copy(tasks = project.tasks.map {
                                     if (it.id == task.id) it.copy(status = "IN_PROGRESS") else it

@@ -97,7 +97,7 @@ class StorageFailureUiTest {
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(inProgressAction)
         compose.onNode(inProgressAction).performClick()
         compose.onLocalizedText("Close", "إغلاق").performClick()
-        compose.onLocalizedText("Not started", "لم تبدأ").assertExists()
+        compose.onAllNodes(hasText("Not started") or hasText("لم تبدأ")).onFirst().assertExists()
         compose.runOnIdle { assertEquals("broken JSON", file.readText()); file.delete(); storage.save(original) }
         compose.runOnIdle { assertEquals("Storage fixture must be restored before retry", original, storage.load()) }
         // The preceding status action scrolled the lazy task list past the add form.

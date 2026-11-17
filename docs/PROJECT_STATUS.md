@@ -1,9 +1,274 @@
 # AI Project Manager — current project status
 
-Updated: 2026-11-14 (Asia/Kathmandu).
-Phase 2A audit branch: `feature/github-snapshot-preview`.
-Starting HEAD for the previous security/state maintenance batch: `d8fb04f86567e7cf2d42c71b5424430df991a2a3`.
+Updated: 2026-11-16 (Asia/Kathmandu).
+Current authorized cycle: VNext 3 on `feature/vnext3`, starting HEAD `a9afb30`.
 Release status: **NOT Ready for Release**.
+
+## Version 0.2.0 configuration — 2026-11-16
+
+Starting branch/HEAD: `feature/vnext3` /
+`c35242563f7978ee193f79d866970a66ea891588`. This is a configuration-only
+increment, not a built, installed, distributed, or accepted release.
+
+Local evidence was inspected before choosing versionCode 3, without accessing
+Android devices or remote services:
+
+- Read-only `aapt dump badging` of existing official and Copilot APKs confirmed
+  base Debug `0.1.0` / code 1 and isolated VNext `0.1.0-vnext3` / code 2.
+  Retained output metadata agrees; Android-test APK codes are not app releases.
+- Official local Git history affecting version settings records only app codes
+  1 and 2. The Codex source configuration remains code 1. Inspected local status
+  and release documentation did not identify a higher distributed app code.
+- Copilot's existing `docs/VNEXT3_RELEASE_READINESS.md`, in its emulator acceptance
+  section, records the prior authorized VNext in-place update from code 1 to 2.
+  This is historical documentation, not a new installed-package inspection.
+
+Code 3 is therefore the next code supported by available local evidence. This
+does not establish the current version or signer on the owner's installation;
+that remains a separate check before any approved installation. If a higher
+installed/distributed code is later established, choose a code above it first.
+
+| Variant | Configured versionName | Configured versionCode | Application ID |
+|---|---|---|---|
+| Debug | `0.2.0` | 3 | `com.karim.aiprojectmanager` |
+| Release | `0.2.0` | 3 | `com.karim.aiprojectmanager` |
+| VNext | `0.2.0-dev.1` | 3 | `com.karim.aiprojectmanager.vnext` |
+
+Both the default code and the explicit VNext output override were advanced to 3.
+The `vnext` build type, isolated application-ID suffix, signing behavior, source
+sets, test build type, and GitHub Actions remain unchanged. Subsequent distributed
+builds need increasing codes for the same package, including development builds;
+update the base code and VNext override consistently. Version names follow
+MAJOR.MINOR.PATCH, with `-dev.1` denoting this development candidate. No historical
+release or Git tag was created, and historical artifact records remain unchanged.
+
+Verification: exact diff review and `git diff --check` only. No build, test, Lint,
+emulator/device action, install/uninstall, commit, push, or backup modification was
+performed. Existing APKs and output metadata still describe the older builds;
+there is no newly verified 0.2.0 APK. Future acceptance must check packaged metadata,
+package/signature compatibility and non-destructive upgrade/data continuity,
+along with pending startup/language, storage/restore and GitHub acceptance.
+**NOT Ready for Release**.
+
+## Finalization — static startup and two-option language UI — 2026-11-16
+
+Starting branch/HEAD: `feature/vnext3` /
+`1bc25c74a53e68764da2427cf47d39de89bd079e`. The uncommitted Phase 2B work
+was preserved. No commit, remote operation, emulator/device action, installation,
+uninstall/data clear, version/identity/signing change, or backup edit occurred.
+The two temporary MainActivity copies remain untouched.
+
+### Implementation
+
+- Settings now displays exactly العربية and English. Automatic mode remains the
+  default for missing/invalid values and remains compatible with stored `system`.
+  The UI marks the effective device-resolved language without saving a preference;
+  clicking either option records an explicit choice through the existing workflow.
+  Existing `ar`/`en`, XML translations, RTL/LTR and Activity recreation remain.
+  This supersedes Phase 2B's visible third option, not its persistence behavior.
+- Added a static Compose splash with the existing approved launcher foreground,
+  the byte-identical reference-derived background from the Copilot workspace,
+  and the exact text `© Karim S.K. Morsi 2026`. Logo size/placement follows the
+  reference implementation. The background does not animate; no Aurora layer
+  was invented. Day/night launch windows use deep navy and API 31+ has native
+  splash color/icon resources before the custom Compose frame.
+- `StartupClock` requires at least 3,000 ms of resumed, displayed-frame time and
+  completed initialization. Paused/background time does not count. Visible time
+  survives Activity saved-state recreation. A completed startup does not impose
+  another timed hold on recreation; pending loading still has visible feedback.
+- Initialization loads appearance and project models off the main thread.
+  `StartupLoader` prevents concurrent/duplicate reads after success and supports
+  explicit retry after failure. A spinner and localized loading text are shown
+  while pending; failure shows a localized explanation and Retry. Retry does not
+  add another three-second hold if the required visible time already elapsed.
+- Startup reads project storage with `readOnly = true`, using a plain input stream
+  instead of AtomicFile recovery. Pending `.new`/`.bak` files are rejected and
+  retained, never deleted or promoted during the splash. Normal storage APIs keep
+  their existing default behavior. Loaded models are passed into ProjectManagerApp,
+  avoiding its duplicate initial read; app navigation/GitHub initialization starts
+  after the gate. The schema and existing write safeguards are unchanged.
+
+### Executed verification
+
+Installed Gradle 8.13 / JDK 17, offline:
+
+```text
+gradle --offline --no-daemon --console=plain :app:assembleDebug \
+  :app:testDebugUnitTest \
+  --tests com.karim.aiprojectmanager.StartupStateTest \
+  --tests com.karim.aiprojectmanager.AppLanguageTest \
+  --tests com.karim.aiprojectmanager.AppLanguagePreferencesTest \
+  --tests com.karim.aiprojectmanager.AppPreferencesTest \
+  --tests com.karim.aiprojectmanager.ThemePreferencesTest :app:lintDebug
+```
+
+- Final Debug assembly/resource processing succeeded. The final Debug artifact was
+  rebuilt without the synthetic Client ID override used for compile-only VNext
+  verification. Debug retains the original application ID: do not install it over
+  the owner's protected application as an acceptance shortcut.
+- JUnit XML confirms **33 passed, 0 failures/errors/skips**: startup 5, language 5,
+  language preferences 4, preference adapter 7, appearance preferences 12.
+  Startup tests cover the exact three-second boundary, slow readiness, foreground
+  pauses, saved elapsed time, success reuse, failure/retry and concurrent requests.
+- Lint succeeded: **0 errors, 19 warnings, 1 hint**. SDK XML compatibility and
+  deprecated-API warnings remain. App Bundle language-delivery acceptance remains
+  outside this local Debug check. `git diff --check` passed.
+- `:app:compileVnextAndroidTestKotlin` was checked with the explicitly synthetic
+  `-PgithubAppClientId=SyntheticBuildFixture`, for source/resource compilation only.
+  No VNext APK from that fixture was installed or presented as login-ready.
+- Added six Android acceptance cases in `StartupAcceptanceTest.kt` (presentation
+  and storage classes): two visible language choices without preference writes,
+  loading/copyright, Retry, unchanged project bytes/unknown fields, retained atomic
+  sidecars, and malformed-byte preservation. These were compiled, **not executed**.
+
+### Remaining acceptance and limits
+
+No running Android screenshot or visual match is claimed. The supplied reference
+and its existing background derivative were inspected, not a rendered app. Native
+system-splash transition, crop on other aspect ratios, logo/copyright proportions,
+large fonts, TalkBack, cold start, pause/recreation timing, pending editor/navigation
+state, device-language changes and real preference durability need owner-authorized
+Android acceptance. The existing derivative itself also needs visual comparison
+with the original reference; byte equality does not establish visual acceptance.
+Permanent corrupt data or pending atomic files may require separately approved
+recovery; Retry intentionally does not repair/delete/overwrite those files.
+Startup does not wait for online GitHub verification; existing GitHub behavior is
+retained. Fatal platform/resource failures cannot be guaranteed recoverable by an
+in-app Retry. Prepare a VNext build with the owner's genuine configured Client ID
+and verify its isolated package/signature before any separately approved install.
+**NOT Ready for Release**.
+
+## Phase 2B — follow device language — 2026-11-16
+
+Starting branch: `feature/vnext3`; HEAD:
+`1bc25c74a53e68764da2427cf47d39de89bd079e`. The only starting untracked
+files were the two temporary MainActivity backup copies; both remain untouched.
+
+- Added `system` alongside the existing `ar` and `en` values in the existing
+  `ui_preferences` / `language` preference. Missing or unsupported values resolve
+  to Follow device language without automatically rewriting the stored value.
+  Existing explicit Arabic/English selections retain their meanings.
+- System mode resolves the device's primary `ar` language to Arabic and every
+  other primary language to English. Locale resolution uses
+  `Resources.getSystem().configuration`, independently of the Activity's
+  overridden locale; copied configurations retain other settings and apply
+  the resolved locale and RTL/LTR direction. Normal Android locale configuration
+  recreation remains in use; no locale configChanges interception was added.
+- Added the third radio option using the existing Settings design and XML
+  translations. Successful selection still recreates the Activity. The Activity
+  now retains one language preference controller so a failed disk commit does
+  not falsely change its confirmed selection even if SharedPreferences changed
+  its in-memory map. The existing failure notification and user retry remain.
+- Reused the existing AppPreferences adapter for isolated JVM coverage. No
+  new translation catalog, dependencies, application identity, signing, versions,
+  appearance preferences, project data/schema, or GitHub logic was changed.
+
+Verification actually executed with installed Gradle 8.13 / JDK 17, offline:
+
+```text
+gradle --offline --no-daemon --console=plain \
+  :app:compileDebugKotlin :app:processDebugResources \
+  :app:testDebugUnitTest \
+  --tests com.karim.aiprojectmanager.AppLanguageTest \
+  --tests com.karim.aiprojectmanager.AppLanguagePreferencesTest \
+  --tests com.karim.aiprojectmanager.AppPreferencesTest \
+  :app:lintDebug
+```
+
+- Gradle completed successfully. Debug Kotlin/Java compilation and Android
+  resource processing succeeded; this was not an APK installation or runtime test.
+- JUnit XML records **16 passed, 0 failed/errors/skipped**: 5 language tests,
+  4 language preference tests, and 7 existing platform preference adapter tests.
+  Coverage includes legacy values, missing/invalid values without writes,
+  primary-language resolution, explicit overrides, save/reload through a new
+  controller, failed commits including in-memory changes, and retry.
+- Lint completed with **0 errors, 19 warnings, 1 hint**. In particular,
+  `AppBundleLocaleChanges` warns about future language delivery in split App
+  Bundles; no bundle/dependency change was made. SDK XML compatibility and
+  deprecated API warnings were also emitted. `git diff --check` passed.
+
+Deferred: actual Android preference durability after cold restart, system-language
+change delivery, Arabic/English visual and RTL/LTR acceptance, Activity recreation
+with pending edits/navigation/restore or GitHub state, and accessibility. JVM
+save/reload tests use an isolated store and do not establish platform durability.
+A failed platform commit can leave changed in-memory preferences; this controller
+retains its confirmed choice, but behavior across later recreation/process restart
+under storage failure still needs Android acceptance. No state-loss defect was
+reproduced, so no alternative navigation/session architecture was introduced.
+No emulator/device, instrumentation, commit, merge, push, or backup modification
+was performed. **NOT Ready for Release**.
+
+## VNext 3 daily-use stabilization — 2026-11-14
+
+The owner-approved work started on the clean `feature/vnext3` baseline
+`a9afb300b9efe8b3aea86ffd257998e5ee463959`. Existing project/task JSON and
+application package identity remain unchanged. VNext alone advances to version
+code 2 / `0.1.0-vnext3`; signing configuration and the existing debug signing
+key were not changed.
+
+Tasks now have confirmed deletion and an explicit reset-to-NOT_STARTED action.
+Roadmap entries are parsed locally using conservative Markdown/imperative
+rules; proposals are capped, deduplicated against existing tasks, editable,
+selectable, and saved only after confirmation. Phases stay visible in the
+proposal review. A restore flow now stages and validates the legacy JSON array,
+previews its contents, requires a second explicit replace-all confirmation,
+checks the candidate and live-file fingerprints, and keeps an exact private
+safety copy before replacing existing bytes. Missing storage is supported;
+corrupt existing bytes can be replaced only after explicit confirmation and
+are snapshotted without reinterpretation. No schema, merge, or GitHub write
+path was added.
+
+Focused host regressions passed: **6/6** roadmap proposal and task deletion
+tests. Debug/VNext APK assembly, VNext Android-test APK assembly, and Debug and
+VNext Lint succeeded; Android-test sources compiled but were not executed.
+Lint reports 0 errors, 27 warnings, and 1 hint. No emulator, device, install,
+instrumentation, live GitHub request, commit, or push was performed. The VNext
+APK metadata and hash, test artifacts, gate decisions, and remaining acceptance
+work are recorded in [VNext 3 release readiness](VNEXT3_RELEASE_READINESS.md).
+
+Storage/restore round-trip execution, task UI acceptance, backup restoration on
+Android, offline use, live authenticated GitHub workflows, and installed-app
+upgrade acceptance remain unverified. Release status remains **NOT Ready for
+Release**.
+
+## Phase 1 — GitHub planning-document import — 2026-11-14
+
+Implemented on `feature/vnext2-document-import`, starting from clean HEAD
+`c1ff5cfb2cd1ca17492e36bf39ac141d40911cff`. The preview detects exact root `README.md`,
+`BLUEPRINT.md` and `ROADMAP.md` names at the displayed commit. README remains preview-only;
+available Blueprint and Roadmap content is fetched at that commit, mapped in the confirmation
+preview, and saved into a newly imported local project. Existing repository metadata, duplicate
+checks, stale-write protection and local project data are preserved. Missing/unavailable files
+are reported; planning documents over 64 KiB are skipped instead of truncated. No task extraction,
+recursive discovery, manual file selection, local schema change or GitHub write was added.
+
+The import action is now in a fixed preview footer. Final confirmation shows project/repository
+identity and compact document statuses rather than repeating document text; its summary is
+scrollable with confirmation actions outside it. English and Arabic labels were updated.
+Focused Debug host tests passed: **8 tests, 8 passed** across
+`GitHubPreparationTest` and `GitHubPlanningDocumentImportTest`. The focused Gradle command also
+compiled the changed Debug app sources. The focused UI regression was updated but not run;
+instrumentation and live GitHub/API validation were not performed. No emulator actions occurred.
+These results do not verify real repository authorization, live response behavior, or Android UI
+acceptance. Release status remains **NOT Ready for Release**.
+
+## VNext 2 final UI improvements — 2026-11-14
+
+On `feature/vnext2-document-import`, the project-details navigation now keeps all four tabs
+visible: one row when the available width and font scale allow it, otherwise two rows. The home
+footer now has separate Import from GitHub and New Project actions, retains navigation/IME inset
+handling, and reserves its measured height from the project list. The import action opens the
+existing authenticated repository browser directly when connected, or routes to Settings to
+connect. Settings retains GitHub status and Disconnect while removing its duplicate browse entry.
+Arabic and English labels are provided. Import mapping, duplicate checks, read-only API calls,
+and project persistence are unchanged.
+
+Debug app assembly and VNext Android UI test-source compilation succeeded. The focused host tests
+passed: **8 tests, 8 passed** across `GitHubPreparationTest` and
+`GitHubPlanningDocumentImportTest`. The SDK emitted a non-fatal SDK-XML-version compatibility
+warning; Kotlin reported deprecated clipboard and soft-input APIs. Updated Compose UI tests were
+compiled but not executed; instrumentation, emulator, install, and live GitHub checks were not
+performed. Release status remains **NOT Ready for Release**.
 
 ## GitHub access follow-up and APK preparation — 2026-11-14
 

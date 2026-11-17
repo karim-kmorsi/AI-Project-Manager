@@ -34,7 +34,6 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Arrangement.Absolute
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -81,20 +80,26 @@ internal fun DashboardHeader(onSettings: () -> Unit, onExport: () -> Unit, onPre
 }
 
 @Composable
-internal fun DashboardCreateBar(onClick: () -> Unit) {
+internal fun DashboardHomeActionBar(onImport: () -> Unit, onCreate: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.background) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
             .padding(horizontal = ProjectSpacing.screen, vertical = ProjectSpacing.small)
-            .testTag("dashboard_create_bar"), horizontalArrangement = Absolute.Right) {
-            DashboardCreateButton(onClick)
+            .testTag("dashboard_create_bar"), horizontalArrangement = Arrangement.spacedBy(ProjectSpacing.small),
+            verticalAlignment = Alignment.CenterVertically) {
+            SecondaryActionButton(onClick = onImport, modifier = Modifier.weight(1f)) {
+                VNextIcon(R.drawable.vnext_link)
+                Spacer(Modifier.width(ProjectSpacing.xSmall))
+                Text(stringResource(R.string.dashboard_import_github))
+            }
+            DashboardCreateButton(onCreate, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-internal fun DashboardCreateButton(onClick: () -> Unit) {
+internal fun DashboardCreateButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ExtendedFloatingActionButton(onClick = onClick,
-        modifier = Modifier.testTag("dashboard_create").border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .65f), RoundedCornerShape(28.dp)),
+        modifier = modifier.testTag("dashboard_create").border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .65f), RoundedCornerShape(28.dp)),
         shape = RoundedCornerShape(28.dp), elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
         containerColor = FilledActionBlue, contentColor = androidx.compose.ui.graphics.Color.White) {
         Text("+", modifier = Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.titleLarge)
@@ -108,7 +113,7 @@ internal fun DashboardProjectList(projects: List<ProjectItem>, query: String, on
     listState: LazyListState, modifier: Modifier = Modifier, onSelect: (String) -> Unit) {
     val visible = filterProjectsByQuery(projects, query)
     val focus = LocalFocusManager.current
-    // Scaffold reserves the measured bottom bar: rows never render behind Create.
+    // Scaffold reserves the measured bottom bar: rows never render behind the home actions.
     LazyColumn(modifier.fillMaxSize().background(vnextBackdrop()).testTag("dashboard_projects"), state = listState,
         contentPadding = PaddingValues(start = ProjectSpacing.screen, end = ProjectSpacing.screen,
             top = ProjectSpacing.small, bottom = ProjectSpacing.screen),

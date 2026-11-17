@@ -75,7 +75,8 @@ class BackupPreviewAccessibilityUiTest {
             compose.onNodeWithText(isolated.getString(R.string.backup_preview_project_tasks, projectName(31), 0))
                 .assertDoesNotExist()
             compose.onNodeWithText(isolated.getString(R.string.backup_preview_limit)).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText(isolated.getString(R.string.backup_preview_read_only)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(isolated.getString(R.string.backup_preview_confirmation_warning))
+                .performScrollTo().assertIsDisplayed()
             close.assertIsDisplayed().performClick()
             compose.onNodeWithText(isolated.getString(R.string.backup_preview_title)).assertDoesNotExist()
             compose.runOnIdle {

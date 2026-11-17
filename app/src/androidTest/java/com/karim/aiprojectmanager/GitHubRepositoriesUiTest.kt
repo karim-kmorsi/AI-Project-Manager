@@ -73,7 +73,7 @@ class GitHubRepositoriesUiTest {
                 AppTheme(true) {
                     GitHubRepositoriesDialog(
                         source, {}, {}, previewSource = detail, localProjects = projects,
-                        onImport = { GitHubImportOutcome.IMPORTED }
+                        onImport = { _, _ -> GitHubImportOutcome.IMPORTED }
                     )
                 }
             }
@@ -81,7 +81,7 @@ class GitHubRepositoriesUiTest {
             clickLabel(R.string.github_repos_import_preview)
             val duplicate = compose.activity.getString(R.string.github_repos_import_duplicate, "owner/repo-1")
             compose.onNodeWithText(duplicate).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText(label(R.string.github_repos_import_action)).performScrollTo().assertIsNotEnabled()
+            compose.onNodeWithText(label(R.string.github_repos_import_action)).assertIsNotEnabled()
             clickLabel(R.string.github_repos_sync_compare)
             compose.onNodeWithText(label(R.string.github_repos_sync_conflict)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(label(R.string.github_repos_sync_head)).performScrollTo().assertIsDisplayed()
@@ -103,30 +103,72 @@ class GitHubRepositoriesUiTest {
             override suspend fun readme(repository: GitHubRepository, commitSha: String) =
                 GitHubReadmePreview("", false)
             override suspend fun tree(repository: GitHubRepository, treeSha: String) =
-                GitHubTreePreview(emptyList(), false)
+                GitHubTreePreview(
+                    listOf(GitHubTreeEntry("BLUEPRINT.md", false)),
+                    false,
+                    setOf("BLUEPRINT.md")
+                )
+            override suspend fun planningDocument(
+                repository: GitHubRepository,
+                document: GitHubPlanningFile,
+                commitSha: String
+            ) = GitHubPlanningDocument("Preview blueprint content")
             override suspend fun snapshot(repository: GitHubRepository) = GitHubRemoteSnapshot(repository, "head")
         }
         var imported: GitHubRepository? = null
+        var importedDocuments: Map<GitHubPlanningFile, GitHubPreviewSection<GitHubPlanningDocument>>? = null
         compose.setContent {
             AppTheme(true) {
                 GitHubRepositoriesDialog(
                     source, {}, {}, previewSource = detail, localProjects = emptyList(),
-                    onImport = { imported = it; GitHubImportOutcome.IMPORTED }
+                    onImport = { importedRepository, documents ->
+                        imported = importedRepository
+                        importedDocuments = documents
+                        GitHubImportOutcome.IMPORTED
+                    }
                 )
             }
         }
 
         clickLabel(R.string.github_repos_preview)
+        compose.onNodeWithText(label(R.string.github_repos_import_action)).assertIsDisplayed()
+        compose.onNode(hasText(label(R.string.github_repos_import_action)) and hasClickAction()).performClick()
+        compose.onNodeWithText(label(R.string.github_repos_import_confirm_title)).assertIsDisplayed()
+        compose.onNodeWithText(
+            compose.activity.getString(R.string.github_repos_import_project_name, repository.fullName)
+        ).assertIsDisplayed()
+        compose.onNodeWithText(
+            compose.activity.getString(
+                R.string.github_repos_import_repository_identity,
+                repository.fullName,
+                repository.id
+            )
+        ).assertIsDisplayed()
+        compose.onNodeWithText(label(R.string.github_repos_import_blueprint_mapping)).assertIsDisplayed()
+        compose.onNodeWithText(label(R.string.github_repos_import_roadmap_absent)).assertIsDisplayed()
+        compose.onNodeWithText("Preview blueprint content").assertDoesNotExist()
+        compose.onNode(hasText(label(R.string.github_repos_import_cancel)) and hasClickAction()).performClick()
+        compose.runOnIdle { assertEquals(null, imported) }
+
         clickLabel(R.string.github_repos_import_preview)
-        clickLabel(R.string.github_repos_import_action)
+        compose.onNodeWithText(label(R.string.github_repos_import_blueprint_mapping))
+            .performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Preview blueprint content").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText(label(R.string.github_repos_import_action)) and hasClickAction()).performClick()
         compose.onNodeWithText(label(R.string.github_repos_import_confirm_title)).assertIsDisplayed()
         compose.runOnIdle { assertEquals(null, imported) }
         compose.onNode(hasText(label(R.string.github_repos_import_cancel)) and hasClickAction()).performClick()
         compose.runOnIdle { assertEquals(null, imported) }
 
-        clickLabel(R.string.github_repos_import_action)
+        compose.onNode(hasText(label(R.string.github_repos_import_action)) and hasClickAction()).performClick()
         compose.onNode(hasText(label(R.string.github_repos_import_confirm_action)) and hasClickAction()).performClick()
-        compose.runOnIdle { assertEquals(repository, imported) }
+        compose.runOnIdle {
+            assertEquals(repository, imported)
+            assertEquals(
+                GitHubPreviewSection.Available(GitHubPlanningDocument("Preview blueprint content")),
+                importedDocuments?.get(GitHubPlanningFile.BLUEPRINT)
+            )
+        }
     }
 
     @Test fun shipsArabicResourcesAndKeepsRepositoryNamesVisibleInRtl() {

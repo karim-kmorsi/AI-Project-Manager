@@ -1,7 +1,7 @@
 name: Android debug build
 on:
   push:
-    branches: [feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview, feature/github-checklist, fix/ci-instrumentation-43829368707]
+    branches: [main, fix/v0.3.0-acceptance-regressions, fix/v0.3.0-full-suite-gate, release/v0.3.0-integration, feature/android-mvp-0-1, feature/v0-2-data-safety, feature/v0-2-editor-ux, feature/github-snapshot-preview, feature/github-checklist, fix/ci-instrumentation-43829368707]
   pull_request:
     branches: [main, feature/android-mvp-0-1, feature/v0-2-data-safety, feature/github-snapshot-preview]
   workflow_dispatch:
@@ -61,7 +61,7 @@ jobs:
           emulator-boot-timeout: 1800
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: gradle --no-daemon :app:connectedVnextAndroidTest
+          script: timeout 900s gradle --no-daemon :app:connectedVnextAndroidTest -Pandroid.testInstrumentationRunnerArguments.timeout_msec=60000
       - name: Upload Android instrumentation reports
         if: always()
         continue-on-error: true # Preserve test result even when artifact storage is full.
