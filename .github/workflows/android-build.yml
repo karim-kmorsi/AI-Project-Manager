@@ -61,7 +61,7 @@ jobs:
           emulator-boot-timeout: 1800
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: gradle --no-daemon :app:connectedVnextAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.karim.aiprojectmanager.ActivityRecreationUiTest#roadmapFailedSavePreservesSavedBytesAcrossRecreationAndRetry,com.karim.aiprojectmanager.ActivityRecreationUiTest#blueprintFailedSavePreservesSavedBytesAcrossRecreationAndRetry -Pandroid.testInstrumentationRunnerArguments.timeout_msec=60000
+          script: timeout 180s gradle --no-daemon :app:connectedVnextAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.karim.aiprojectmanager.ActivityRecreationUiTest#roadmapFailedSavePreservesSavedBytesAcrossRecreationAndRetry,com.karim.aiprojectmanager.ActivityRecreationUiTest#blueprintFailedSavePreservesSavedBytesAcrossRecreationAndRetry,com.karim.aiprojectmanager.DashboardVNextUiTest#darkArabicLargeFont,com.karim.aiprojectmanager.DashboardVNextUiTest#lightEnglishLargeFont,com.karim.aiprojectmanager.StorageFailureUiTest#taskFailureRetainsInputAndDoesNotAdvanceStatus,com.karim.aiprojectmanager.GitHubRepositoriesUiTest#previewsImportAndSyncWithoutChangingExistingProjectBytes -Pandroid.testInstrumentationRunnerArguments.timeout_msec=60000
       - name: Upload Android instrumentation reports
         if: always()
         continue-on-error: true # Preserve test result even when artifact storage is full.
