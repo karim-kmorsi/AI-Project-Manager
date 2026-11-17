@@ -81,7 +81,7 @@ class GitHubRepositoriesUiTest {
             clickLabel(R.string.github_repos_import_preview)
             val duplicate = compose.activity.getString(R.string.github_repos_import_duplicate, "owner/repo-1")
             compose.onNodeWithText(duplicate).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText(label(R.string.github_repos_import_action)).performScrollTo().assertIsNotEnabled()
+            compose.onNodeWithText(label(R.string.github_repos_import_action)).assertIsNotEnabled()
             clickLabel(R.string.github_repos_sync_compare)
             compose.onNodeWithText(label(R.string.github_repos_sync_conflict)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(label(R.string.github_repos_sync_head)).performScrollTo().assertIsDisplayed()
